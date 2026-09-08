@@ -23,7 +23,28 @@ export const Route = createFileRoute("/patients")({
   component: PatientsPage,
 });
 
-const empty = { name: "", phone: "", birthDate: "", cnam: "", allergies: "" };
+const empty = {
+  name: "",
+  phone: "",
+  birthDate: "",
+  country: "Tunisie",
+  coverage: "cnam" as "cnam" | "assurance" | "aucune",
+  insurer: "",
+  cnam: "",
+  allergies: "",
+};
+
+const countries = [
+  "Tunisie",
+  "Algérie",
+  "Maroc",
+  "Libye",
+  "France",
+  "Italie",
+  "Allemagne",
+  "Canada",
+  "Autre",
+];
 
 function PatientsPage() {
   const { data, update, newId } = useCabinet();
