@@ -346,7 +346,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                 <Plus className="h-4 w-4" /> Nouveau certificat
               </PrimaryButton>
             </div>
-          )}
+          </section>
         </div>
       </aside>
 
