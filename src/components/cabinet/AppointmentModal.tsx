@@ -15,7 +15,7 @@ export function AppointmentModal({
 }: {
   open: boolean;
   onClose: () => void;
-  defaults?: { date?: string; time?: string; patientId?: string };
+  defaults?: { date?: string | undefined; time?: string | undefined; patientId?: string | undefined };
   editId?: string | null;
 }) {
   const { data, update, newId, patientName } = useCabinet();

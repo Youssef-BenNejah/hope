@@ -9,7 +9,9 @@ import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components
 import { PatientDrawer } from "@/components/cabinet/PatientDrawer";
 
 export const Route = createFileRoute("/patients")({
-  validateSearch: (s: Record<string, unknown>) => ({ p: typeof s.p === "string" ? s.p : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    p: typeof s["p"] === "string" ? (s["p"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Patients — Cabinet" },
@@ -205,7 +207,7 @@ function PatientsPage() {
         </div>
       </Modal>
 
-      {p && <PatientDrawer patientId={p} onClose={() => navigate({ to: "/patients", search: {} })} />}
+      {p && <PatientDrawer patientId={p} onClose={() => navigate({ to: "/patients", search: { p: undefined } })} />}
     </ScreenTransition>
   );
 }
