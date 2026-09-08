@@ -33,11 +33,19 @@ export interface Block {
   reason: string;
 }
 
+export interface NoteAttachment {
+  id: string;
+  name: string;
+  type: string;
+  dataUrl: string;
+}
+
 export interface Note {
   id: string;
   patientId: string;
   date: string;
   text: string;
+  attachments?: NoteAttachment[];
 }
 
 export interface Prescription {

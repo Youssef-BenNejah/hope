@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, FileUp, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
+import type { NoteAttachment } from "@/lib/cabinet/types";
 import { fmtDate, statusMeta, today } from "@/lib/cabinet/utils";
 import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 
@@ -16,6 +17,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Aperçu");
   const [note, setNote] = useState("");
+  const [files, setFiles] = useState<NoteAttachment[]>([]);
   
   const [chronic, setChronic] = useState("");
   const [allergyEdit, setAllergyEdit] = useState(false);
@@ -240,14 +242,65 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
+              <div className="space-y-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-frost hover:text-twilight">
+                  <Paperclip className="h-4 w-4" /> Joindre un fichier (photo, PDF…)
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      const read = await Promise.all(
+                        files.map(
+                          (f) =>
+                            new Promise<{ id: string; name: string; type: string; dataUrl: string }>((res) => {
+                              const r = new FileReader();
+                              r.onload = () =>
+                                res({ id: newId(), name: f.name, type: f.type, dataUrl: String(r.result) });
+                              r.readAsDataURL(f);
+                            }),
+                        ),
+                      );
+                      setFiles((prev) => [...prev, ...read]);
+                      e.target.value = "";
+                      if (read.length) toast.success(`${read.length} fichier(s) joint(s)`);
+                    }}
+                  />
+                </label>
+                {files.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {files.map((f) => (
+                      <span
+                        key={f.id}
+                        className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs"
+                      >
+                        {f.type.startsWith("image/") ? (
+                          <img src={f.dataUrl} alt={f.name} className="h-8 w-8 rounded object-cover" />
+                        ) : (
+                          <FileUp className="h-4 w-4 text-teal" />
+                        )}
+                        {f.name}
+                        <button onClick={() => setFiles((prev) => prev.filter((x) => x.id !== f.id))}>
+                          <X className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
               <PrimaryButton
                 onClick={() => {
-                  if (!note.trim()) return;
+                  if (!note.trim() && files.length === 0) return;
                   update((d) => ({
                     ...d,
-                    notes: [...d.notes, { id: newId(), patientId: patient.id, date: today(), text: note }],
+                    notes: [
+                      ...d.notes,
+                      { id: newId(), patientId: patient.id, date: today(), text: note, attachments: files },
+                    ],
                   }));
                   setNote("");
+                  setFiles([]);
                   toast.success("Note enregistrée");
                 }}
               >
@@ -258,13 +311,35 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                   <div key={n.id} className="relative pb-5">
                     <span className="absolute -left-[23px] top-1.5 h-2.5 w-2.5 rounded-full bg-surf" />
                     <p className="num text-xs text-muted-foreground">{fmtDate(n.date)}</p>
-                    <p className="mt-1">{n.text}</p>
+                    {n.text && <p className="mt-1">{n.text}</p>}
+                    {n.attachments && n.attachments.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {n.attachments.map((f) => (
+                          <a
+                            key={f.id}
+                            href={f.dataUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download={f.name}
+                            className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs hover:bg-frost hover:text-twilight"
+                          >
+                            {f.type.startsWith("image/") ? (
+                              <img src={f.dataUrl} alt={f.name} className="h-10 w-10 rounded object-cover" />
+                            ) : (
+                              <FileUp className="h-4 w-4 text-teal" />
+                            )}
+                            {f.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {notes.length === 0 && <p className="text-muted-foreground">Aucune note pour ce patient.</p>}
               </div>
             </div>
           </section>
+
 
           <section id={sectionId("Analyses")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Analyses</h3>
