@@ -210,9 +210,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
               ))}
               {visits.length === 0 && <p className="text-muted-foreground">Aucune visite enregistrée.</p>}
             </div>
-          )}
+          </section>
 
-          {tab === "Notes" && (
+          <section id={sectionId("Notes")} className="scroll-mt-14">
+            <h3 className="label-caps mb-3 text-teal">Notes</h3>
             <div className="space-y-4">
               <textarea
                 className={`${inputCls} min-h-24`}
