@@ -20,12 +20,12 @@ import { dt, fmtDate, today } from "@/lib/cabinet/utils";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { GhostButton } from "@/components/cabinet/Modal";
 
-export const Route = createFileRoute("/recettes")({
+export const Route = createFileRoute("/comptabilite")({
   head: () => ({
     meta: [
-      { title: "Recettes — Cabinet" },
+      { title: "Comptabilité — Cabinet" },
       { name: "description", content: "Suivi des recettes du cabinet : jour, semaine, mois et dossiers CNAM." },
-      { property: "og:title", content: "Recettes — Cabinet" },
+      { property: "og:title", content: "Comptabilité — Cabinet" },
       { property: "og:description", content: "Suivi des recettes et des remboursements CNAM du cabinet." },
     ],
   }),
@@ -72,7 +72,7 @@ function RevenuePage() {
   return (
     <ScreenTransition>
       <PageHeader
-        title="Recettes"
+        title="Comptabilité"
         subtitle={`Suivi financier du cabinet — ${fmtDate(day)}`}
         actions={
           <GhostButton
