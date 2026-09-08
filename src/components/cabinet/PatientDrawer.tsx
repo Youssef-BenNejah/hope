@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, FileUp, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
+import type { NoteAttachment } from "@/lib/cabinet/types";
 import { fmtDate, statusMeta, today } from "@/lib/cabinet/utils";
 import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 
@@ -16,6 +17,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Aperçu");
   const [note, setNote] = useState("");
+  const [files, setFiles] = useState<NoteAttachment[]>([]);
   
   const [chronic, setChronic] = useState("");
   const [allergyEdit, setAllergyEdit] = useState(false);
