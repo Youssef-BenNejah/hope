@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import { fmtDate, levenshtein, matches, today } from "@/lib/cabinet/utils";
+import { fmtDate, levenshtein, makePatientCode, matches, today } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientDrawer } from "@/components/cabinet/PatientDrawer";
@@ -34,7 +34,9 @@ function PatientsPage() {
   const [form, setForm] = useState(empty);
   const [dup, setDup] = useState<string | null>(null);
 
-  const list = data.patients.filter((x) => matches(x.name, query) || matches(x.phone, query));
+  const list = data.patients.filter(
+    (x) => matches(x.name, query) || matches(x.phone, query) || matches(x.code ?? "", query),
+  );
 
   const lastVisit = (id: string) => {
     const visits = data.appointments.filter((a) => a.patientId === id && a.status === "done");
@@ -58,6 +60,7 @@ function PatientsPage() {
         ...d.patients,
         {
           id,
+          code: makePatientCode(form.name, d.patients.map((x) => x.code)),
           name: form.name,
           phone: form.phone,
           birthDate: form.birthDate,
@@ -95,7 +98,7 @@ function PatientsPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           className={`${inputCls} pl-9`}
-          placeholder="Rechercher par nom ou téléphone"
+          placeholder="Rechercher par nom, téléphone ou identifiant"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -113,7 +116,8 @@ function PatientsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="grid grid-cols-[minmax(0,1fr)_170px_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5">
+          <div className="grid grid-cols-[130px_minmax(0,1fr)_170px_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5">
+            <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
             <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
             <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
             <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
@@ -123,8 +127,9 @@ function PatientsPage() {
             <button
               key={x.id}
               onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
-              className="grid w-full grid-cols-[minmax(0,1fr)_170px_150px_110px] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
+              className="grid w-full grid-cols-[130px_minmax(0,1fr)_170px_150px_110px] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
             >
+              <span className="num text-xs font-semibold tracking-wide text-teal">{x.code}</span>
               <span className="truncate font-medium">{x.name}</span>
               <span className="num text-left text-muted-foreground">{x.phone}</span>
               <span className="num text-left text-muted-foreground">{lastVisit(x.id)}</span>

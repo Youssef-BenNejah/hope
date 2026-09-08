@@ -175,7 +175,7 @@ function PrescriptionsPage() {
                   {patient && (
                     <span className="num text-[#5B6472]">
                       {" "}
-                      — né(e) le {fmtDate(patient.birthDate, "dd/MM/yyyy")}
+                      — ID {patient.code} · né(e) le {fmtDate(patient.birthDate, "dd/MM/yyyy")}
                       {patient.cnam ? ` · CNAM ${patient.cnam}` : ""}
                     </span>
                   )}

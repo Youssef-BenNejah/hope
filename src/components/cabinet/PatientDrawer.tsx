@@ -75,7 +75,9 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">{patient.name}</h2>
-            <p className="num text-sm text-muted-foreground">{patient.phone}</p>
+            <p className="num text-sm text-muted-foreground">
+              <span className="font-semibold text-teal">{patient.code}</span> · {patient.phone}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <GhostButton
@@ -128,6 +130,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
             <div className="space-y-5">
               <dl className="grid grid-cols-2 gap-4">
                 {[
+                  ["Identifiant", patient.code],
                   ["Nom", patient.name],
                   ["Téléphone", patient.phone],
                   ["Date de naissance", patient.birthDate ? fmtDate(patient.birthDate) : "Non renseignée"],
