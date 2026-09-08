@@ -34,7 +34,9 @@ function PatientsPage() {
   const [form, setForm] = useState(empty);
   const [dup, setDup] = useState<string | null>(null);
 
-  const list = data.patients.filter((x) => matches(x.name, query) || matches(x.phone, query));
+  const list = data.patients.filter(
+    (x) => matches(x.name, query) || matches(x.phone, query) || matches(x.code ?? "", query),
+  );
 
   const lastVisit = (id: string) => {
     const visits = data.appointments.filter((a) => a.patientId === id && a.status === "done");
@@ -58,6 +60,7 @@ function PatientsPage() {
         ...d.patients,
         {
           id,
+          code: makePatientCode(form.name, d.patients.map((x) => x.code)),
           name: form.name,
           phone: form.phone,
           birthDate: form.birthDate,
