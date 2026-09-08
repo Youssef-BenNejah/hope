@@ -113,25 +113,24 @@ function PatientsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="grid grid-cols-[2fr_1.2fr_1fr_auto] gap-4 bg-twilight px-5 py-2.5">
-            {["Nom", "Téléphone", "Dernière visite", ""].map((h, i) => (
-              <span key={i} className="label-caps text-[#CAF0F8]">
-                {h}
-              </span>
-            ))}
+          <div className="grid grid-cols-[minmax(0,1fr)_170px_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5">
+            <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
+            <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
+            <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
+            <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
           </div>
           {list.map((x) => (
             <button
               key={x.id}
               onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
-              className="grid w-full grid-cols-[2fr_1.2fr_1fr_auto] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
+              className="grid w-full grid-cols-[minmax(0,1fr)_170px_150px_110px] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
             >
-              <span className="font-medium">{x.name}</span>
-              <span className="num text-muted-foreground">{x.phone}</span>
-              <span className="num text-muted-foreground">{lastVisit(x.id)}</span>
-              <span>
+              <span className="truncate font-medium">{x.name}</span>
+              <span className="num text-left text-muted-foreground">{x.phone}</span>
+              <span className="num text-left text-muted-foreground">{lastVisit(x.id)}</span>
+              <span className="text-right">
                 {x.allergies.length > 0 && (
-                  <span className="rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
+                  <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
                     Allergies
                   </span>
                 )}
@@ -139,6 +138,7 @@ function PatientsPage() {
             </button>
           ))}
         </div>
+
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Nouveau patient">
