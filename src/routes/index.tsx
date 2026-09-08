@@ -114,47 +114,52 @@ function TodayPage() {
               <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusMeta[a.status].className}`}>
                 {statusMeta[a.status].label}
               </span>
-              {a.status === "upcoming" && (
-                <div className="flex gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <button
-                    onClick={() => setPayFor(a.id)}
-                    title="Marquer terminé"
-                    className="rounded-md p-2 text-success hover:bg-success-soft"
+                    aria-label="Actions"
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted"
                   >
-                    <Check className="h-4 w-4" />
+                    <MoreHorizontal className="h-4 w-4" />
                   </button>
-                  <button
-                    onClick={() => {
-                      update((d) => ({
-                        ...d,
-                        appointments: d.appointments.map((x) => (x.id === a.id ? { ...x, status: "absent" } : x)),
-                      }));
-                      toast.success("Patient marqué absent");
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  {a.status === "upcoming" && (
+                    <>
+                      <DropdownMenuItem onSelect={() => setPayFor(a.id)}>
+                        <Check className="h-4 w-4 text-success" /> Marquer terminé
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          update((d) => ({
+                            ...d,
+                            appointments: d.appointments.map((x) => (x.id === a.id ? { ...x, status: "absent" } : x)),
+                          }));
+                          toast.success("Patient marqué absent");
+                        }}
+                      >
+                        <X className="h-4 w-4 text-danger" /> Marquer absent
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setEditId(a.id);
+                      setModalOpen(true);
                     }}
-                    title="Marquer absent"
-                    className="rounded-md p-2 text-danger hover:bg-danger-soft"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  setEditId(a.id);
-                  setModalOpen(true);
-                }}
-                title="Modifier"
-                className="rounded-md p-2 text-muted-foreground hover:bg-muted"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setDeleteId(a.id)}
-                title="Annuler"
-                className="rounded-md p-2 text-muted-foreground hover:bg-danger-soft hover:text-danger"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+                    <Pencil className="h-4 w-4" /> Modifier
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => setDeleteId(a.id)}
+                    className="text-danger focus:bg-danger-soft focus:text-danger"
+                  >
+                    <Trash2 className="h-4 w-4" /> Annuler le rendez-vous
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
             </div>
           ))}
         </div>
