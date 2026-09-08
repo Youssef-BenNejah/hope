@@ -18,7 +18,7 @@ const items = [
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/ordonnances", label: "Ordonnances", icon: Pill },
   { to: "/certificats", label: "Certificats", icon: FileText },
-  { to: "/recettes", label: "Recettes", icon: Receipt },
+  { to: "/comptabilite", label: "Comptabilité", icon: Receipt },
   { to: "/parametres", label: "Paramètres", icon: SettingsIcon },
 ] as const;
 
