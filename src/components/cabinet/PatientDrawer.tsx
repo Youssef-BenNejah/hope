@@ -15,7 +15,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Aperçu");
   const [note, setNote] = useState("");
-  const [rx, setRx] = useState("");
+  
   const [chronic, setChronic] = useState("");
   const [allergyEdit, setAllergyEdit] = useState(false);
   const [allergyValue, setAllergyValue] = useState("");
