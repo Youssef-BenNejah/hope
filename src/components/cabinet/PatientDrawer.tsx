@@ -245,10 +245,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                 {notes.length === 0 && <p className="text-muted-foreground">Aucune note pour ce patient.</p>}
               </div>
             </div>
-          )}
+          </section>
 
-
-          {tab === "Analyses" && (
+          <section id={sectionId("Analyses")} className="scroll-mt-14">
+            <h3 className="label-caps mb-3 text-teal">Analyses</h3>
             <div className="space-y-5">
               <button
                 onClick={() => {
