@@ -3,6 +3,7 @@ export type PaymentMethod = "cash" | "cnam_pending" | "cnam_paid";
 
 export interface Patient {
   id: string;
+  code: string; // identifiant unique : initiales + 6 chiffres
   name: string;
   phone: string;
   birthDate: string;
