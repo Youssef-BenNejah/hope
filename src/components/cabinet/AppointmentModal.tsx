@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import { slots, today } from "@/lib/cabinet/utils";
+import { makePatientCode, slots, today } from "@/lib/cabinet/utils";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 import { PatientPicker } from "./PatientPicker";
 
@@ -52,6 +52,7 @@ export function AppointmentModal({
           ...d.patients,
           {
             id: pid,
+            code: makePatientCode(newName, d.patients.map((p) => p.code)),
             name: newName,
             phone,
             birthDate: "",

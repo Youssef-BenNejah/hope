@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import { fmtDate, levenshtein, matches, today } from "@/lib/cabinet/utils";
+import { fmtDate, levenshtein, makePatientCode, matches, today } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientDrawer } from "@/components/cabinet/PatientDrawer";
