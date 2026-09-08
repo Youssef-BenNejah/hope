@@ -152,6 +152,7 @@ export function buildSeed(): CabinetData {
       doctorName: "Dr. Amine Belhaj",
       specialty: "Médecine générale",
       address: "12 Rue Ibn Khaldoun, Sousse",
+      phone: "+216 73 220 118",
       licenseNumber: "MG-2011-4417",
       favorites: [
         "Paracétamol 1g — 3x/j",
