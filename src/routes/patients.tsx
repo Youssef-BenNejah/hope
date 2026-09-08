@@ -85,7 +85,10 @@ function PatientsPage() {
           name: form.name,
           phone: form.phone,
           birthDate: form.birthDate,
-          cnam: form.cnam,
+          country: form.country,
+          coverage: form.coverage,
+          insurer: form.coverage === "assurance" ? form.insurer : "",
+          cnam: form.coverage === "cnam" ? form.cnam : "",
           allergies: form.allergies
             .split(",")
             .map((s) => s.trim())
