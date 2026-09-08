@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { buildSeed, uid } from "./seed";
+import { makePatientCode } from "./utils";
 import type { CabinetData, Settings } from "./types";
 
 const KEY = "cabinet-data-v1";
@@ -27,7 +28,18 @@ function load(): CabinetData {
   if (typeof window === "undefined") return buildSeed();
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as CabinetData;
+    if (raw) {
+      const parsed = JSON.parse(raw) as CabinetData;
+      // rétro-compatibilité : générer l'identifiant des anciens dossiers
+      const taken: string[] = parsed.patients.map((p) => p.code).filter(Boolean);
+      parsed.patients = parsed.patients.map((p) => {
+        if (p.code) return p;
+        const code = makePatientCode(p.name, taken);
+        taken.push(code);
+        return { ...p, code };
+      });
+      return parsed;
+    }
   } catch {
     /* ignore */
   }
