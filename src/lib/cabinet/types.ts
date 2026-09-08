@@ -88,6 +88,7 @@ export interface Settings {
   doctorName: string;
   specialty: string;
   address: string;
+  phone: string;
   licenseNumber: string;
   favorites: string[];
   pin: string;

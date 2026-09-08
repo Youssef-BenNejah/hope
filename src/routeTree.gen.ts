@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as CertificatsRouteImport } from './routes/certificats'
+import { Route as OrdonnancesRouteImport } from './routes/ordonnances'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as RecettesRouteImport } from './routes/recettes'
@@ -29,6 +30,11 @@ const AgendaRoute = AgendaRouteImport.update({
 const CertificatsRoute = CertificatsRouteImport.update({
   id: '/certificats',
   path: '/certificats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdonnancesRoute = OrdonnancesRouteImport.update({
+  id: '/ordonnances',
+  path: '/ordonnances',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParametresRoute = ParametresRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/certificats': typeof CertificatsRoute
+  '/ordonnances': typeof OrdonnancesRoute
   '/parametres': typeof ParametresRoute
   '/patients': typeof PatientsRoute
   '/recettes': typeof RecettesRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/certificats': typeof CertificatsRoute
+  '/ordonnances': typeof OrdonnancesRoute
   '/parametres': typeof ParametresRoute
   '/patients': typeof PatientsRoute
   '/recettes': typeof RecettesRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/certificats': typeof CertificatsRoute
+  '/ordonnances': typeof OrdonnancesRoute
   '/parametres': typeof ParametresRoute
   '/patients': typeof PatientsRoute
   '/recettes': typeof RecettesRoute
@@ -75,15 +84,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/agenda' | '/certificats' | '/parametres' | '/patients' | '/recettes'
+    | '/'
+    | '/agenda'
+    | '/certificats'
+    | '/ordonnances'
+    | '/parametres'
+    | '/patients'
+    | '/recettes'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/agenda' | '/certificats' | '/parametres' | '/patients' | '/recettes'
+    | '/'
+    | '/agenda'
+    | '/certificats'
+    | '/ordonnances'
+    | '/parametres'
+    | '/patients'
+    | '/recettes'
   id:
     | '__root__'
     | '/'
     | '/agenda'
     | '/certificats'
+    | '/ordonnances'
     | '/parametres'
     | '/patients'
     | '/recettes'
@@ -93,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   CertificatsRoute: typeof CertificatsRoute
+  OrdonnancesRoute: typeof OrdonnancesRoute
   ParametresRoute: typeof ParametresRoute
   PatientsRoute: typeof PatientsRoute
   RecettesRoute: typeof RecettesRoute
@@ -119,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/certificats'
       fullPath: '/certificats'
       preLoaderRoute: typeof CertificatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ordonnances': {
+      id: '/ordonnances'
+      path: '/ordonnances'
+      fullPath: '/ordonnances'
+      preLoaderRoute: typeof OrdonnancesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parametres': {
@@ -149,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   CertificatsRoute: CertificatsRoute,
+  OrdonnancesRoute: OrdonnancesRoute,
   ParametresRoute: ParametresRoute,
   PatientsRoute: PatientsRoute,
   RecettesRoute: RecettesRoute,

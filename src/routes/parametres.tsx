@@ -41,6 +41,13 @@ function SettingsPage() {
             <Field label="Adresse du cabinet">
               <input className={inputCls} value={s.address} onChange={(e) => setSettings({ address: e.target.value })} />
             </Field>
+            <Field label="Téléphone du cabinet">
+              <input
+                className={`${inputCls} num`}
+                value={s.phone ?? ""}
+                onChange={(e) => setSettings({ phone: e.target.value })}
+              />
+            </Field>
             <Field label="Numéro d'ordre">
               <input
                 className={`${inputCls} num`}
