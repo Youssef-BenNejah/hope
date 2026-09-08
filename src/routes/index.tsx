@@ -1,24 +1,186 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { CalendarDays, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { useCabinet } from "@/lib/cabinet/store";
+import { dt, fmtLong, statusMeta, today } from "@/lib/cabinet/utils";
+import { Card, EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
+import { AppointmentModal } from "@/components/cabinet/AppointmentModal";
+import { PaymentModal } from "@/components/cabinet/PaymentModal";
+import { ConfirmModal, PrimaryButton } from "@/components/cabinet/Modal";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Aujourd'hui — Cabinet" },
+      { name: "description", content: "Vue du jour : rendez-vous, présence et recettes du cabinet." },
+      { property: "og:title", content: "Aujourd'hui — Cabinet" },
+      { property: "og:description", content: "Vue du jour : rendez-vous, présence et recettes du cabinet." },
+    ],
+  }),
+  component: TodayPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function TodayPage() {
+  const { data, update, patientName } = useCabinet();
+  const navigate = useNavigate();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [payFor, setPayFor] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const day = today();
+  const list = useMemo(
+    () => data.appointments.filter((a) => a.date === day).sort((a, b) => a.time.localeCompare(b.time)),
+    [data.appointments, day],
+  );
+
+  const last30 = data.appointments.filter((a) => a.status !== "upcoming");
+  const rate = last30.length
+    ? Math.round((last30.filter((a) => a.status === "done").length / last30.length) * 100)
+    : 100;
+  const revenue = data.payments.filter((p) => p.date === day).reduce((s, p) => s + p.amount, 0);
+
+  const isNewPatient = (patientId: string) =>
+    data.appointments.filter((a) => a.patientId === patientId).length <= 1;
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+    <ScreenTransition>
+      <PageHeader
+        title="Bonjour, Dr. Belhaj"
+        subtitle={fmtLong(new Date())}
+        actions={
+          <PrimaryButton
+            onClick={() => {
+              setEditId(null);
+              setModalOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" /> Nouveau rendez-vous
+          </PrimaryButton>
+        }
       />
-    </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <p className="label-caps">Rendez-vous aujourd'hui</p>
+          <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{list.length}</p>
+        </Card>
+        <Card>
+          <p className="label-caps">Taux de présence (30 j)</p>
+          <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{rate}%</p>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-surf" style={{ width: `${rate}%` }} />
+          </div>
+        </Card>
+        <Card>
+          <p className="label-caps">Recettes du jour</p>
+          <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{dt(revenue)}</p>
+        </Card>
+      </div>
+
+      <h2 className="mb-3 mt-8 text-lg font-semibold">Rendez-vous du jour</h2>
+
+      {list.length === 0 ? (
+        <EmptyState
+          icon={<CalendarDays className="h-10 w-10" />}
+          title="Aucun rendez-vous aujourd'hui"
+          action={
+            <PrimaryButton onClick={() => setModalOpen(true)}>
+              <Plus className="h-4 w-4" /> Ajouter un rendez-vous
+            </PrimaryButton>
+          }
+        />
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          {list.map((a) => (
+            <div
+              key={a.id}
+              className="flex flex-wrap items-center gap-4 border-b border-border px-5 py-4 last:border-0 transition-colors hover:bg-cyan/40 dark:hover:bg-muted"
+            >
+              <span className="num w-14 text-sm font-medium">{a.time}</span>
+              <button
+                onClick={() => navigate({ to: "/patients", search: { p: a.patientId } })}
+                className="text-sm font-medium text-teal hover:underline"
+              >
+                {patientName(a.patientId)}
+              </button>
+              {isNewPatient(a.patientId) && (
+                <span className="rounded-full bg-frost px-2 py-0.5 text-[11px] font-medium text-twilight">
+                  Nouveau patient
+                </span>
+              )}
+              <span className="flex-1 text-sm text-muted-foreground">{a.reason}</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusMeta[a.status].className}`}>
+                {statusMeta[a.status].label}
+              </span>
+              {a.status === "upcoming" && (
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setPayFor(a.id)}
+                    title="Marquer terminé"
+                    className="rounded-md p-2 text-success hover:bg-success-soft"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      update((d) => ({
+                        ...d,
+                        appointments: d.appointments.map((x) => (x.id === a.id ? { ...x, status: "absent" } : x)),
+                      }));
+                      toast.success("Patient marqué absent");
+                    }}
+                    title="Marquer absent"
+                    className="rounded-md p-2 text-danger hover:bg-danger-soft"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setEditId(a.id);
+                  setModalOpen(true);
+                }}
+                title="Modifier"
+                className="rounded-md p-2 text-muted-foreground hover:bg-muted"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setDeleteId(a.id)}
+                title="Annuler"
+                className="rounded-md p-2 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={() => {
+          setEditId(null);
+          setModalOpen(true);
+        }}
+        className="fixed bottom-8 right-8 flex items-center gap-2 rounded-full bg-teal px-5 py-3 text-sm font-medium text-white shadow-lg transition-colors hover:bg-surf"
+      >
+        <Plus className="h-5 w-5" /> Nouveau rendez-vous
+      </button>
+
+      <AppointmentModal open={modalOpen} onClose={() => setModalOpen(false)} editId={editId} />
+      <PaymentModal appointmentId={payFor} onClose={() => setPayFor(null)} />
+      <ConfirmModal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        message="Cette action est irréversible. Confirmer la suppression du rendez-vous ?"
+        onConfirm={() => {
+          update((d) => ({ ...d, appointments: d.appointments.filter((a) => a.id !== deleteId) }));
+          toast.success("Rendez-vous supprimé");
+        }}
+      />
+    </ScreenTransition>
   );
 }
