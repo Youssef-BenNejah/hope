@@ -9,6 +9,7 @@ import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 
 const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
+const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
 
 export function PatientDrawer({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
   const { data, update, newId } = useCabinet();
