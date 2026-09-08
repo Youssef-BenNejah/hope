@@ -24,6 +24,24 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const [importState, setImportState] = useState<"idle" | "loading" | "done">("idle");
   const [scan, setScan] = useState<"idle" | "loading" | "ready">("idle");
 
+  useEffect(() => {
+    if (!patientId) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (!visible[0]) return;
+        const idx = tabs.findIndex((t) => sectionId(t) === visible[0]!.target.id);
+        if (idx >= 0) setTab(tabs[idx]!);
+      },
+      { rootMargin: "-15% 0px -70% 0px" },
+    );
+    tabs.forEach((t) => {
+      const el = document.getElementById(sectionId(t));
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, [patientId]);
+
   const patient = data.patients.find((p) => p.id === patientId);
   if (!patient) return null;
 
