@@ -330,9 +330,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
               )}
               {analyses.length === 0 && <p className="text-muted-foreground">Aucune analyse enregistrée.</p>}
             </div>
-          )}
+          </section>
 
-          {tab === "Certificats" && (
+          <section id={sectionId("Certificats")} className="scroll-mt-14 pb-10">
+            <h3 className="label-caps mb-3 text-teal">Certificats</h3>
             <div className="space-y-3">
               {certs.map((c) => (
                 <div key={c.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
