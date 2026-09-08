@@ -138,7 +138,18 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                   ["Nom", patient.name],
                   ["Téléphone", patient.phone],
                   ["Date de naissance", patient.birthDate ? fmtDate(patient.birthDate) : "Non renseignée"],
-                  ["Numéro CNAM", patient.cnam || "Non renseigné"],
+                  ["Pays", patient.country || "Non renseigné"],
+                  [
+                    "Couverture",
+                    patient.coverage === "assurance"
+                      ? "Assurance privée"
+                      : patient.coverage === "aucune"
+                        ? "Aucune"
+                        : "CNAM",
+                  ],
+                  patient.coverage === "assurance"
+                    ? ["Assurance", patient.insurer || "Non renseignée"]
+                    : ["Numéro CNAM", patient.cnam || "Non renseigné"],
                 ].map(([k, v]) => (
                   <div key={k}>
                     <dt className="label-caps">{k}</dt>
