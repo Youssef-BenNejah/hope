@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, FileUp, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 
 const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
+const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
 
 export function PatientDrawer({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
   const { data, update, newId } = useCabinet();
@@ -22,6 +23,24 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const [importOpen, setImportOpen] = useState(false);
   const [importState, setImportState] = useState<"idle" | "loading" | "done">("idle");
   const [scan, setScan] = useState<"idle" | "loading" | "ready">("idle");
+
+  useEffect(() => {
+    if (!patientId) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (!visible[0]) return;
+        const idx = tabs.findIndex((t) => sectionId(t) === visible[0]!.target.id);
+        if (idx >= 0) setTab(tabs[idx]!);
+      },
+      { rootMargin: "-15% 0px -70% 0px" },
+    );
+    tabs.forEach((t) => {
+      const el = document.getElementById(sectionId(t));
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, [patientId]);
 
   const patient = data.patients.find((p) => p.id === patientId);
   if (!patient) return null;
@@ -111,11 +130,14 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
           </button>
         )}
 
-        <div className="mt-5 flex flex-wrap gap-1 border-b border-border">
+        <div className="sticky top-0 z-10 mt-5 flex flex-wrap gap-1 border-b border-border bg-card">
           {tabs.map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => {
+                setTab(t);
+                document.getElementById(sectionId(t))?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className={`-mb-px border-b-2 px-3 py-2 text-sm ${
                 tab === t ? "border-teal font-medium text-teal" : "border-transparent text-muted-foreground"
               }`}
@@ -125,8 +147,9 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
           ))}
         </div>
 
-        <div className="mt-5 flex-1 text-sm">
-          {tab === "Aperçu" && (
+        <div className="mt-5 flex-1 space-y-10 text-sm">
+          <section id={sectionId("Aperçu")} className="scroll-mt-14">
+            <h3 className="label-caps mb-3 text-teal">Aperçu</h3>
             <div className="space-y-5">
               <dl className="grid grid-cols-2 gap-4">
                 {[
@@ -134,7 +157,18 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                   ["Nom", patient.name],
                   ["Téléphone", patient.phone],
                   ["Date de naissance", patient.birthDate ? fmtDate(patient.birthDate) : "Non renseignée"],
-                  ["Numéro CNAM", patient.cnam || "Non renseigné"],
+                  ["Pays", patient.country || "Non renseigné"],
+                  [
+                    "Couverture",
+                    patient.coverage === "assurance"
+                      ? "Assurance privée"
+                      : patient.coverage === "aucune"
+                        ? "Aucune"
+                        : "CNAM",
+                  ],
+                  patient.coverage === "assurance"
+                    ? ["Assurance", patient.insurer || "Non renseignée"]
+                    : ["Numéro CNAM", patient.cnam || "Non renseigné"],
                 ].map(([k, v]) => (
                   <div key={k}>
                     <dt className="label-caps">{k}</dt>
@@ -177,9 +211,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                 </div>
               </div>
             </div>
-          )}
+          </section>
 
-          {tab === "Historique" && (
+          <section id={sectionId("Historique")} className="scroll-mt-14">
+            <h3 className="label-caps mb-3 text-teal">Historique</h3>
             <div className="divide-y divide-border">
               {visits.map((v) => (
                 <div key={v.id} className="flex items-center gap-4 py-3">
@@ -194,9 +229,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
               ))}
               {visits.length === 0 && <p className="text-muted-foreground">Aucune visite enregistrée.</p>}
             </div>
-          )}
+          </section>
 
-          {tab === "Notes" && (
+          <section id={sectionId("Notes")} className="scroll-mt-14">
+            <h3 className="label-caps mb-3 text-teal">Notes</h3>
             <div className="space-y-4">
               <textarea
                 className={`${inputCls} min-h-24`}
@@ -228,10 +264,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                 {notes.length === 0 && <p className="text-muted-foreground">Aucune note pour ce patient.</p>}
               </div>
             </div>
-          )}
+          </section>
 
-
-          {tab === "Analyses" && (
+          <section id={sectionId("Analyses")} className="scroll-mt-14">
+            <h3 className="label-caps mb-3 text-teal">Analyses</h3>
             <div className="space-y-5">
               <button
                 onClick={() => {
@@ -313,9 +349,10 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
               )}
               {analyses.length === 0 && <p className="text-muted-foreground">Aucune analyse enregistrée.</p>}
             </div>
-          )}
+          </section>
 
-          {tab === "Certificats" && (
+          <section id={sectionId("Certificats")} className="scroll-mt-14 pb-10">
+            <h3 className="label-caps mb-3 text-teal">Certificats</h3>
             <div className="space-y-3">
               {certs.map((c) => (
                 <div key={c.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
@@ -328,7 +365,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
                 <Plus className="h-4 w-4" /> Nouveau certificat
               </PrimaryButton>
             </div>
-          )}
+          </section>
         </div>
       </aside>
 

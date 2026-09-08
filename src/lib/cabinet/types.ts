@@ -7,6 +7,9 @@ export interface Patient {
   name: string;
   phone: string;
   birthDate: string;
+  country?: string;
+  coverage?: "cnam" | "assurance" | "aucune";
+  insurer?: string;
   cnam: string;
   allergies: string[];
   chronic: string[];
