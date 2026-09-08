@@ -1,6 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarDays, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Check, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { dt, fmtLong, statusMeta, today } from "@/lib/cabinet/utils";
