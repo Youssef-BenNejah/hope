@@ -193,6 +193,32 @@ function PatientsPage() {
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
+            <Field label="Pays">
+              <select
+                className={inputCls}
+                value={form.country}
+                onChange={(e) => setForm({ ...form, country: e.target.value })}
+              >
+                {countries.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Couverture">
+              <select
+                className={inputCls}
+                value={form.coverage}
+                onChange={(e) => setForm({ ...form, coverage: e.target.value as typeof form.coverage })}
+              >
+                <option value="cnam">CNAM</option>
+                <option value="assurance">Assurance privée</option>
+                <option value="aucune">Aucune couverture</option>
+              </select>
+            </Field>
+          </div>
+          {form.coverage === "cnam" && (
             <Field label="Numéro CNAM">
               <input
                 className={`${inputCls} num`}
@@ -200,14 +226,24 @@ function PatientsPage() {
                 onChange={(e) => setForm({ ...form, cnam: e.target.value })}
               />
             </Field>
-            <Field label="Allergies (séparées par des virgules)">
+          )}
+          {form.coverage === "assurance" && (
+            <Field label="Nom de l'assurance et numéro d'adhérent">
               <input
                 className={inputCls}
-                value={form.allergies}
-                onChange={(e) => setForm({ ...form, allergies: e.target.value })}
+                value={form.insurer}
+                onChange={(e) => setForm({ ...form, insurer: e.target.value })}
+                placeholder="STAR — 123456"
               />
             </Field>
-          </div>
+          )}
+          <Field label="Allergies (séparées par des virgules)">
+            <input
+              className={inputCls}
+              value={form.allergies}
+              onChange={(e) => setForm({ ...form, allergies: e.target.value })}
+            />
+          </Field>
 
           {duplicate && (
             <div className="rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning">
