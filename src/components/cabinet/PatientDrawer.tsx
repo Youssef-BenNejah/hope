@@ -7,7 +7,7 @@ import { useCabinet } from "@/lib/cabinet/store";
 import { fmtDate, statusMeta, today } from "@/lib/cabinet/utils";
 import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 
-const tabs = ["Aperçu", "Historique", "Notes", "Ordonnances", "Analyses", "Certificats"] as const;
+const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
 
 export function PatientDrawer({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
@@ -230,70 +230,6 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
             </div>
           )}
 
-          {tab === "Ordonnances" && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {data.settings.favorites.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setRx((prev) => (prev ? `${prev}\n${f}` : f))}
-                    className="rounded-full bg-cyan px-3 py-1 text-xs text-twilight hover:bg-frost dark:bg-muted dark:text-frost"
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-              <textarea
-                className={`${inputCls} min-h-24`}
-                placeholder="Contenu de l'ordonnance…"
-                value={rx}
-                onChange={(e) => setRx(e.target.value)}
-              />
-              <div className="flex gap-2">
-                <PrimaryButton
-                  onClick={() => {
-                    if (!rx.trim()) return;
-                    update((d) => ({
-                      ...d,
-                      prescriptions: [
-                        ...d.prescriptions,
-                        { id: newId(), patientId: patient.id, date: today(), text: rx },
-                      ],
-                    }));
-                    setRx("");
-                    toast.success("Ordonnance sauvegardée");
-                  }}
-                >
-                  Enregistrer l'ordonnance
-                </PrimaryButton>
-                {rxs.length > 0 && (
-                  <GhostButton
-                    onClick={() => {
-                      update((d) => ({
-                        ...d,
-                        prescriptions: [
-                          ...d.prescriptions,
-                          { id: newId(), patientId: patient.id, date: today(), text: rxs[0]!.text },
-                        ],
-                      }));
-                      toast.success("Dernière ordonnance reconduite");
-                    }}
-                  >
-                    Reconduire la dernière ordonnance
-                  </GhostButton>
-                )}
-              </div>
-              <div className="divide-y divide-border">
-                {rxs.map((p) => (
-                  <div key={p.id} className="py-3">
-                    <p className="num text-xs text-muted-foreground">{fmtDate(p.date)}</p>
-                    <p className="mt-1 whitespace-pre-line">{p.text}</p>
-                  </div>
-                ))}
-                {rxs.length === 0 && <p className="text-muted-foreground">Aucune ordonnance enregistrée.</p>}
-              </div>
-            </div>
-          )}
 
           {tab === "Analyses" && (
             <div className="space-y-5">
