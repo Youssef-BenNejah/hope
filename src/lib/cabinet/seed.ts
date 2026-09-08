@@ -1,5 +1,6 @@
 import { addDays, format, subDays } from "date-fns";
 import type { CabinetData } from "./types";
+import { makePatientCode } from "./utils";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -34,6 +35,7 @@ export function buildSeed(): CabinetData {
     patients: [
       {
         id: p1,
+        code: makePatientCode("Salma Trabelsi"),
         name: "Salma Trabelsi",
         phone: "+216 20 145 332",
         birthDate: "1978-04-12",
@@ -44,6 +46,7 @@ export function buildSeed(): CabinetData {
       },
       {
         id: p2,
+        code: makePatientCode("Karim Bouazizi"),
         name: "Karim Bouazizi",
         phone: "+216 55 809 214",
         birthDate: "1990-11-02",
@@ -54,6 +57,7 @@ export function buildSeed(): CabinetData {
       },
       {
         id: p3,
+        code: makePatientCode("Ines Chaabane"),
         name: "Ines Chaabane",
         phone: "+216 98 302 771",
         birthDate: "1996-06-25",
@@ -64,6 +68,7 @@ export function buildSeed(): CabinetData {
       },
       {
         id: p4,
+        code: makePatientCode("Mohamed Sfaxi"),
         name: "Mohamed Sfaxi",
         phone: "+216 22 456 781",
         birthDate: "1965-01-30",
