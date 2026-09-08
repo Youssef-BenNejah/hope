@@ -40,8 +40,14 @@ function PrescriptionsPage() {
   const name = patientId ? patientName(patientId) : "";
 
   const save = () => {
-    if (!patientId) return toast.error("Sélectionnez un patient");
-    if (!lines.trim()) return toast.error("Ajoutez au moins un médicament");
+    if (!patientId) {
+      toast.error("Sélectionnez un patient");
+      return;
+    }
+    if (!lines.trim()) {
+      toast.error("Ajoutez au moins un médicament");
+      return;
+    }
     update((d) => ({
       ...d,
       prescriptions: [...d.prescriptions, { id: newId(), patientId, date, text: lines.trim() }],
@@ -50,7 +56,10 @@ function PrescriptionsPage() {
   };
 
   const exportPdf = () => {
-    if (!patientId) return toast.error("Sélectionnez un patient");
+    if (!patientId) {
+      toast.error("Sélectionnez un patient");
+      return;
+    }
     toast.success("Ouverture de la fenêtre d'impression — choisissez « Enregistrer au format PDF »");
     window.setTimeout(() => window.print(), 400);
   };
@@ -135,7 +144,7 @@ function PrescriptionsPage() {
             <div className="text-[13px] leading-6">
               <p className="font-semibold text-[#3FA6A9]">{s.doctorName}</p>
               <p>{s.specialty}</p>
-              <p className="num">Tél : {s.phone ?? "0522 000 000"}</p>
+              <p className="num">Tél : {s.phone}</p>
               <p>N° d'ordre : {s.licenseNumber}</p>
             </div>
             <img src={caduceus} alt="" width={64} height={85} className="h-20 w-auto shrink-0" />
@@ -193,7 +202,7 @@ function PrescriptionsPage() {
 
           <div className="bg-[#BFE0E1] px-10 py-3 text-center text-[11px] leading-5 text-[#0B1220]">
             <p>
-              Adresse : {s.address} — Tél : {s.phone ?? "0522 000 000"}
+              Adresse : {s.address} — Tél : {s.phone}
             </p>
             <p>N° d'ordre : {s.licenseNumber}</p>
           </div>
