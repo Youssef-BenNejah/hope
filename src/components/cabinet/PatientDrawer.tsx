@@ -30,9 +30,6 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
     .filter((a) => a.patientId === patient.id)
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
   const notes = data.notes.filter((n) => n.patientId === patient.id).sort((a, b) => b.date.localeCompare(a.date));
-  const rxs = data.prescriptions
-    .filter((p) => p.patientId === patient.id)
-    .sort((a, b) => b.date.localeCompare(a.date));
   const analyses = data.analyses.filter((a) => a.patientId === patient.id).sort((a, b) => a.date.localeCompare(b.date));
   const certs = data.certificates.filter((c) => c.patientId === patient.id);
 
