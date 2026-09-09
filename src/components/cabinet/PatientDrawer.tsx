@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Download, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, Download, FileUp, History, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
@@ -155,6 +155,9 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <GhostButton onClick={() => navigate({ to: "/historique/$id", params: { id: patient.id } })}>
+              <History className="h-4 w-4" /> Historique complet
+            </GhostButton>
             <PrimaryButton onClick={exportPdf}>
               <Download className="h-4 w-4" /> Exporter le dossier en PDF
             </PrimaryButton>
