@@ -49,6 +49,7 @@ export function CabinetProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
   const [locked, setLocked] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setData(load());
@@ -142,12 +143,19 @@ export function CabinetProvider({ children }: { children: ReactNode }) {
       syncing,
       justSynced,
       locked,
-      lock: () => setLocked(true),
-      unlock: () => setLocked(false),
+      isAdmin,
+      lock: () => {
+        setLocked(true);
+        setIsAdmin(false);
+      },
+      unlock: (admin?: boolean) => {
+        setIsAdmin(!!admin);
+        setLocked(false);
+      },
       patientName,
       newId: uid,
     }),
-    [data, update, setSettings, reset, offline, setOffline, pending, syncing, justSynced, locked, patientName],
+    [data, update, setSettings, reset, offline, setOffline, pending, syncing, justSynced, locked, isAdmin, patientName],
   );
 
   return <CabinetContext.Provider value={value}>{children}</CabinetContext.Provider>;

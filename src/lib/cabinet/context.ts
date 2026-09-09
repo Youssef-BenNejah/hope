@@ -12,8 +12,9 @@ export interface CabinetContextValue {
   syncing: boolean;
   justSynced: boolean;
   locked: boolean;
+  isAdmin: boolean;
   lock: () => void;
-  unlock: () => void;
+  unlock: (admin?: boolean) => void;
   patientName: (id: string) => string;
   newId: () => string;
 }
