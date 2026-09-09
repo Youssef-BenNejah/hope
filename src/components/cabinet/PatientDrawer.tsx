@@ -230,9 +230,6 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
             </button>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <GhostButton onClick={() => navigate({ to: "/historique/$id", params: { id: patient.id } })}>
-              <History className="h-4 w-4" /> Historique complet
-            </GhostButton>
             <PrimaryButton onClick={exportPdf}>
               <Download className="h-4 w-4" /> Exporter en PDF
             </PrimaryButton>
