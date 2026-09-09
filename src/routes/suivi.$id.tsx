@@ -176,7 +176,7 @@ function TrackingPage() {
     return (
       <div className="space-y-4">
         <PageHeader title="Patient introuvable" />
-        <GhostButton onClick={() => navigate({ to: "/patients" })}>Retour aux patients</GhostButton>
+        <GhostButton onClick={() => navigate({ to: "/patients", search: {} })}>Retour aux patients</GhostButton>
       </div>
     );
   }
@@ -218,7 +218,7 @@ function TrackingPage() {
         subtitle={`${patient.code} · ${checkups.length} point(s) de suivi · ${analyses.length} bilan(s)`}
         actions={
           <>
-            <GhostButton onClick={() => navigate({ to: "/patients" })}>
+            <GhostButton onClick={() => navigate({ to: "/patients", search: {} })}>
               <ArrowLeft className="mr-1.5 inline h-4 w-4" />
               Patients
             </GhostButton>
