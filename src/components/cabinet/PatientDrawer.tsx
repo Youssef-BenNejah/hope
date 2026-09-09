@@ -209,7 +209,7 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-[60%] flex-col overflow-y-auto border-l border-border bg-card p-6 shadow-2xl animate-in slide-in-from-right duration-200">
+      <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-y-auto border-l border-border bg-card p-4 shadow-2xl animate-in slide-in-from-right duration-200 sm:p-6 md:max-w-[560px] xl:max-w-[60%]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">{patient.name}</h2>
@@ -255,7 +255,7 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
           </button>
         )}
 
-        <div className="sticky top-0 z-10 mt-5 flex flex-wrap gap-1 border-b border-border bg-card">
+        <div className="sticky top-0 z-10 mt-5 flex gap-1 overflow-x-auto border-b border-border bg-card sm:flex-wrap sm:overflow-visible">
           {tabs.map((t) => (
             <button
               key={t}
@@ -276,7 +276,7 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
           <section id={sectionId("Aperçu")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Aperçu</h3>
             <div className="space-y-5">
-              <dl className="grid grid-cols-2 gap-4">
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {[
                   ["Identifiant", patient.code],
                   ["Nom", patient.name],

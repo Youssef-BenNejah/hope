@@ -149,7 +149,9 @@ function CertificatesPage() {
             </GhostButton>
           </div>
         </div>
-        <table className="w-full text-sm">
+        <div className="-mx-5 overflow-x-auto px-5">
+        <table className="w-full min-w-[640px] text-sm">
+
           <thead>
             <tr className="bg-twilight text-left">
               {["Patient", "Type", "Date d'émission", "Date du document", ""].map((h) => (
@@ -199,7 +201,9 @@ function CertificatesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </Card>
+
 
       <Modal open={!!active} onClose={() => setActive(null)} title={active ?? ""} width="max-w-4xl">
         <div className="grid gap-6 md:grid-cols-2">
@@ -209,7 +213,7 @@ function CertificatesPage() {
             </Field>
             {isSick ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Date de début">
                     <input
                       type="date"
@@ -281,7 +285,7 @@ function CertificatesPage() {
       <Modal open={!!detail} onClose={() => setDetail(null)} title={detail?.type ?? "Détail du certificat"} width="max-w-2xl">
         {detail && (
           <div className="space-y-5 text-sm">
-            <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4">
+            <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 sm:grid-cols-2">
               <div>
                 <p className="label-caps">Patient</p>
                 <p className="mt-1 font-medium">{patientName(detail.patientId)}</p>

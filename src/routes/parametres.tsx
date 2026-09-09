@@ -186,7 +186,7 @@ function SettingsPage() {
 
         <Card>
           <h2 className="mb-4 text-lg font-semibold">Apparence</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {(["light", "dark", "system"] as const).map((t) => (
               <button
                 key={t}

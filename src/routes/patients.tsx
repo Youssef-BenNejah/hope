@@ -140,7 +140,7 @@ function PatientsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="grid grid-cols-[180px_minmax(0,1fr)_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5">
+          <div className="hidden grid-cols-[180px_minmax(0,1fr)_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
             <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
             <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
             <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
@@ -150,15 +150,18 @@ function PatientsPage() {
             <button
               key={x.id}
               onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
-              className="grid w-full grid-cols-[180px_minmax(0,1fr)_150px_110px] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
+              className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[180px_minmax(0,1fr)_150px_110px] sm:items-center sm:gap-4 sm:px-5"
             >
-              <div className="flex flex-col gap-0.5">
+              <div className="order-2 flex flex-col gap-0.5 sm:order-none">
                 <span className="num text-xs font-semibold tracking-wide text-teal">{x.code}</span>
                 <span className="num text-xs text-muted-foreground">{x.phone}</span>
               </div>
-              <span className="truncate font-medium">{x.name}</span>
-              <span className="num text-left text-muted-foreground">{lastVisit(x.id)}</span>
-              <span className="text-right">
+              <span className="order-1 truncate font-medium sm:order-none">{x.name}</span>
+              <span className="num order-3 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                <span className="sm:hidden">Dernière visite : </span>
+                {lastVisit(x.id)}
+              </span>
+              <span className="order-4 sm:order-none sm:text-right">
                 {x.allergies.length > 0 && (
                   <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
                     Allergies
@@ -169,6 +172,7 @@ function PatientsPage() {
           ))}
         </div>
 
+
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Nouveau patient">
@@ -176,7 +180,8 @@ function PatientsPage() {
           <Field label="Nom complet">
             <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+
             <Field label="Téléphone">
               <input
                 className={`${inputCls} num`}
@@ -193,7 +198,7 @@ function PatientsPage() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Pays">
               <select
                 className={inputCls}

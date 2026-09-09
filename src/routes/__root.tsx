@@ -4,10 +4,13 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Menu } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -126,17 +129,36 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function AppFrame() {
-  const { locked } = useCabinet();
+  const { locked, data } = useCabinet();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
   if (locked) return <LockScreen />;
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="ml-[76px] min-h-screen p-8 animate-in fade-in duration-300 xl:ml-60">
+      <Sidebar mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card px-4 py-3 md:hidden">
+        <button
+          onClick={() => setMenuOpen(true)}
+          aria-label="Ouvrir le menu"
+          className="rounded-lg border border-border p-2"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">Cabinet</p>
+          <p className="truncate text-xs text-muted-foreground">{data.settings.doctorName}</p>
+        </div>
+      </header>
+      <main className="min-h-screen p-4 animate-in fade-in duration-300 sm:p-6 md:ml-[76px] md:p-8 xl:ml-60">
         <Outlet />
       </main>
     </div>
   );
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
