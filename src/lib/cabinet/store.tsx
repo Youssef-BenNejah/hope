@@ -23,6 +23,14 @@ function load(): CabinetData {
         return { ...p, code };
       });
       parsed.settings = { ...parsed.settings, consultDuration: parsed.settings.consultDuration || 30 };
+      // rétro-compatibilité : suivi clinique + analyses de démonstration
+      if (!parsed.checkups?.length || !parsed.analyses?.some((a) => a.patientId === "pat-salma")) {
+        const seed = buildSeed();
+        parsed.checkups = parsed.checkups?.length ? parsed.checkups : seed.checkups;
+        if (!parsed.analyses?.some((a) => a.patientId === "pat-salma")) {
+          parsed.analyses = [...(parsed.analyses ?? []), ...seed.analyses.filter((a) => a.patientId === "pat-salma")];
+        }
+      }
       return parsed;
     }
   } catch {
