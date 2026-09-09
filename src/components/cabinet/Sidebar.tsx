@@ -6,6 +6,7 @@ import {
   Pill,
   Receipt,
   Settings as SettingsIcon,
+  Shield,
   Sun,
   Users,
   Check,
