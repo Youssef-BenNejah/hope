@@ -172,15 +172,6 @@ function TodayPage() {
         </div>
       )}
 
-      <button
-        onClick={() => {
-          setEditId(null);
-          setModalOpen(true);
-        }}
-        className="fixed bottom-8 right-8 flex items-center gap-2 rounded-full bg-teal px-5 py-3 text-sm font-medium text-white shadow-lg transition-colors hover:bg-surf"
-      >
-        <Plus className="h-5 w-5" /> Nouveau rendez-vous
-      </button>
 
       <AppointmentModal open={modalOpen} onClose={() => setModalOpen(false)} editId={editId} />
       <PaymentModal appointmentId={payFor} onClose={() => setPayFor(null)} />
