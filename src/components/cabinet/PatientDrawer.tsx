@@ -485,7 +485,12 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
 
 
           <section id={sectionId("Analyses")} className="scroll-mt-14">
-            <h3 className="label-caps mb-3 text-teal">Analyses</h3>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="label-caps text-teal">Analyses</h3>
+              <GhostButton onClick={() => navigate({ to: "/suivi/$id", params: { id: patient.id } })}>
+                <Activity className="h-4 w-4" /> Suivi & courbes
+              </GhostButton>
+            </div>
             <div className="space-y-5">
               <button
                 onClick={() => {
