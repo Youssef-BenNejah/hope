@@ -101,6 +101,17 @@ function CertificatesPage() {
     setPreview(false);
   };
 
+  const duplicateCertificate = (c: (typeof data.certificates)[number]) => {
+    update((d) => ({
+      ...d,
+      certificates: [
+        ...d.certificates,
+        { ...c, id: newId(), documentDate: today(), createdAt: new Date().toISOString() },
+      ],
+    }));
+    toast.success("Certificat dupliqué");
+  };
+
   return (
     <ScreenTransition>
       <PageHeader title="Certificats" subtitle="Générez un document à partir d'un modèle" />
