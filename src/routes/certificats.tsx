@@ -61,6 +61,11 @@ function CertificatesPage() {
   const [preview, setPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [detail, setDetail] = useState<(typeof data.certificates)[number] | null>(null);
+  const [month, setMonth] = useState(today().slice(0, 7));
+
+  const shownCertificates = month
+    ? data.certificates.filter((c) => c.documentDate.startsWith(month))
+    : data.certificates;
 
   const endDate = format(addDays(parseISO(startDate), days), "yyyy-MM-dd");
   const isSick = active === "Arrêt de travail";
