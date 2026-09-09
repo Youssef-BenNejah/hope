@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Search, Users } from "lucide-react";
+import { Activity, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { fmtDate, levenshtein, makePatientCode, matches, today } from "@/lib/cabinet/utils";
@@ -140,34 +140,50 @@ function PatientsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_130px_100px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
+          <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_130px_100px_60px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
             <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
             <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
             <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
             <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
             <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
+            <span className="label-caps text-center text-[#CAF0F8]">Suivi</span>
           </div>
           {list.map((x) => (
-            <button
+            <div
               key={x.id}
-              onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
-              className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_130px_100px] sm:items-center sm:gap-4 sm:px-5"
+              className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_130px_100px_60px] sm:items-center sm:gap-4 sm:px-5"
             >
-              <span className="order-2 num text-xs font-semibold tracking-wide text-teal sm:order-none">{x.code}</span>
-              <span className="order-1 truncate font-medium sm:order-none">{x.name}</span>
-              <span className="order-3 num text-xs text-muted-foreground sm:order-none sm:text-sm">{x.phone}</span>
-              <span className="num order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
-                <span className="sm:hidden">Dernière visite : </span>
-                {lastVisit(x.id)}
-              </span>
-              <span className="order-5 sm:order-none sm:text-right">
-                {x.allergies.length > 0 && (
-                  <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
-                    Allergies
-                  </span>
-                )}
-              </span>
-            </button>
+              <button
+                onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
+                className="contents text-left"
+              >
+                <span className="order-2 num text-xs font-semibold tracking-wide text-teal sm:order-none">{x.code}</span>
+                <span className="order-1 truncate font-medium sm:order-none">{x.name}</span>
+                <span className="order-3 num text-xs text-muted-foreground sm:order-none sm:text-sm">{x.phone}</span>
+                <span className="num order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                  <span className="sm:hidden">Dernière visite : </span>
+                  {lastVisit(x.id)}
+                </span>
+                <span className="order-5 sm:order-none sm:text-right">
+                  {x.allergies.length > 0 && (
+                    <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
+                      Allergies
+                    </span>
+                  )}
+                </span>
+              </button>
+              <div className="order-6 flex justify-end sm:order-none sm:justify-center">
+                <Link
+                  to="/suivi/$id"
+                  params={{ id: x.id }}
+                  title={`Suivi de ${x.name}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
+                >
+                  <Activity className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
 
