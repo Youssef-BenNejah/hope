@@ -1,28 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { buildSeed, uid } from "./seed";
 import { makePatientCode } from "./utils";
 import type { CabinetData, Settings } from "./types";
+import { CabinetContext, type CabinetContextValue } from "./context";
+
+export { useCabinet } from "./context";
 
 const KEY = "cabinet-data-v1";
-
-interface Ctx {
-  data: CabinetData;
-  update: (fn: (d: CabinetData) => CabinetData) => void;
-  setSettings: (s: Partial<Settings>) => void;
-  reset: () => void;
-  offline: boolean;
-  setOffline: (v: boolean) => void;
-  pending: number;
-  syncing: boolean;
-  justSynced: boolean;
-  locked: boolean;
-  lock: () => void;
-  unlock: () => void;
-  patientName: (id: string) => string;
-  newId: () => string;
-}
-
-const CabinetContext = createContext<Ctx | null>(null);
 
 function load(): CabinetData {
   if (typeof window === "undefined") return buildSeed();
@@ -136,7 +120,7 @@ export function CabinetProvider({ children }: { children: ReactNode }) {
     [data.patients],
   );
 
-  const value = useMemo<Ctx>(
+  const value = useMemo<CabinetContextValue>(
     () => ({
       data,
       update,
@@ -157,10 +141,4 @@ export function CabinetProvider({ children }: { children: ReactNode }) {
   );
 
   return <CabinetContext.Provider value={value}>{children}</CabinetContext.Provider>;
-}
-
-export function useCabinet() {
-  const ctx = useContext(CabinetContext);
-  if (!ctx) throw new Error("useCabinet doit être utilisé dans CabinetProvider");
-  return ctx;
 }
