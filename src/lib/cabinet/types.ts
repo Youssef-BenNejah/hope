@@ -59,7 +59,8 @@ export interface AnalysisValue {
   label: string;
   value: number;
   unit: string;
-  ref: number;
+  ref: number; // borne haute de référence
+  refMin?: number; // borne basse de référence
 }
 
 export interface Analysis {
@@ -67,6 +68,23 @@ export interface Analysis {
   patientId: string;
   date: string;
   values: AnalysisValue[];
+}
+
+export type PatientState = "mieux" | "stable" | "moins_bien";
+
+/** Point de suivi clinique saisi par le médecin */
+export interface Checkup {
+  id: string;
+  patientId: string;
+  date: string;
+  state: PatientState;
+  weight?: number; // kg
+  systolic?: number; // mmHg
+  diastolic?: number; // mmHg
+  heartRate?: number; // bpm
+  temperature?: number; // °C
+  pain?: number; // 0 à 10
+  comment?: string;
 }
 
 export type CertificateType =
