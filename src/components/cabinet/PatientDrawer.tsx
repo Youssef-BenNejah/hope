@@ -209,8 +209,8 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
-      <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-y-auto border-l border-border bg-card p-4 shadow-2xl animate-in slide-in-from-right duration-200 sm:p-6 md:max-w-[560px] xl:max-w-[60%]">
-        <div className="flex flex-col gap-3">
+      <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-hidden border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-200 md:max-w-[560px] xl:max-w-[60%]">
+        <div className="shrink-0 border-b border-border bg-card p-4 sm:p-6">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
@@ -229,7 +229,7 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
               <X className="h-5 w-5" />
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <GhostButton onClick={() => navigate({ to: "/historique/$id", params: { id: patient.id } })}>
               <History className="h-4 w-4" /> Historique complet
             </GhostButton>
@@ -245,44 +245,43 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
               <FileUp className="h-4 w-4" /> Import de dossier
             </GhostButton>
           </div>
-        </div>
 
-
-        {patient.allergies.length > 0 ? (
-          <div className="mt-5 flex items-center gap-3 rounded-lg bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
-            <AlertTriangle className="h-5 w-5 shrink-0" />
-            <span className="flex-1">Allergies : {patient.allergies.join(", ")}</span>
-            <button onClick={() => setAllergyEdit(true)} aria-label="Modifier les allergies">
-              <Pencil className="h-4 w-4" />
-            </button>
+          <div className="mt-4 flex gap-1 overflow-x-auto border-b border-border sm:flex-wrap sm:overflow-visible">
+            {tabs.map((t) => (
+              <button
+                key={t}
+                onClick={() => {
+                  setTab(t);
+                  const el = document.getElementById(sectionId(t));
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-sm ${
+                  tab === t ? "border-teal font-medium text-teal" : "border-transparent text-muted-foreground"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
-        ) : (
-          <button
-            onClick={() => setAllergyEdit(true)}
-            className="mt-5 w-full rounded-lg border border-dashed border-border-strong px-4 py-3 text-left text-sm text-muted-foreground hover:bg-muted"
-          >
-            Aucune allergie connue — Ajouter
-          </button>
-        )}
-
-        <div className="sticky top-0 z-10 mt-5 flex gap-1 overflow-x-auto border-b border-border bg-card sm:flex-wrap sm:overflow-visible">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => {
-                setTab(t);
-                document.getElementById(sectionId(t))?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className={`-mb-px border-b-2 px-3 py-2 text-sm ${
-                tab === t ? "border-teal font-medium text-teal" : "border-transparent text-muted-foreground"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
         </div>
 
-        <div className="mt-5 flex-1 space-y-10 text-sm">
+        <div className="flex-1 space-y-10 overflow-y-auto p-4 pt-5 text-sm sm:p-6 sm:pt-5">
+          {patient.allergies.length > 0 ? (
+            <div className="flex items-center gap-3 rounded-lg bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <span className="flex-1">Allergies : {patient.allergies.join(", ")}</span>
+              <button onClick={() => setAllergyEdit(true)} aria-label="Modifier les allergies">
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAllergyEdit(true)}
+              className="w-full rounded-lg border border-dashed border-border-strong px-4 py-3 text-left text-sm text-muted-foreground hover:bg-muted"
+            >
+              Aucune allergie connue — Ajouter
+            </button>
+          )}
           <section id={sectionId("Aperçu")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Aperçu</h3>
             <div className="space-y-5">
