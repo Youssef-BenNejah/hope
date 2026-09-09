@@ -449,14 +449,32 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                             target="_blank"
                             rel="noreferrer"
                             download={f.name}
-                            className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs hover:bg-frost hover:text-twilight"
+                            className="group relative flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs hover:bg-frost hover:text-twilight"
                           >
                             {f.type.startsWith("image/") ? (
                               <img src={f.dataUrl} alt={f.name} className="h-10 w-10 rounded object-cover" />
                             ) : (
                               <FileUp className="h-4 w-4 text-teal" />
                             )}
-                            {f.name}
+                            <span className="max-w-[180px] truncate">{f.name}</span>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                update((d) => ({
+                                  ...d,
+                                  notes: d.notes.map((note) =>
+                                    note.id === n.id
+                                      ? { ...note, attachments: note.attachments?.filter((a) => a.id !== f.id) }
+                                      : note,
+                                  ),
+                                }));
+                                toast.success("Fichier supprimé");
+                              }}
+                              className="ml-1 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-danger-soft hover:text-danger"
+                              aria-label="Supprimer le fichier"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
                           </a>
                         ))}
                       </div>
