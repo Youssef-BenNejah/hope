@@ -6,6 +6,7 @@ import logoAsset from "@/assets/logo.png.asset.json";
 
 export function LockScreen() {
   const { data, unlock } = useCabinet();
+  const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
 
