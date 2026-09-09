@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Delete } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useCabinet } from "@/lib/cabinet/store";
 import logoAsset from "@/assets/logo.png.asset.json";
 
