@@ -138,6 +138,63 @@ export function buildSeed(): CabinetData {
           { label: "Cholestérol total", value: 1.9, unit: "g/L", ref: 2 },
         ],
       },
+      // Salma Trabelsi — suivi hypertension, bilans sur 10 mois
+      ...[
+        { off: 300, gly: 1.24, chol: 2.42, ldl: 1.86, tg: 1.94, crea: 11.4, hb: 12.4, k: 4.9 },
+        { off: 210, gly: 1.18, chol: 2.31, ldl: 1.74, tg: 1.8, crea: 11.1, hb: 12.6, k: 4.7 },
+        { off: 140, gly: 1.12, chol: 2.18, ldl: 1.66, tg: 1.62, crea: 10.6, hb: 12.9, k: 4.5 },
+        { off: 75, gly: 1.06, chol: 2.05, ldl: 1.58, tg: 1.48, crea: 10.2, hb: 13.2, k: 4.4 },
+        { off: 20, gly: 0.98, chol: 1.92, ldl: 1.44, tg: 1.32, crea: 9.8, hb: 13.6, k: 4.3 },
+      ].map((b) => ({
+        id: uid(),
+        patientId: p1,
+        date: back(b.off),
+        values: [
+          { label: "Glycémie", value: b.gly, unit: "g/L", ref: 1.1, refMin: 0.7 },
+          { label: "Cholestérol total", value: b.chol, unit: "g/L", ref: 2 },
+          { label: "LDL", value: b.ldl, unit: "g/L", ref: 1.6 },
+          { label: "Triglycérides", value: b.tg, unit: "g/L", ref: 1.5 },
+          { label: "Créatinine", value: b.crea, unit: "mg/L", ref: 12, refMin: 6 },
+          { label: "Hémoglobine", value: b.hb, unit: "g/dL", ref: 16, refMin: 12 },
+          { label: "Potassium", value: b.k, unit: "mmol/L", ref: 5.1, refMin: 3.5 },
+        ],
+      })),
+    ],
+    checkups: [
+      // Salma Trabelsi — points de suivi clinique
+      ...[
+        { off: 300, s: 158, d: 96, w: 82.4, hr: 88, t: 36.8, pain: 5, st: "moins_bien", c: "Céphalées matinales, tension élevée." },
+        { off: 210, s: 152, d: 93, w: 81.2, hr: 84, t: 36.7, pain: 4, st: "stable", c: "Introduction Amlodipine 5mg." },
+        { off: 140, s: 145, d: 90, w: 79.8, hr: 80, t: 36.6, pain: 3, st: "mieux", c: "Meilleure tolérance, marche quotidienne." },
+        { off: 75, s: 138, d: 86, w: 78.1, hr: 78, t: 36.6, pain: 2, st: "mieux", c: "Tension en baisse, sommeil amélioré." },
+        { off: 30, s: 134, d: 84, w: 77.0, hr: 76, t: 36.5, pain: 1, st: "mieux", c: "Objectif tensionnel presque atteint." },
+        { off: 5, s: 129, d: 81, w: 76.2, hr: 74, t: 36.5, pain: 1, st: "mieux", c: "État général très satisfaisant." },
+      ].map((c) => ({
+        id: uid(),
+        patientId: p1,
+        date: back(c.off),
+        state: c.st as "mieux" | "stable" | "moins_bien",
+        systolic: c.s,
+        diastolic: c.d,
+        weight: c.w,
+        heartRate: c.hr,
+        temperature: c.t,
+        pain: c.pain,
+        comment: c.c,
+      })),
+      {
+        id: uid(),
+        patientId: p4,
+        date: back(15),
+        state: "stable" as const,
+        systolic: 136,
+        diastolic: 85,
+        weight: 88.5,
+        heartRate: 82,
+        temperature: 36.7,
+        pain: 2,
+        comment: "Glycémie en amélioration lente, poursuite Metformine.",
+      },
     ],
     certificates: [
       {
