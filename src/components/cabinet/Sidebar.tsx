@@ -9,6 +9,7 @@ import {
   Sun,
   Users,
   Check,
+  ShieldCheck,
 } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
 
@@ -20,6 +21,7 @@ const items = [
   { to: "/certificats", label: "Certificats", icon: FileText },
   { to: "/comptabilite", label: "Comptabilité", icon: Receipt },
   { to: "/parametres", label: "Paramètres", icon: SettingsIcon },
+  { to: "/admin", label: "Administration", icon: ShieldCheck },
 ] as const;
 
 export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {

@@ -32,6 +32,41 @@ export function buildSeed(): CabinetData {
   }
 
   return {
+    doctors: [
+      {
+        id: "doc-amine",
+        name: "Dr. Amine Belhaj",
+        specialty: "Médecine générale",
+        email: "amine.belhaj@cabinet.tn",
+        phone: "+216 73 220 118",
+        licenseNumber: "MG-2011-4417",
+        pin: "1234",
+        active: true,
+        createdAt: back(600),
+      },
+      {
+        id: "doc-nour",
+        name: "Dr. Nour Hammami",
+        specialty: "Cardiologie",
+        email: "nour.hammami@cabinet.tn",
+        phone: "+216 71 884 021",
+        licenseNumber: "CA-2016-2098",
+        pin: "4021",
+        active: true,
+        createdAt: back(320),
+      },
+      {
+        id: "doc-slim",
+        name: "Dr. Slim Gharbi",
+        specialty: "Pédiatrie",
+        email: "slim.gharbi@cabinet.tn",
+        phone: "+216 74 512 660",
+        licenseNumber: "PE-2019-7712",
+        pin: "7712",
+        active: false,
+        createdAt: back(120),
+      },
+    ],
     patients: [
       {
         id: p1,

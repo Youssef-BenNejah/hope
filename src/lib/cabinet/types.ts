@@ -127,7 +127,22 @@ export interface Settings {
   theme: "light" | "dark" | "system";
 }
 
+/** Compte médecin géré depuis l'écran d'administration */
+export interface Doctor {
+  id: string;
+  name: string;
+  specialty: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  pin: string;
+  active: boolean;
+  createdAt: string;
+  lastPinResetAt?: string;
+}
+
 export interface CabinetData {
+  doctors: Doctor[];
   patients: Patient[];
   appointments: Appointment[];
   blocks: Block[];
