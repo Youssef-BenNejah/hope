@@ -25,7 +25,7 @@ const items = [
 ] as const;
 
 export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {
-  const { data, lock, offline, setOffline, pending, syncing, justSynced } = useCabinet();
+  const { data, lock, offline, setOffline, pending, syncing, justSynced, isAdmin } = useCabinet();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
