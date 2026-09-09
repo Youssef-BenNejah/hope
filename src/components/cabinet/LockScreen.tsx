@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Delete } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export function LockScreen() {
   const { data, unlock } = useCabinet();
@@ -52,9 +53,11 @@ export function LockScreen() {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{ background: "linear-gradient(160deg, #03045E 0%, #052a7a 55%, #0077B6 100%)" }}
     >
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-frost text-2xl font-bold text-twilight">
-        C.
-      </div>
+      <img
+        src={logoAsset.url}
+        alt="Cabinet"
+        className="h-24 w-24 drop-shadow-[0_0_24px_rgba(144,224,239,0.35)]"
+      />
       <h1 className="mt-6 text-2xl font-semibold text-[#EAF2FA]">Cabinet</h1>
       <p className="mt-1 text-sm text-frost">{data.settings.doctorName}</p>
 

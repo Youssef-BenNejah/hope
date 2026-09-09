@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 const items = [
   { to: "/", label: "Aujourd'hui", icon: Sun },
@@ -37,9 +38,11 @@ export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
         }`}
       >
         <div className="flex items-center gap-3 px-4 py-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-frost font-bold text-twilight">
-            C.
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="Cabinet"
+            className="h-10 w-10 shrink-0 rounded-xl bg-frost object-contain p-1.5"
+          />
           <div className="min-w-0 md:hidden xl:block">
             <p className="truncate font-semibold">Cabinet</p>
             <p className="truncate text-xs text-frost/80">{data.settings.doctorName}</p>
