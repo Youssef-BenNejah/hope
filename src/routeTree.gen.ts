@@ -17,6 +17,7 @@ import { Route as OrdonnancesRouteImport } from './routes/ordonnances'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as HistoriqueIdRouteImport } from './routes/historique.$id'
+import { Route as SuiviIndexRouteImport } from './routes/suivi.index'
 import { Route as SuiviIdRouteImport } from './routes/suivi.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const HistoriqueIdRoute = HistoriqueIdRouteImport.update({
   path: '/historique/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuiviIndexRoute = SuiviIndexRouteImport.update({
+  id: '/suivi/',
+  path: '/suivi/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuiviIdRoute = SuiviIdRouteImport.update({
   id: '/suivi/$id',
   path: '/suivi/$id',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/patients': typeof PatientsRoute
   '/historique/$id': typeof HistoriqueIdRoute
   '/suivi/$id': typeof SuiviIdRoute
+  '/suivi/': typeof SuiviIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/patients': typeof PatientsRoute
   '/historique/$id': typeof HistoriqueIdRoute
   '/suivi/$id': typeof SuiviIdRoute
+  '/suivi': typeof SuiviIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/patients': typeof PatientsRoute
   '/historique/$id': typeof HistoriqueIdRoute
   '/suivi/$id': typeof SuiviIdRoute
+  '/suivi/': typeof SuiviIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/patients'
     | '/historique/$id'
     | '/suivi/$id'
+    | '/suivi/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/patients'
     | '/historique/$id'
     | '/suivi/$id'
+    | '/suivi'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/patients'
     | '/historique/$id'
     | '/suivi/$id'
+    | '/suivi/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   PatientsRoute: typeof PatientsRoute
   HistoriqueIdRoute: typeof HistoriqueIdRoute
   SuiviIdRoute: typeof SuiviIdRoute
+  SuiviIndexRoute: typeof SuiviIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoriqueIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/suivi/': {
+      id: '/suivi/'
+      path: '/suivi'
+      fullPath: '/suivi/'
+      preLoaderRoute: typeof SuiviIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/suivi/$id': {
       id: '/suivi/$id'
       path: '/suivi/$id'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   PatientsRoute: PatientsRoute,
   HistoriqueIdRoute: HistoriqueIdRoute,
   SuiviIdRoute: SuiviIdRoute,
+  SuiviIndexRoute: SuiviIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
