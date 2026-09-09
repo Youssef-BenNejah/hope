@@ -54,9 +54,44 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const analyses = data.analyses.filter((a) => a.patientId === patient.id).sort((a, b) => a.date.localeCompare(b.date));
   const certs = data.certificates.filter((c) => c.patientId === patient.id);
 
+  const payments = data.payments.filter((p) => p.patientId === patient.id);
+
+  const timeline: TimelineItem[] = [
+    ...visits.map((v) => ({
+      id: `v-${v.id}`,
+      date: v.date,
+      time: v.time,
+      label: v.reason,
+      badge: statusMeta[v.status].label,
+      badgeClass: statusMeta[v.status].className,
+    })),
+    ...notes.map((n) => ({
+      id: `n-${n.id}`,
+      date: n.date,
+      label: n.text || "Note de consultation",
+      badge: "Note",
+      badgeClass: "bg-frost text-twilight",
+    })),
+    ...certs.map((c) => ({
+      id: `c-${c.id}`,
+      date: c.documentDate,
+      label: c.type,
+      badge: "Certificat",
+      badgeClass: "bg-frost text-twilight",
+    })),
+    ...payments.map((p) => ({
+      id: `p-${p.id}`,
+      date: p.date,
+      label: `Paiement — ${p.amount} DT`,
+      badge: p.method === "cash" ? "Espèces" : p.method === "cnam_paid" ? "CNAM payé" : "CNAM en attente",
+      badgeClass: "bg-frost text-twilight",
+    })),
+  ].sort((a, b) => (b.date + (b.time ?? "")).localeCompare(a.date + (a.time ?? "")));
+
   const glycemia = analyses
     .map((a) => ({ date: fmtDate(a.date, "dd/MM"), value: a.values.find((v) => v.label === "Glycémie")?.value }))
     .filter((r) => typeof r.value === "number");
+
 
   const runImport = () => {
     setImportState("loading");
