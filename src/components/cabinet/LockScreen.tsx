@@ -14,7 +14,10 @@ export function LockScreen() {
     (value: string) => {
       if (value === data.settings.pin) {
         setError(false);
-        window.setTimeout(() => unlock(false), 150);
+        window.setTimeout(() => {
+          unlock(false);
+          navigate({ to: "/" });
+        }, 150);
       } else if (value === (data.settings.adminPin || "0000")) {
         setError(false);
         window.setTimeout(() => unlock(true), 150);
@@ -26,7 +29,7 @@ export function LockScreen() {
         }, 500);
       }
     },
-    [data.settings.pin, data.settings.adminPin, unlock],
+    [data.settings.pin, data.settings.adminPin, unlock, navigate],
   );
 
   const push = useCallback(
