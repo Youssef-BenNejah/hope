@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { NoteAttachment } from "@/lib/cabinet/types";
-import { fmtDate, statusMeta, today } from "@/lib/cabinet/utils";
+import { ageFrom, fmtDate, sexLabel, statusMeta, today } from "@/lib/cabinet/utils";
 import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 
 const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as const;
