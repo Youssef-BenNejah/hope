@@ -9,6 +9,7 @@ import {
   Sun,
   Users,
   Check,
+  ShieldCheck,
 } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
 

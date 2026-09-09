@@ -23,6 +23,8 @@ function load(): CabinetData {
         return { ...p, code };
       });
       parsed.settings = { ...parsed.settings, consultDuration: parsed.settings.consultDuration || 30 };
+      // rétro-compatibilité : comptes médecins
+      if (!parsed.doctors?.length) parsed.doctors = buildSeed().doctors;
       // rétro-compatibilité : suivi clinique + analyses de démonstration
       if (!parsed.checkups?.length || !parsed.analyses?.some((a) => a.patientId === "pat-salma")) {
         const seed = buildSeed();
