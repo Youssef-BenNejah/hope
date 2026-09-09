@@ -11,7 +11,10 @@ export function LockScreen() {
     (value: string) => {
       if (value === data.settings.pin) {
         setError(false);
-        window.setTimeout(unlock, 150);
+        window.setTimeout(() => unlock(false), 150);
+      } else if (value === (data.settings.adminPin || "0000")) {
+        setError(false);
+        window.setTimeout(() => unlock(true), 150);
       } else {
         setError(true);
         window.setTimeout(() => {
@@ -20,7 +23,7 @@ export function LockScreen() {
         }, 500);
       }
     },
-    [data.settings.pin, unlock],
+    [data.settings.pin, data.settings.adminPin, unlock],
   );
 
   const push = useCallback(
@@ -69,7 +72,7 @@ export function LockScreen() {
       </div>
 
       <p className={`mt-3 h-5 text-sm ${error ? "text-[#e2705a]" : "text-frost/70"}`}>
-        {error ? "Code incorrect" : "Code de démonstration : 1234"}
+        {error ? "Code incorrect" : "Médecin : 1234 · Administration : 0000"}
       </p>
 
       <div className="mt-6 grid w-64 grid-cols-3 gap-3">

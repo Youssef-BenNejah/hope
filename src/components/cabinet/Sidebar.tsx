@@ -25,7 +25,7 @@ const items = [
 ] as const;
 
 export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {
-  const { data, lock, offline, setOffline, pending, syncing, justSynced } = useCabinet();
+  const { data, lock, isAdmin, offline, setOffline, pending, syncing, justSynced } = useCabinet();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -49,7 +49,7 @@ export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
         </div>
 
         <nav className="mt-2 flex-1 space-y-1 overflow-y-auto px-3">
-          {items.map(({ to, label, icon: Icon }) => {
+          {(isAdmin ? items.filter((i) => i.to === "/admin") : items).map(({ to, label, icon: Icon }) => {
             const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
             return (
               <Link

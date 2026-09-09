@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  Navigate,
   Outlet,
   Link,
   createRootRouteWithContext,
@@ -129,13 +130,14 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function AppFrame() {
-  const { locked, data } = useCabinet();
+  const { locked, isAdmin, data } = useCabinet();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
   if (locked) return <LockScreen />;
+  if (isAdmin && pathname !== "/admin") return <Navigate to="/admin" replace />;
   return (
     <div className="min-h-screen bg-background">
       <Sidebar mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />

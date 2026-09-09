@@ -22,7 +22,11 @@ function load(): CabinetData {
         taken.push(code);
         return { ...p, code };
       });
-      parsed.settings = { ...parsed.settings, consultDuration: parsed.settings.consultDuration || 30 };
+      parsed.settings = {
+        ...parsed.settings,
+        consultDuration: parsed.settings.consultDuration || 30,
+        adminPin: parsed.settings.adminPin || "0000",
+      };
       // rétro-compatibilité : comptes médecins
       if (!parsed.doctors?.length) parsed.doctors = buildSeed().doctors;
       // rétro-compatibilité : suivi clinique + analyses de démonstration
@@ -49,6 +53,7 @@ export function CabinetProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
   const [locked, setLocked] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setData(load());
@@ -142,12 +147,19 @@ export function CabinetProvider({ children }: { children: ReactNode }) {
       syncing,
       justSynced,
       locked,
-      lock: () => setLocked(true),
-      unlock: () => setLocked(false),
+      isAdmin,
+      lock: () => {
+        setLocked(true);
+        setIsAdmin(false);
+      },
+      unlock: (admin?: boolean) => {
+        setIsAdmin(!!admin);
+        setLocked(false);
+      },
       patientName,
       newId: uid,
     }),
-    [data, update, setSettings, reset, offline, setOffline, pending, syncing, justSynced, locked, patientName],
+    [data, update, setSettings, reset, offline, setOffline, pending, syncing, justSynced, locked, isAdmin, patientName],
   );
 
   return <CabinetContext.Provider value={value}>{children}</CabinetContext.Provider>;

@@ -123,6 +123,7 @@ export interface Settings {
   favorites: string[];
   consultDuration: number; // durée d'une consultation en minutes
   pin: string;
+  adminPin: string;
   lockDelay: number; // minutes, 0 = jamais
   theme: "light" | "dark" | "system";
 }

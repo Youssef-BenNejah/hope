@@ -259,6 +259,7 @@ export function buildSeed(): CabinetData {
       ],
       consultDuration: 30,
       pin: "1234",
+      adminPin: "0000",
       lockDelay: 5,
       theme: "light",
     },
