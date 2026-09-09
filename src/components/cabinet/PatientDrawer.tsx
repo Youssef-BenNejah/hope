@@ -113,7 +113,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
       badge: p.method === "cash" ? "Espèces" : p.method === "cnam_paid" ? "CNAM payé" : "CNAM en attente",
       badgeClass: "bg-frost text-twilight",
     })),
-  ].sort((a, b) => (b.date + (b.time ?? "")).localeCompare(a.date + (a.time ?? "")));
+  ].sort((a: TimelineItem, b: TimelineItem) => (b.date + (b.time ?? "")).localeCompare(a.date + (a.time ?? "")));
 
   const glycemia = analyses
     .map((a) => ({ date: fmtDate(a.date, "dd/MM"), value: a.values.find((v) => v.label === "Glycémie")?.value }))
