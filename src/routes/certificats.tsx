@@ -143,7 +143,11 @@ function CertificatesPage() {
           </thead>
           <tbody>
             {data.certificates.map((c) => (
-              <tr key={c.id} className="border-b border-border last:border-0">
+              <tr
+                key={c.id}
+                onClick={() => setDetail(c)}
+                className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-cyan/40 dark:hover:bg-muted"
+              >
                 <td className="px-3 py-2.5">{patientName(c.patientId)}</td>
                 <td className="px-3 py-2.5">{c.type}</td>
                 <td
@@ -157,15 +161,9 @@ function CertificatesPage() {
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   <button
-                    onClick={() => {
-                      update((d) => ({
-                        ...d,
-                        certificates: [
-                          ...d.certificates,
-                          { ...c, id: newId(), documentDate: today(), createdAt: new Date().toISOString() },
-                        ],
-                      }));
-                      toast.success("Certificat dupliqué");
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      duplicateCertificate(c);
                     }}
                     className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-muted"
                   >
