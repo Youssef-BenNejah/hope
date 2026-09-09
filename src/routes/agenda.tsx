@@ -22,7 +22,8 @@ export const Route = createFileRoute("/agenda")({
   component: AgendaPage,
 });
 
-const hours = Array.from({ length: 11 }, (_, i) => 8 + i);
+const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+const toHHMM = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const statusColor = {
   upcoming: "bg-frost text-twilight",
   done: "bg-success-soft text-success",
