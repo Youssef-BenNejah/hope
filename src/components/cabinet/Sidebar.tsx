@@ -9,7 +9,6 @@ import {
   Sun,
   Users,
   Check,
-  Activity,
 } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
 
@@ -17,7 +16,6 @@ const items = [
   { to: "/", label: "Aujourd'hui", icon: Sun },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/patients", label: "Patients", icon: Users },
-  { to: "/suivi", label: "Suivi", icon: Activity },
   { to: "/ordonnances", label: "Ordonnances", icon: Pill },
   { to: "/certificats", label: "Certificats", icon: FileText },
   { to: "/comptabilite", label: "Comptabilité", icon: Receipt },
