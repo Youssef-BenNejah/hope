@@ -45,10 +45,17 @@ function AgendaPage() {
     return Array.from({ length: 6 }, (_, i) => addDays(start, i));
   }, [cursor]);
 
-  const apptAt = (date: string, hour: number) =>
-    data.appointments.filter((a) => a.date === date && Number(a.time.slice(0, 2)) === hour);
-  const blockAt = (date: string, hour: number) =>
-    data.blocks.find((b) => b.date === date && hour >= Number(b.start.slice(0, 2)) && hour < Number(b.end.slice(0, 2)));
+  const duration = data.settings.consultDuration || 30;
+  const rows = useMemo(() => {
+    const out: number[] = [];
+    for (let m = 8 * 60; m < 18 * 60 + 1 - duration; m += duration) out.push(m);
+    return out;
+  }, [duration]);
+
+  const apptAt = (date: string, m: number) =>
+    data.appointments.filter((a) => a.date === date && toMin(a.time) >= m && toMin(a.time) < m + duration);
+  const blockAt = (date: string, m: number) =>
+    data.blocks.find((b) => b.date === date && m >= toMin(b.start) && m < toMin(b.end));
 
   const shift = (dir: number) => setCursor((c) => (view === "month" ? addMonths(c, dir) : addDays(c, dir * (view === "week" ? 7 : 1))));
 
