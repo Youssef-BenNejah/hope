@@ -74,3 +74,18 @@ export function makePatientCode(name: string, taken: string[] = []) {
   }
   return `${initials}-${String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0")}`;
 }
+
+/** Âge calculé automatiquement à partir de la date de naissance */
+export function ageFrom(birthDate?: string) {
+  if (!birthDate) return null;
+  const b = new Date(birthDate);
+  if (Number.isNaN(b.getTime())) return null;
+  const now = new Date();
+  let a = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) a--;
+  return a >= 0 && a < 130 ? a : null;
+}
+
+export const sexLabel = (sex?: "homme" | "femme") =>
+  sex === "homme" ? "Homme" : sex === "femme" ? "Femme" : "—";

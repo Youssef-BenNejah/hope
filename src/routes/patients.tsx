@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Activity, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import { fmtDate, levenshtein, makePatientCode, matches, today } from "@/lib/cabinet/utils";
+import { ageFrom, fmtDate, levenshtein, makePatientCode, matches, sexLabel, today } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientDrawer } from "@/components/cabinet/PatientDrawer";
@@ -27,6 +27,7 @@ const empty = {
   name: "",
   phone: "",
   birthDate: "",
+  sex: "femme" as "homme" | "femme",
   country: "Tunisie",
   coverage: "cnam" as "cnam" | "assurance" | "aucune",
   insurer: "",
@@ -85,6 +86,7 @@ function PatientsPage() {
           name: form.name,
           phone: form.phone,
           birthDate: form.birthDate,
+          sex: form.sex,
           country: form.country,
           coverage: form.coverage,
           insurer: form.coverage === "assurance" ? form.insurer : "",
@@ -140,10 +142,12 @@ function PatientsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_130px_100px_60px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
+          <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_100px_60px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
             <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
             <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
             <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
+            <span className="label-caps text-left text-[#CAF0F8]">Âge</span>
+            <span className="label-caps text-left text-[#CAF0F8]">Sexe</span>
             <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
             <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
             <span className="label-caps text-center text-[#CAF0F8]">Suivi</span>
@@ -151,7 +155,7 @@ function PatientsPage() {
           {list.map((x) => (
             <div
               key={x.id}
-              className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_130px_100px_60px] sm:items-center sm:gap-4 sm:px-5"
+              className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_100px_60px] sm:items-center sm:gap-4 sm:px-5"
             >
               <button
                 onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
@@ -160,6 +164,14 @@ function PatientsPage() {
                 <span className="order-2 num text-xs font-semibold tracking-wide text-teal sm:order-none">{x.code}</span>
                 <span className="order-1 truncate font-medium sm:order-none">{x.name}</span>
                 <span className="order-3 num text-xs text-muted-foreground sm:order-none sm:text-sm">{x.phone}</span>
+                <span className="order-4 num text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                  <span className="sm:hidden">Âge : </span>
+                  {ageFrom(x.birthDate) !== null ? `${ageFrom(x.birthDate)} ans` : "—"}
+                </span>
+                <span className="order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                  <span className="sm:hidden">Sexe : </span>
+                  {sexLabel(x.sex)}
+                </span>
                 <span className="num order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
                   <span className="sm:hidden">Dernière visite : </span>
                   {lastVisit(x.id)}
@@ -210,6 +222,25 @@ function PatientsPage() {
                 className={`${inputCls} num`}
                 value={form.birthDate}
                 onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Sexe">
+              <select
+                className={inputCls}
+                value={form.sex}
+                onChange={(e) => setForm({ ...form, sex: e.target.value as typeof form.sex })}
+              >
+                <option value="femme">Femme</option>
+                <option value="homme">Homme</option>
+              </select>
+            </Field>
+            <Field label="Âge (calculé automatiquement)">
+              <input
+                className={`${inputCls} num`}
+                readOnly
+                value={ageFrom(form.birthDate) !== null ? `${ageFrom(form.birthDate)} ans` : "—"}
               />
             </Field>
           </div>
