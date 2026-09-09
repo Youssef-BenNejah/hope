@@ -51,24 +51,39 @@ export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
         </div>
 
         <nav className="mt-2 flex-1 space-y-1 overflow-y-auto px-3">
-          {items.map(({ to, label, icon: Icon }) => {
-            const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
-            return (
-              <Link
-                key={to}
-                to={to}
-                title={label}
-                onClick={onClose}
-                className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                  active ? "bg-teal text-white" : "text-sidebar-foreground/80 hover:bg-white/10"
-                }`}
-              >
-                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-surf" />}
-                <Icon className={`h-5 w-5 shrink-0 ${active ? "text-frost" : ""}`} />
-                <span className="md:hidden xl:inline">{label}</span>
-              </Link>
-            );
-          })}
+          {isAdmin ? (
+            <Link
+              to="/admin"
+              title="Administration"
+              onClick={onClose}
+              className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                pathname === "/admin" ? "bg-teal text-white" : "text-sidebar-foreground/80 hover:bg-white/10"
+              }`}
+            >
+              {pathname === "/admin" && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-surf" />}
+              <Shield className="h-5 w-5 shrink-0" />
+              <span className="md:hidden xl:inline">Administration</span>
+            </Link>
+          ) : (
+            items.map(({ to, label, icon: Icon }) => {
+              const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  title={label}
+                  onClick={onClose}
+                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                    active ? "bg-teal text-white" : "text-sidebar-foreground/80 hover:bg-white/10"
+                  }`}
+                >
+                  {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-surf" />}
+                  <Icon className={`h-5 w-5 shrink-0 ${active ? "text-frost" : ""}`} />
+                  <span className="md:hidden xl:inline">{label}</span>
+                </Link>
+              );
+            })
+          )}
         </nav>
 
         <div className="m-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
