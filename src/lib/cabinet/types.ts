@@ -7,6 +7,7 @@ export interface Patient {
   name: string;
   phone: string;
   birthDate: string;
+  sex?: "homme" | "femme";
   country?: string;
   coverage?: "cnam" | "assurance" | "aucune";
   insurer?: string;
