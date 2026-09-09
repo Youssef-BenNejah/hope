@@ -130,7 +130,20 @@ function CertificatesPage() {
       </div>
 
       <Card className="mt-8">
-        <p className="mb-3 font-semibold">Journal des certificats</p>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="font-semibold">Journal des certificats</p>
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              className={`${inputCls} num w-auto`}
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+            />
+            <GhostButton onClick={() => setMonth(month ? "" : today().slice(0, 7))}>
+              {month ? "Tous les mois" : "Ce mois-ci"}
+            </GhostButton>
+          </div>
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-twilight text-left">
