@@ -38,6 +38,7 @@ function load(): CabinetData {
         taken.push(code);
         return { ...p, code };
       });
+      parsed.settings = { ...parsed.settings, consultDuration: parsed.settings.consultDuration || 30 };
       return parsed;
     }
   } catch {

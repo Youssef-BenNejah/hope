@@ -22,7 +22,8 @@ export const Route = createFileRoute("/agenda")({
   component: AgendaPage,
 });
 
-const hours = Array.from({ length: 11 }, (_, i) => 8 + i);
+const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+const toHHMM = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const statusColor = {
   upcoming: "bg-frost text-twilight",
   done: "bg-success-soft text-success",
@@ -44,10 +45,17 @@ function AgendaPage() {
     return Array.from({ length: 6 }, (_, i) => addDays(start, i));
   }, [cursor]);
 
-  const apptAt = (date: string, hour: number) =>
-    data.appointments.filter((a) => a.date === date && Number(a.time.slice(0, 2)) === hour);
-  const blockAt = (date: string, hour: number) =>
-    data.blocks.find((b) => b.date === date && hour >= Number(b.start.slice(0, 2)) && hour < Number(b.end.slice(0, 2)));
+  const duration = data.settings.consultDuration || 30;
+  const rows = useMemo(() => {
+    const out: number[] = [];
+    for (let m = 8 * 60; m < 18 * 60 + 1 - duration; m += duration) out.push(m);
+    return out;
+  }, [duration]);
+
+  const apptAt = (date: string, m: number) =>
+    data.appointments.filter((a) => a.date === date && toMin(a.time) >= m && toMin(a.time) < m + duration);
+  const blockAt = (date: string, m: number) =>
+    data.blocks.find((b) => b.date === date && m >= toMin(b.start) && m < toMin(b.end));
 
   const shift = (dir: number) => setCursor((c) => (view === "month" ? addMonths(c, dir) : addDays(c, dir * (view === "week" ? 7 : 1))));
 
@@ -109,10 +117,10 @@ function AgendaPage() {
                 {format(d, "EEEE d", { locale: fr })}
               </div>
             ))}
-            {hours.map((h) => (
+            {rows.map((h) => (
               <FragmentRow key={h}>
                 <div className="num border-b border-border px-2 py-3 text-xs text-muted-foreground">
-                  {String(h).padStart(2, "0")}:00
+                  {toHHMM(h)}
                 </div>
                 {days.map((d) => {
                   const ds = format(d, "yyyy-MM-dd");
@@ -122,7 +130,7 @@ function AgendaPage() {
                     <div
                       key={ds + h}
                       title={blocked ? `Créneau bloqué : ${blocked.reason}` : undefined}
-                      onClick={() => !blocked && setModal({ open: true, date: ds, time: `${String(h).padStart(2, "0")}:00` })}
+                      onClick={() => !blocked && setModal({ open: true, date: ds, time: toHHMM(h) })}
                       className={`group min-h-14 cursor-pointer border-b border-l border-border p-1 ${
                         blocked
                           ? "cursor-not-allowed bg-[repeating-linear-gradient(45deg,var(--muted),var(--muted)6px,transparent_6px,transparent_12px)]"
@@ -148,7 +156,7 @@ function AgendaPage() {
                         ))}
                       {!blocked && appts.length === 0 && (
                         <span className="num block px-2 py-1 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                          + {String(h).padStart(2, "0")}:00
+                          + {toHHMM(h)}
                         </span>
                       )}
                     </div>

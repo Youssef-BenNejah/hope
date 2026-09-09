@@ -98,6 +98,29 @@ function SettingsPage() {
         </Card>
 
         <Card>
+          <h2 className="mb-4 text-lg font-semibold">Agenda</h2>
+          <Field label="Durée d'une consultation">
+            <select
+              className={inputCls}
+              value={s.consultDuration}
+              onChange={(e) => {
+                setSettings({ consultDuration: Number(e.target.value) });
+                toast.success(`Créneaux de ${e.target.value} minutes appliqués à l'agenda`);
+              }}
+            >
+              {[15, 20, 30, 45, 60].map((d) => (
+                <option key={d} value={d}>
+                  {d} minutes
+                </option>
+              ))}
+            </select>
+          </Field>
+          <p className="mt-2 text-sm text-muted-foreground">
+            L'agenda découpe la journée en créneaux de cette durée (8h — 18h).
+          </p>
+        </Card>
+
+        <Card>
           <h2 className="mb-4 text-lg font-semibold">Sécurité</h2>
           <div className="space-y-4">
             <Field label="Nouveau code PIN (4 chiffres)">

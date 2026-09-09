@@ -128,7 +128,7 @@ export function AppointmentModal({
           </Field>
           <Field label="Heure">
             <select className={`${inputCls} num`} value={time} onChange={(e) => setTime(e.target.value)}>
-              {slots().map((s) => (
+              {slots(data.settings.consultDuration || 30).map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>

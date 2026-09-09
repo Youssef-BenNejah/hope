@@ -165,6 +165,7 @@ export function buildSeed(): CabinetData {
         "Ibuprofène 400mg — 3x/j, 5j",
         "Oméprazole 20mg — 1x/j, 14j",
       ],
+      consultDuration: 30,
       pin: "1234",
       lockDelay: 5,
       theme: "light",

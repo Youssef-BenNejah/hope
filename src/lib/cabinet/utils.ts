@@ -22,13 +22,10 @@ export const statusMeta: Record<AppointmentStatus, { label: string; className: s
   absent: { label: "Absent", className: "bg-danger-soft text-danger" },
 };
 
-export const slots = () => {
+export const slots = (step = 15) => {
   const out: string[] = [];
-  for (let h = 8; h <= 18; h++) {
-    for (const m of ["00", "15", "30", "45"]) {
-      if (h === 18 && m !== "00") continue;
-      out.push(`${String(h).padStart(2, "0")}:${m}`);
-    }
+  for (let m = 8 * 60; m <= 18 * 60; m += step) {
+    out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
   }
   return out;
 };
