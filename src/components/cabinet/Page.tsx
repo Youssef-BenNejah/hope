@@ -10,21 +10,22 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-[26px] font-semibold leading-tight">{title}</h1>
+    <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold leading-tight sm:text-[26px]">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted-foreground first-letter:uppercase">{subtitle}</p>}
       </div>
-      <div className="flex items-center gap-2">{actions}</div>
+      <div className="flex flex-wrap items-center gap-2">{actions}</div>
     </header>
   );
 }
+
 
 export function PageSkeleton() {
   return (
     <div className="space-y-4">
       <div className="h-9 w-56 animate-pulse rounded-lg bg-muted" />
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         {[0, 1, 2].map((i) => (
           <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />
         ))}
