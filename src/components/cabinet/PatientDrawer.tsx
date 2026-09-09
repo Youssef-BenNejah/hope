@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, Download, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";

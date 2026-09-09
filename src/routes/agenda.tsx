@@ -123,7 +123,7 @@ function AgendaPage() {
                       key={ds + h}
                       title={blocked ? `Créneau bloqué : ${blocked.reason}` : undefined}
                       onClick={() => !blocked && setModal({ open: true, date: ds, time: `${String(h).padStart(2, "0")}:00` })}
-                      className={`min-h-14 cursor-pointer border-b border-l border-border p-1 ${
+                      className={`group min-h-14 cursor-pointer border-b border-l border-border p-1 ${
                         blocked
                           ? "cursor-not-allowed bg-[repeating-linear-gradient(45deg,var(--muted),var(--muted)6px,transparent_6px,transparent_12px)]"
                           : "hover:bg-cyan/40 dark:hover:bg-muted"
