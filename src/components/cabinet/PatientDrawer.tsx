@@ -12,11 +12,39 @@ const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as co
 type Tab = (typeof tabs)[number];
 const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
 
+type TimelineItem = {
+  id: string;
+  date: string;
+  time?: string;
+  label: string;
+  badge: string;
+  badgeClass: string;
+};
+
+function HistoryList({ items }: { items: TimelineItem[] }) {
+  if (items.length === 0) return <p className="text-muted-foreground">Aucun élément enregistré.</p>;
+  return (
+    <div className="divide-y divide-border">
+      {items.map((it) => (
+        <div key={it.id} className="flex items-center gap-4 py-3">
+          <span className="num w-32 shrink-0 text-muted-foreground">
+            {fmtDate(it.date, "dd/MM/yyyy")} {it.time ?? ""}
+          </span>
+          <span className="flex-1">{it.label}</span>
+          <span className={`rounded-full px-2.5 py-1 text-xs ${it.badgeClass}`}>{it.badge}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 export function PatientDrawer({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
   const { data, update, newId } = useCabinet();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Aperçu");
   const [note, setNote] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [files, setFiles] = useState<NoteAttachment[]>([]);
   
   const [chronic, setChronic] = useState("");
@@ -54,9 +82,44 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const analyses = data.analyses.filter((a) => a.patientId === patient.id).sort((a, b) => a.date.localeCompare(b.date));
   const certs = data.certificates.filter((c) => c.patientId === patient.id);
 
+  const payments = data.payments.filter((p) => p.patientId === patient.id);
+
+  const timeline: TimelineItem[] = [
+    ...visits.map((v) => ({
+      id: `v-${v.id}`,
+      date: v.date,
+      time: v.time,
+      label: v.reason,
+      badge: statusMeta[v.status].label,
+      badgeClass: statusMeta[v.status].className,
+    })),
+    ...notes.map((n) => ({
+      id: `n-${n.id}`,
+      date: n.date,
+      label: n.text || "Note de consultation",
+      badge: "Note",
+      badgeClass: "bg-frost text-twilight",
+    })),
+    ...certs.map((c) => ({
+      id: `c-${c.id}`,
+      date: c.documentDate,
+      label: c.type,
+      badge: "Certificat",
+      badgeClass: "bg-frost text-twilight",
+    })),
+    ...payments.map((p) => ({
+      id: `p-${p.id}`,
+      date: p.date,
+      label: `Paiement — ${p.amount} DT`,
+      badge: p.method === "cash" ? "Espèces" : p.method === "cnam_paid" ? "CNAM payé" : "CNAM en attente",
+      badgeClass: "bg-frost text-twilight",
+    })),
+  ].sort((a: TimelineItem, b: TimelineItem) => (b.date + (b.time ?? "")).localeCompare(a.date + (a.time ?? "")));
+
   const glycemia = analyses
     .map((a) => ({ date: fmtDate(a.date, "dd/MM"), value: a.values.find((v) => v.label === "Glycémie")?.value }))
     .filter((r) => typeof r.value === "number");
+
 
   const runImport = () => {
     setImportState("loading");
@@ -277,21 +340,16 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
 
           <section id={sectionId("Historique")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Historique</h3>
-            <div className="divide-y divide-border">
-              {visits.map((v) => (
-                <div key={v.id} className="flex items-center gap-4 py-3">
-                  <span className="num w-32 text-muted-foreground">
-                    {fmtDate(v.date, "dd/MM/yyyy")} {v.time}
-                  </span>
-                  <span className="flex-1">{v.reason}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs ${statusMeta[v.status].className}`}>
-                    {statusMeta[v.status].label}
-                  </span>
-                </div>
-              ))}
-              {visits.length === 0 && <p className="text-muted-foreground">Aucune visite enregistrée.</p>}
-            </div>
+            <HistoryList items={timeline.slice(0, 6)} />
+            {timeline.length > 6 && (
+              <div className="mt-3">
+                <GhostButton onClick={() => setHistoryOpen(true)}>
+                  <History className="h-4 w-4" /> Voir tout l'historique ({timeline.length})
+                </GhostButton>
+              </div>
+            )}
           </section>
+
 
           <section id={sectionId("Notes")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Notes</h3>
@@ -530,6 +588,15 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
             Enregistrer
           </PrimaryButton>
         </div>
+      </Modal>
+
+      <Modal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        title={`Historique complet — ${patient.name}`}
+        width="max-w-3xl"
+      >
+        <HistoryList items={timeline} />
       </Modal>
 
       <Modal open={importOpen} onClose={() => setImportOpen(false)} title="Import de dossier existant">
