@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Download, FileUp, History, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, FileUp, History, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
@@ -210,19 +210,31 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
       <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-y-auto border-l border-border bg-card p-4 shadow-2xl animate-in slide-in-from-right duration-200 sm:p-6 md:max-w-[560px] xl:max-w-[60%]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">{patient.name}</h2>
-            <p className="num text-sm text-muted-foreground">
-              <span className="font-semibold text-teal">{patient.code}</span> · {patient.phone}
-            </p>
-          </div>
+        <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              aria-label="Retour"
+              className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-muted"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-lg font-semibold sm:text-xl">{patient.name}</h2>
+              <p className="num truncate text-xs text-muted-foreground sm:text-sm">
+                <span className="font-semibold text-teal">{patient.code}</span> · {patient.phone}
+              </p>
+            </div>
+            <button onClick={onClose} aria-label="Fermer" className="shrink-0 rounded-md p-2 hover:bg-muted">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <GhostButton onClick={() => navigate({ to: "/historique/$id", params: { id: patient.id } })}>
               <History className="h-4 w-4" /> Historique complet
             </GhostButton>
             <PrimaryButton onClick={exportPdf}>
-              <Download className="h-4 w-4" /> Exporter le dossier en PDF
+              <Download className="h-4 w-4" /> Exporter en PDF
             </PrimaryButton>
             <GhostButton
               onClick={() => {
@@ -230,13 +242,11 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                 setImportOpen(true);
               }}
             >
-              <FileUp className="h-4 w-4" /> Import de dossier existant
+              <FileUp className="h-4 w-4" /> Import de dossier
             </GhostButton>
-            <button onClick={onClose} aria-label="Fermer" className="rounded-md p-2 hover:bg-muted">
-              <X className="h-5 w-5" />
-            </button>
           </div>
         </div>
+
 
         {patient.allergies.length > 0 ? (
           <div className="mt-5 flex items-center gap-3 rounded-lg bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
