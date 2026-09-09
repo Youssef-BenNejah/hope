@@ -135,6 +135,7 @@ export interface CabinetData {
   prescriptions: Prescription[];
   analyses: Analysis[];
   certificates: Certificate[];
+  checkups: Checkup[];
   payments: Payment[];
   settings: Settings;
 }
