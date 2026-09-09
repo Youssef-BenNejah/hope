@@ -124,10 +124,11 @@ function RevenuePage() {
           <p className="mb-3 font-semibold">CNAM en attente</p>
           <div className="divide-y divide-border">
             {pending.map((p) => (
-              <div key={p.id} className="flex items-center gap-4 py-2.5 text-sm">
-                <span className="num w-28 text-muted-foreground">{fmtDate(p.date, "dd/MM/yyyy")}</span>
-                <span className="flex-1">{patientName(p.patientId)}</span>
+              <div key={p.id} className="flex flex-wrap items-center gap-3 py-2.5 text-sm sm:gap-4">
+                <span className="num w-24 text-muted-foreground sm:w-28">{fmtDate(p.date, "dd/MM/yyyy")}</span>
+                <span className="min-w-0 flex-1 truncate">{patientName(p.patientId)}</span>
                 <span className="num font-medium">{dt(p.amount)}</span>
+
                 <button
                   onClick={() => {
                     update((d) => ({
@@ -148,7 +149,9 @@ function RevenuePage() {
 
       <Card className="mt-6">
         <p className="mb-3 font-semibold">Transactions</p>
-        <table className="w-full text-sm">
+        <div className="-mx-5 overflow-x-auto px-5">
+        <table className="w-full min-w-[560px] text-sm">
+
           <thead>
             <tr className="bg-twilight text-left text-[#EAF2FA]">
               <th className="label-caps rounded-l-lg px-3 py-2 text-[#CAF0F8]">Date</th>
@@ -172,7 +175,9 @@ function RevenuePage() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
+
     </ScreenTransition>
   );
 }
