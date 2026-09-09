@@ -140,10 +140,9 @@ function PatientsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="grid grid-cols-[130px_minmax(0,1fr)_170px_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)_150px_110px] items-center gap-4 bg-twilight px-5 py-2.5">
             <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
             <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
-            <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
             <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
             <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
           </div>
@@ -151,11 +150,13 @@ function PatientsPage() {
             <button
               key={x.id}
               onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
-              className="grid w-full grid-cols-[130px_minmax(0,1fr)_170px_150px_110px] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
+              className="grid w-full grid-cols-[180px_minmax(0,1fr)_150px_110px] items-center gap-4 border-b border-border px-5 py-3.5 text-left text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted"
             >
-              <span className="num text-xs font-semibold tracking-wide text-teal">{x.code}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="num text-xs font-semibold tracking-wide text-teal">{x.code}</span>
+                <span className="num text-xs text-muted-foreground">{x.phone}</span>
+              </div>
               <span className="truncate font-medium">{x.name}</span>
-              <span className="num text-left text-muted-foreground">{x.phone}</span>
               <span className="num text-left text-muted-foreground">{lastVisit(x.id)}</span>
               <span className="text-right">
                 {x.allergies.length > 0 && (
