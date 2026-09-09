@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, Download, FileUp, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
@@ -89,6 +89,60 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
     }, 1500);
   };
 
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const exportPdf = () => {
+    const s = data.settings;
+    const rows = (items: string[][]) =>
+      items.length
+        ? items.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")
+        : `<tr><td colspan="3">—</td></tr>`;
+    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>Dossier ${esc(patient.name)}</title>
+<style>
+@page{size:A4;margin:18mm}
+body{font-family:Arial,Helvetica,sans-serif;color:#0B1220;font-size:12px}
+h1{font-size:18px;margin:0 0 2px}h2{font-size:13px;margin:22px 0 6px;color:#0077B6;text-transform:uppercase;letter-spacing:.06em}
+.head{border-bottom:2px solid #0077B6;padding-bottom:10px;margin-bottom:18px}
+.muted{color:#5B6472;font-size:11px}
+table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;padding:5px 4px;text-align:left;vertical-align:top}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+</style></head><body>
+<div class="head"><h1>${esc(s.doctorName)}</h1>
+<p class="muted">${esc(s.specialty)} — ${esc(s.address)}<br>Tél. ${esc(s.phone ?? "")} · N° d'ordre : ${esc(s.licenseNumber)}</p></div>
+<h1>Dossier médical — ${esc(patient.name)}</h1>
+<p class="muted">Identifiant ${esc(patient.code)} · Édité le ${fmtDate(today())}</p>
+<h2>Identité</h2>
+<div class="grid">
+<div><b>Téléphone :</b> ${esc(patient.phone || "—")}</div>
+<div><b>Naissance :</b> ${patient.birthDate ? fmtDate(patient.birthDate) : "—"}</div>
+<div><b>Pays :</b> ${esc(patient.country || "—")}</div>
+<div><b>Couverture :</b> ${patient.coverage === "assurance" ? `Assurance ${esc(patient.insurer || "")}` : patient.coverage === "aucune" ? "Aucune" : `CNAM ${esc(patient.cnam || "")}`}</div>
+<div><b>Allergies :</b> ${esc(patient.allergies.join(", ") || "Aucune connue")}</div>
+<div><b>Antécédents :</b> ${esc(patient.chronic.join(", ") || "—")}</div>
+</div>
+<h2>Historique des consultations</h2>
+<table>${rows(visits.map((v) => [`${fmtDate(v.date, "dd/MM/yyyy")} ${v.time}`, v.reason, statusMeta[v.status].label]))}</table>
+<h2>Notes</h2>
+<table>${rows(notes.map((n) => [fmtDate(n.date, "dd/MM/yyyy"), n.text || "—", `${n.attachments?.length ?? 0} pièce(s) jointe(s)`]))}</table>
+<h2>Analyses</h2>
+<table>${rows(analyses.map((a) => [fmtDate(a.date, "dd/MM/yyyy"), a.values.map((v) => `${v.label} : ${v.value} ${v.unit}`).join(" · "), ""]))}</table>
+<h2>Certificats</h2>
+<table>${rows(certs.map((c) => [fmtDate(c.documentDate, "dd/MM/yyyy"), c.type, ""]))}</table>
+</body></html>`;
+    const w = window.open("", "_blank", "width=900,height=1000");
+    if (!w) {
+      toast.error("Autorisez les fenêtres contextuelles pour exporter le dossier");
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    window.setTimeout(() => w.print(), 300);
+    toast.success("Dossier prêt — choisissez « Enregistrer au format PDF »");
+  };
+
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
@@ -101,6 +155,9 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <PrimaryButton onClick={exportPdf}>
+              <Download className="h-4 w-4" /> Exporter le dossier en PDF
+            </PrimaryButton>
             <GhostButton
               onClick={() => {
                 setImportState("idle");

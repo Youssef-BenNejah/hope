@@ -61,6 +61,11 @@ function CertificatesPage() {
   const [preview, setPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [detail, setDetail] = useState<(typeof data.certificates)[number] | null>(null);
+  const [month, setMonth] = useState(today().slice(0, 7));
+
+  const shownCertificates = month
+    ? data.certificates.filter((c) => c.documentDate.startsWith(month))
+    : data.certificates;
 
   const endDate = format(addDays(parseISO(startDate), days), "yyyy-MM-dd");
   const isSick = active === "Arrêt de travail";
@@ -130,7 +135,20 @@ function CertificatesPage() {
       </div>
 
       <Card className="mt-8">
-        <p className="mb-3 font-semibold">Journal des certificats</p>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="font-semibold">Journal des certificats</p>
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              className={`${inputCls} num w-auto`}
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+            />
+            <GhostButton onClick={() => setMonth(month ? "" : today().slice(0, 7))}>
+              {month ? "Tous les mois" : "Ce mois-ci"}
+            </GhostButton>
+          </div>
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-twilight text-left">
@@ -142,7 +160,7 @@ function CertificatesPage() {
             </tr>
           </thead>
           <tbody>
-            {data.certificates.map((c) => (
+            {shownCertificates.map((c) => (
               <tr
                 key={c.id}
                 onClick={() => setDetail(c)}
@@ -172,10 +190,10 @@ function CertificatesPage() {
                 </td>
               </tr>
             ))}
-            {data.certificates.length === 0 && (
+            {shownCertificates.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
-                  Aucun certificat émis pour le moment.
+                  {month ? "Aucun certificat pour ce mois." : "Aucun certificat émis pour le moment."}
                 </td>
               </tr>
             )}
