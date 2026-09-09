@@ -79,7 +79,7 @@ function HistoryPage() {
         date: c.documentDate,
         title: c.type,
         detail: c.text,
-        badge: c.days ? `${c.days} jour(s)` : undefined,
+        ...(c.days ? { badge: `${c.days} jour(s)` } : {}),
       });
     }
     for (const p of data.payments.filter((x) => x.patientId === patient.id)) {
@@ -98,7 +98,7 @@ function HistoryPage() {
     return (
       <ScreenTransition>
         <PageHeader title="Patient introuvable" subtitle="Ce dossier n'existe plus" />
-        <Link to="/patients">
+        <Link to="/patients" search={{ p: undefined }}>
           <GhostButton>Retour aux patients</GhostButton>
         </Link>
       </ScreenTransition>
