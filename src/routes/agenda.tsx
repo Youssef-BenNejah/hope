@@ -129,18 +129,28 @@ function AgendaPage() {
                           : "hover:bg-cyan/40 dark:hover:bg-muted"
                       }`}
                     >
-                      {appts.map((a) => (
-                        <button
-                          key={a.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setModal({ open: true, editId: a.id });
-                          }}
-                          className={`mb-1 block w-full rounded-md px-2 py-1 text-left text-xs ${statusColor[a.status]}`}
-                        >
-                          <span className="num">{a.time}</span> {patientName(a.patientId)}
-                        </button>
-                      ))}
+                      {[...appts]
+                        .sort((x, y) => x.time.localeCompare(y.time))
+                        .map((a) => (
+                          <button
+                            key={a.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModal({ open: true, editId: a.id });
+                            }}
+                            className={`mb-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs ${statusColor[a.status]}`}
+                          >
+                            <span className="num shrink-0 rounded bg-white/60 px-1 py-0.5 font-semibold dark:bg-black/20">
+                              {a.time}
+                            </span>
+                            <span className="truncate">{patientName(a.patientId)}</span>
+                          </button>
+                        ))}
+                      {!blocked && appts.length === 0 && (
+                        <span className="num block px-2 py-1 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                          + {String(h).padStart(2, "0")}:00
+                        </span>
+                      )}
                     </div>
                   );
                 })}
