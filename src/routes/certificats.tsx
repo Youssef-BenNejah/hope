@@ -60,6 +60,7 @@ function CertificatesPage() {
   const [text, setText] = useState("");
   const [preview, setPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [detail, setDetail] = useState<(typeof data.certificates)[number] | null>(null);
 
   const endDate = format(addDays(parseISO(startDate), days), "yyyy-MM-dd");
   const isSick = active === "Arrêt de travail";
@@ -100,6 +101,17 @@ function CertificatesPage() {
     setPreview(false);
   };
 
+  const duplicateCertificate = (c: (typeof data.certificates)[number]) => {
+    update((d) => ({
+      ...d,
+      certificates: [
+        ...d.certificates,
+        { ...c, id: newId(), documentDate: today(), createdAt: new Date().toISOString() },
+      ],
+    }));
+    toast.success("Certificat dupliqué");
+  };
+
   return (
     <ScreenTransition>
       <PageHeader title="Certificats" subtitle="Générez un document à partir d'un modèle" />
@@ -131,7 +143,11 @@ function CertificatesPage() {
           </thead>
           <tbody>
             {data.certificates.map((c) => (
-              <tr key={c.id} className="border-b border-border last:border-0">
+              <tr
+                key={c.id}
+                onClick={() => setDetail(c)}
+                className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-cyan/40 dark:hover:bg-muted"
+              >
                 <td className="px-3 py-2.5">{patientName(c.patientId)}</td>
                 <td className="px-3 py-2.5">{c.type}</td>
                 <td
@@ -145,15 +161,9 @@ function CertificatesPage() {
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   <button
-                    onClick={() => {
-                      update((d) => ({
-                        ...d,
-                        certificates: [
-                          ...d.certificates,
-                          { ...c, id: newId(), documentDate: today(), createdAt: new Date().toISOString() },
-                        ],
-                      }));
-                      toast.success("Certificat dupliqué");
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      duplicateCertificate(c);
                     }}
                     className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-muted"
                   >
@@ -246,6 +256,83 @@ function CertificatesPage() {
             <span className="mr-auto text-sm text-success">Document généré avec succès.</span>
             <GhostButton onClick={() => toast.success("Téléchargement simulé du document")}>Télécharger</GhostButton>
             <PrimaryButton onClick={save}>Enregistrer dans le dossier du patient</PrimaryButton>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={!!detail} onClose={() => setDetail(null)} title={detail?.type ?? "Détail du certificat"} width="max-w-2xl">
+        {detail && (
+          <div className="space-y-5 text-sm">
+            <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4">
+              <div>
+                <p className="label-caps">Patient</p>
+                <p className="mt-1 font-medium">{patientName(detail.patientId)}</p>
+              </div>
+              <div>
+                <p className="label-caps">Type</p>
+                <p className="mt-1 font-medium">{detail.type}</p>
+              </div>
+              <div>
+                <p className="label-caps">Date d'émission</p>
+                <p className="mt-1 num">
+                  {format(new Date(detail.createdAt), "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
+                </p>
+              </div>
+              <div>
+                <p className="label-caps">Date du document</p>
+                <p className="mt-1 num">{fmtDate(detail.documentDate, "dd/MM/yyyy")}</p>
+              </div>
+              {detail.startDate && (
+                <div>
+                  <p className="label-caps">Début</p>
+                  <p className="mt-1 num">{fmtDate(detail.startDate, "dd/MM/yyyy")}</p>
+                </div>
+              )}
+              {detail.endDate && (
+                <div>
+                  <p className="label-caps">Fin</p>
+                  <p className="mt-1 num">{fmtDate(detail.endDate, "dd/MM/yyyy")}</p>
+                </div>
+              )}
+              {detail.days && (
+                <div>
+                  <p className="label-caps">Durée</p>
+                  <p className="mt-1 num">{detail.days} jour(s)</p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="label-caps mb-2">Contenu</p>
+              <div className="rounded-lg border border-border bg-white p-5 text-[#0B1220] shadow-inner">
+                <p className="text-sm font-semibold">{data.settings.doctorName}</p>
+                <p className="text-xs text-[#5B6472]">{data.settings.specialty}</p>
+                <p className="text-xs text-[#5B6472]">{data.settings.address}</p>
+                <p className="text-xs text-[#5B6472]">N° d'ordre : {data.settings.licenseNumber}</p>
+                <hr className="my-4 border-[#E2E8F0]" />
+                <p className="text-center text-sm font-semibold uppercase tracking-wide">{detail.type}</p>
+                <p className="mt-6 whitespace-pre-wrap leading-relaxed">{detail.text}</p>
+                <p className="mt-8 text-right text-xs">
+                  Sousse, le {fmtDate(detail.documentDate)}
+                  <br />
+                  {data.settings.doctorName}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <GhostButton
+                onClick={() => {
+                  duplicateCertificate(detail);
+                  setDetail(null);
+                }}
+              >
+                <Copy className="h-4 w-4" /> Dupliquer / Renouveler
+              </GhostButton>
+              <PrimaryButton onClick={() => toast.success("Téléchargement simulé du document")}>
+                Télécharger le PDF
+              </PrimaryButton>
+            </div>
           </div>
         )}
       </Modal>
