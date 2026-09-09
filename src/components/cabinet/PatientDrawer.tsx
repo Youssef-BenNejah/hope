@@ -12,6 +12,33 @@ const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as co
 type Tab = (typeof tabs)[number];
 const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
 
+type TimelineItem = {
+  id: string;
+  date: string;
+  time?: string;
+  label: string;
+  badge: string;
+  badgeClass: string;
+};
+
+function HistoryList({ items }: { items: TimelineItem[] }) {
+  if (items.length === 0) return <p className="text-muted-foreground">Aucun élément enregistré.</p>;
+  return (
+    <div className="divide-y divide-border">
+      {items.map((it) => (
+        <div key={it.id} className="flex items-center gap-4 py-3">
+          <span className="num w-32 shrink-0 text-muted-foreground">
+            {fmtDate(it.date, "dd/MM/yyyy")} {it.time ?? ""}
+          </span>
+          <span className="flex-1">{it.label}</span>
+          <span className={`rounded-full px-2.5 py-1 text-xs ${it.badgeClass}`}>{it.badge}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 export function PatientDrawer({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
   const { data, update, newId } = useCabinet();
   const navigate = useNavigate();
