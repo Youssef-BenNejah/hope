@@ -160,7 +160,7 @@ function CertificatesPage() {
             </tr>
           </thead>
           <tbody>
-            {data.certificates.map((c) => (
+            {shownCertificates.map((c) => (
               <tr
                 key={c.id}
                 onClick={() => setDetail(c)}
@@ -190,10 +190,10 @@ function CertificatesPage() {
                 </td>
               </tr>
             ))}
-            {data.certificates.length === 0 && (
+            {shownCertificates.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
-                  Aucun certificat émis pour le moment.
+                  {month ? "Aucun certificat pour ce mois." : "Aucun certificat émis pour le moment."}
                 </td>
               </tr>
             )}
