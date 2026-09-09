@@ -590,6 +590,15 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
         </div>
       </Modal>
 
+      <Modal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        title={`Historique complet — ${patient.name}`}
+        width="max-w-3xl"
+      >
+        <HistoryList items={timeline} />
+      </Modal>
+
       <Modal open={importOpen} onClose={() => setImportOpen(false)} title="Import de dossier existant">
         {importState === "done" ? (
           <p className="rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
