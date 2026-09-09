@@ -225,25 +225,16 @@ function PatientsPage() {
               />
             </Field>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Sexe">
-              <select
-                className={inputCls}
-                value={form.sex}
-                onChange={(e) => setForm({ ...form, sex: e.target.value as typeof form.sex })}
-              >
-                <option value="femme">Femme</option>
-                <option value="homme">Homme</option>
-              </select>
-            </Field>
-            <Field label="Âge (calculé automatiquement)">
-              <input
-                className={`${inputCls} num`}
-                readOnly
-                value={ageFrom(form.birthDate) !== null ? `${ageFrom(form.birthDate)} ans` : "—"}
-              />
-            </Field>
-          </div>
+          <Field label="Sexe">
+            <select
+              className={inputCls}
+              value={form.sex}
+              onChange={(e) => setForm({ ...form, sex: e.target.value as typeof form.sex })}
+            >
+              <option value="femme">Femme</option>
+              <option value="homme">Homme</option>
+            </select>
+          </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Pays">
               <select
