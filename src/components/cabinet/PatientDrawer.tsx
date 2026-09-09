@@ -155,6 +155,9 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <PrimaryButton onClick={exportPdf}>
+              <Download className="h-4 w-4" /> Exporter le dossier en PDF
+            </PrimaryButton>
             <GhostButton
               onClick={() => {
                 setImportState("idle");
