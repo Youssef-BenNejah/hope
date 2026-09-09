@@ -60,6 +60,7 @@ function CertificatesPage() {
   const [text, setText] = useState("");
   const [preview, setPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [detail, setDetail] = useState<(typeof data.certificates)[number] | null>(null);
 
   const endDate = format(addDays(parseISO(startDate), days), "yyyy-MM-dd");
   const isSick = active === "Arrêt de travail";
