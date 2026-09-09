@@ -462,11 +462,12 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                                 e.preventDefault();
                                 update((d) => ({
                                   ...d,
-                                  notes: d.notes.map((note) =>
-                                    note.id === n.id
-                                      ? { ...note, attachments: note.attachments?.filter((a) => a.id !== f.id) }
-                                      : note,
-                                  ),
+                                  notes: d.notes.map((note) => {
+                                    if (note.id !== n.id) return note;
+                                    const remaining = note.attachments?.filter((a) => a.id !== f.id) ?? [];
+                                    const { attachments, ...rest } = note;
+                                    return remaining.length ? { ...rest, attachments: remaining } : rest;
+                                  }),
                                 }));
                                 toast.success("Fichier supprimé");
                               }}
