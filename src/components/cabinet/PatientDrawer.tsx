@@ -44,6 +44,7 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Aperçu");
   const [note, setNote] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [files, setFiles] = useState<NoteAttachment[]>([]);
   
   const [chronic, setChronic] = useState("");
