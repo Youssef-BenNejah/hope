@@ -277,21 +277,16 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
 
           <section id={sectionId("Historique")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Historique</h3>
-            <div className="divide-y divide-border">
-              {visits.map((v) => (
-                <div key={v.id} className="flex items-center gap-4 py-3">
-                  <span className="num w-32 text-muted-foreground">
-                    {fmtDate(v.date, "dd/MM/yyyy")} {v.time}
-                  </span>
-                  <span className="flex-1">{v.reason}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs ${statusMeta[v.status].className}`}>
-                    {statusMeta[v.status].label}
-                  </span>
-                </div>
-              ))}
-              {visits.length === 0 && <p className="text-muted-foreground">Aucune visite enregistrée.</p>}
-            </div>
+            <HistoryList items={timeline.slice(0, 6)} />
+            {timeline.length > 6 && (
+              <div className="mt-3">
+                <GhostButton onClick={() => setHistoryOpen(true)}>
+                  <History className="h-4 w-4" /> Voir tout l'historique ({timeline.length})
+                </GhostButton>
+              </div>
+            )}
           </section>
+
 
           <section id={sectionId("Notes")} className="scroll-mt-14">
             <h3 className="label-caps mb-3 text-teal">Notes</h3>
