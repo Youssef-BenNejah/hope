@@ -117,10 +117,10 @@ function AgendaPage() {
                 {format(d, "EEEE d", { locale: fr })}
               </div>
             ))}
-            {hours.map((h) => (
+            {rows.map((h) => (
               <FragmentRow key={h}>
                 <div className="num border-b border-border px-2 py-3 text-xs text-muted-foreground">
-                  {String(h).padStart(2, "0")}:00
+                  {toHHMM(h)}
                 </div>
                 {days.map((d) => {
                   const ds = format(d, "yyyy-MM-dd");
@@ -130,7 +130,7 @@ function AgendaPage() {
                     <div
                       key={ds + h}
                       title={blocked ? `Créneau bloqué : ${blocked.reason}` : undefined}
-                      onClick={() => !blocked && setModal({ open: true, date: ds, time: `${String(h).padStart(2, "0")}:00` })}
+                      onClick={() => !blocked && setModal({ open: true, date: ds, time: toHHMM(h) })}
                       className={`group min-h-14 cursor-pointer border-b border-l border-border p-1 ${
                         blocked
                           ? "cursor-not-allowed bg-[repeating-linear-gradient(45deg,var(--muted),var(--muted)6px,transparent_6px,transparent_12px)]"
@@ -156,7 +156,7 @@ function AgendaPage() {
                         ))}
                       {!blocked && appts.length === 0 && (
                         <span className="num block px-2 py-1 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                          + {String(h).padStart(2, "0")}:00
+                          + {toHHMM(h)}
                         </span>
                       )}
                     </div>
