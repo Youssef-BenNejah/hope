@@ -180,11 +180,14 @@ export interface CabinetDocument {
   uploadedAt: string;
 }
 
-/** Contact externe : confrère, laboratoire, fournisseur */
+/** Types de contact usuels (le champ `kind` accepte aussi des valeurs personnalisées) */
+export const CONTACT_KINDS = ["Confrère", "Laboratoire", "Fournisseur", "Autre"] as const;
+
+/** Contact externe : confrère, laboratoire, fournisseur… */
 export interface Contact {
   id: string;
   name: string;
-  kind: "Confrère" | "Laboratoire" | "Fournisseur" | "Autre";
+  kind: string; // un des CONTACT_KINDS ou un type saisi librement
   specialty?: string;
   phone?: string;
   email?: string;

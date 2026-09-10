@@ -3,18 +3,34 @@ import { useMemo, useState } from "react";
 import { Mail, MapPin, Pencil, Phone, Plus, Search, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import type { Contact } from "@/lib/cabinet/types";
+import { CONTACT_KINDS, type Contact } from "@/lib/cabinet/types";
 import { matches } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { Combobox } from "@/components/cabinet/Combobox";
 
-const kindMeta: Record<Contact["kind"], { avatar: string; badge: string; plural: string }> = {
-  Confrère: { avatar: "bg-teal text-white", badge: "bg-frost text-twilight", plural: "Confrères" },
-  Laboratoire: { avatar: "bg-surf text-white", badge: "bg-cyan text-twilight", plural: "Laboratoires" },
-  Fournisseur: { avatar: "bg-warning text-white", badge: "bg-warning-soft text-warning", plural: "Fournisseurs" },
-  Autre: { avatar: "bg-muted-foreground text-white", badge: "bg-muted text-muted-foreground", plural: "Autres" },
+const KNOWN_META: Record<string, { avatar: string; badge: string }> = {
+  Confrère: { avatar: "bg-teal text-white", badge: "bg-frost text-twilight" },
+  Laboratoire: { avatar: "bg-surf text-white", badge: "bg-cyan text-twilight" },
+  Fournisseur: { avatar: "bg-warning text-white", badge: "bg-warning-soft text-warning" },
+  Autre: { avatar: "bg-muted-foreground text-white", badge: "bg-muted text-muted-foreground" },
 };
-const groupOrder: Contact["kind"][] = ["Confrère", "Laboratoire", "Fournisseur", "Autre"];
+const CUSTOM_PALETTE = [
+  { avatar: "bg-[#7B4FBF] text-white", badge: "bg-[#7B4FBF]/15 text-[#7B4FBF]" },
+  { avatar: "bg-[#2E9E6B] text-white", badge: "bg-success-soft text-success" },
+  { avatar: "bg-[#0077B6] text-white", badge: "bg-frost text-twilight" },
+  { avatar: "bg-[#D1495B] text-white", badge: "bg-danger-soft text-danger" },
+];
+const metaFor = (kind: string, allKinds: string[]) => {
+  if (KNOWN_META[kind]) return KNOWN_META[kind]!;
+  const custom = allKinds.filter((k) => !KNOWN_META[k]).sort();
+  return CUSTOM_PALETTE[custom.indexOf(kind) % CUSTOM_PALETTE.length]!;
+};
+const pluralOf = (kind: string) => {
+  if (kind === "Autre") return "Autres";
+  if (kind === "Confrère") return "Confrères";
+  return /[sxz]$/i.test(kind) ? kind : `${kind}s`;
+};
 const initials = (name: string) =>
   name
     .replace(/^(Dr\.?|Pr\.?)\s+/i, "")
@@ -38,10 +54,9 @@ export const Route = createFileRoute("/annuaire")({
   component: DirectoryPage,
 });
 
-const kinds: Contact["kind"][] = ["Confrère", "Laboratoire", "Fournisseur", "Autre"];
 const empty = {
   name: "",
-  kind: "Confrère" as Contact["kind"],
+  kind: "Confrère",
   specialty: "",
   phone: "",
   email: "",
@@ -52,7 +67,7 @@ const empty = {
 function DirectoryPage() {
   const { data, update, newId } = useCabinet();
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"Tous" | Contact["kind"]>("Tous");
+  const [filter, setFilter] = useState<string>("Tous");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Contact | null>(null);
   const [form, setForm] = useState(empty);
@@ -74,9 +89,22 @@ function DirectoryPage() {
     [data.contacts, filter, q],
   );
 
+  // Tous les types présents : les usuels d'abord, puis les types personnalisés (triés)
+  const allKinds = useMemo(() => {
+    const custom = [...new Set(data.contacts.map((c) => c.kind))]
+      .filter((k) => !(CONTACT_KINDS as readonly string[]).includes(k))
+      .sort((a, b) => a.localeCompare(b));
+    return [...CONTACT_KINDS, ...custom];
+  }, [data.contacts]);
+
+  const kindOptions = useMemo(
+    () => [...new Set([...CONTACT_KINDS, ...data.contacts.map((c) => c.kind)])],
+    [data.contacts],
+  );
+
   const groups = useMemo(
-    () => groupOrder.map((k) => ({ kind: k, items: list.filter((c) => c.kind === k) })).filter((g) => g.items.length),
-    [list],
+    () => allKinds.map((k) => ({ kind: k, items: list.filter((c) => c.kind === k) })).filter((g) => g.items.length),
+    [list, allKinds],
   );
 
   const openCreate = () => {
@@ -151,7 +179,7 @@ function DirectoryPage() {
           />
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {(["Tous", ...kinds] as const).map((k) => (
+          {["Tous", ...allKinds].map((k) => (
             <button
               key={k}
               onClick={() => setFilter(k)}
@@ -172,8 +200,10 @@ function DirectoryPage() {
           {groups.map((g) => (
             <section key={g.kind}>
               <div className="mb-2 flex items-center gap-2">
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${kindMeta[g.kind].badge}`}>
-                  {kindMeta[g.kind].plural}
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${metaFor(g.kind, allKinds).badge}`}
+                >
+                  {pluralOf(g.kind)}
                 </span>
                 <span className="num text-xs text-muted-foreground">{g.items.length}</span>
               </div>
@@ -184,7 +214,7 @@ function DirectoryPage() {
                     className="group flex flex-wrap items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 sm:px-5"
                   >
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${kindMeta[c.kind].avatar}`}
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${metaFor(c.kind, allKinds).avatar}`}
                     >
                       {initials(c.name)}
                     </span>
@@ -259,15 +289,13 @@ function DirectoryPage() {
             <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <Field label="Type">
-            <select
-              className={inputCls}
+            <Combobox
               value={form.kind}
-              onChange={(e) => setForm({ ...form, kind: e.target.value as Contact["kind"] })}
-            >
-              {kinds.map((k) => (
-                <option key={k}>{k}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm({ ...form, kind: v })}
+              options={kindOptions}
+              placeholder="Choisir ou saisir un type"
+              addLabel={(t) => `Ajouter le type « ${t} »`}
+            />
           </Field>
           <Field label="Spécialité / activité">
             <input
