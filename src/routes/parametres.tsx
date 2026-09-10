@@ -1,11 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { History, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { FlaskConical, History, Pencil, Pill, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { today } from "@/lib/cabinet/utils";
+import { renderFavorite } from "@/lib/cabinet/prescriptions";
+import { DRUG_CLASSES, type Favorite, type Protocol } from "@/lib/cabinet/types";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
-import { Field, GhostButton, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { Combobox } from "@/components/cabinet/Combobox";
+
+const emptyFav = { label: "", form: "", posology: "", duration: "", note: "", drugClass: "" };
+const emptyProto = { name: "", category: "", note: "", linesText: "" };
 
 export const Route = createFileRoute("/parametres")({
   head: () => ({
@@ -22,8 +28,85 @@ export const Route = createFileRoute("/parametres")({
 function SettingsPage() {
   const { data, setSettings, reset, update, newId } = useCabinet();
   const s = data.settings;
-  const [fav, setFav] = useState("");
   const [pin, setPin] = useState("");
+  const [favOpen, setFavOpen] = useState(false);
+  const [favEditId, setFavEditId] = useState<string | null>(null);
+  const [favForm, setFavForm] = useState(emptyFav);
+  const [protoOpen, setProtoOpen] = useState(false);
+  const [protoEditId, setProtoEditId] = useState<string | null>(null);
+  const [protoForm, setProtoForm] = useState(emptyProto);
+
+  const favClasses = [...new Set([...DRUG_CLASSES, ...s.favorites.map((f) => f.drugClass ?? "")].filter(Boolean))];
+
+  const openFav = (f?: Favorite) => {
+    setFavEditId(f?.id ?? null);
+    setFavForm(
+      f
+        ? {
+            label: f.label,
+            form: f.form ?? "",
+            posology: f.posology,
+            duration: f.duration ?? "",
+            note: f.note ?? "",
+            drugClass: f.drugClass ?? "",
+          }
+        : emptyFav,
+    );
+    setFavOpen(true);
+  };
+  const saveFav = () => {
+    if (!favForm.label.trim() || !favForm.posology.trim()) {
+      toast.error("Dénomination et posologie sont obligatoires");
+      return;
+    }
+    const payload: Favorite = {
+      id: favEditId ?? newId(),
+      label: favForm.label.trim(),
+      posology: favForm.posology.trim(),
+      ...(favForm.form.trim() ? { form: favForm.form.trim() } : {}),
+      ...(favForm.duration.trim() ? { duration: favForm.duration.trim() } : {}),
+      ...(favForm.note.trim() ? { note: favForm.note.trim() } : {}),
+      ...(favForm.drugClass.trim() ? { drugClass: favForm.drugClass.trim() } : {}),
+    };
+    setSettings({
+      favorites: favEditId
+        ? s.favorites.map((x) => (x.id === favEditId ? { ...x, ...payload } : x))
+        : [...s.favorites, payload],
+    });
+    toast.success(favEditId ? "Favori modifié" : "Favori ajouté");
+    setFavOpen(false);
+  };
+
+  const openProto = (p?: Protocol) => {
+    setProtoEditId(p?.id ?? null);
+    setProtoForm(
+      p
+        ? { name: p.name, category: p.category ?? "", note: p.note ?? "", linesText: p.lines.join("\n") }
+        : emptyProto,
+    );
+    setProtoOpen(true);
+  };
+  const saveProto = () => {
+    const lines = protoForm.linesText.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (!protoForm.name.trim() || lines.length === 0) {
+      toast.error("Nom et au moins une ligne sont obligatoires");
+      return;
+    }
+    const payload: Protocol = {
+      id: protoEditId ?? newId(),
+      name: protoForm.name.trim(),
+      lines,
+      ...(protoForm.category.trim() ? { category: protoForm.category.trim() } : {}),
+      ...(protoForm.note.trim() ? { note: protoForm.note.trim() } : {}),
+    };
+    setSettings({
+      protocols: protoEditId
+        ? s.protocols.map((x) => (x.id === protoEditId ? payload : x))
+        : [...s.protocols, payload],
+    });
+    toast.success(protoEditId ? "Ordonnance type modifiée" : "Ordonnance type ajoutée");
+    setProtoOpen(false);
+  };
   const [cat, setCat] = useState({ label: "", color: "#0077B6" });
   const [res, setRes] = useState({ name: "", kind: "salle" as "salle" | "équipement" | "praticien" });
   const [holiday, setHoliday] = useState({ date: today(), label: "" });
@@ -62,43 +145,126 @@ function SettingsPage() {
           </div>
         </Card>
 
-        <Card>
-          <h2 className="mb-4 text-lg font-semibold">Médicaments favoris</h2>
-          <div className="space-y-2">
-            {s.favorites.map((f) => (
-              <div key={f} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                <span>{f}</span>
-                <button
-                  onClick={() => {
-                    setSettings({ favorites: s.favorites.filter((x) => x !== f) });
-                    toast.success("Favori supprimé");
-                  }}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
-                  aria-label={`Supprimer ${f}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+        <Card className="xl:col-span-2">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <Pill className="h-4 w-4 text-teal" /> Médicaments favoris
+            </h2>
+            <GhostButton onClick={() => openFav()}>
+              <Plus className="h-4 w-4" /> Ajouter
+            </GhostButton>
           </div>
-          <div className="mt-3 flex gap-2">
-            <input
-              className={inputCls}
-              placeholder="Ex. Doliprane 500mg — 3x/j"
-              value={fav}
-              onChange={(e) => setFav(e.target.value)}
-            />
-            <PrimaryButton
-              onClick={() => {
-                if (!fav.trim()) return;
-                setSettings({ favorites: [...s.favorites, fav] });
-                setFav("");
-                toast.success("Favori ajouté");
-              }}
-            >
-              <Plus className="h-4 w-4" />
-            </PrimaryButton>
+          {s.favorites.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucun favori. Ils apparaissent en un clic dans l'éditeur d'ordonnances.</p>
+          ) : (
+            <div className="space-y-4">
+              {favClasses
+                .map((cls) => ({ cls, items: s.favorites.filter((f) => (f.drugClass ?? "Autre") === cls) }))
+                .filter((g) => g.items.length)
+                .map(({ cls, items }) => (
+                  <div key={cls}>
+                    <p className="label-caps mb-1.5 text-teal">{cls}</p>
+                    <div className="space-y-1.5">
+                      {items
+                        .slice()
+                        .sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0))
+                        .map((f) => (
+                          <div
+                            key={f.id}
+                            className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm"
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="font-medium">{f.label}</span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                — {f.posology}
+                                {f.duration ? `, ${f.duration}` : ""}
+                                {f.note ? ` (${f.note})` : ""}
+                              </span>
+                            </span>
+                            {f.uses ? (
+                              <span className="num shrink-0 text-[11px] text-muted-foreground">{f.uses}×</span>
+                            ) : null}
+                            <button
+                              onClick={() => openFav(f)}
+                              aria-label={`Modifier ${f.label}`}
+                              className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-teal/10 hover:text-teal"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSettings({ favorites: s.favorites.filter((x) => x.id !== f.id) });
+                                toast.success("Favori supprimé");
+                              }}
+                              aria-label={`Supprimer ${f.label}`}
+                              className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </Card>
+
+        <Card className="xl:col-span-2">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <FlaskConical className="h-4 w-4 text-teal" /> Ordonnances types
+            </h2>
+            <GhostButton onClick={() => openProto()}>
+              <Plus className="h-4 w-4" /> Ajouter
+            </GhostButton>
           </div>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Modèles multi-lignes pour les situations fréquentes — insérés en entier depuis l'éditeur d'ordonnances.
+          </p>
+          {s.protocols.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucune ordonnance type.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {s.protocols.map((p) => (
+                <div key={p.id} className="rounded-lg border border-border p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium">{p.name}</p>
+                      {p.category && <p className="text-xs text-muted-foreground">{p.category}</p>}
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        onClick={() => openProto(p)}
+                        aria-label={`Modifier ${p.name}`}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-teal/10 hover:text-teal"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSettings({ protocols: s.protocols.filter((x) => x.id !== p.id) });
+                          toast.success("Ordonnance type supprimée");
+                        }}
+                        aria-label={`Supprimer ${p.name}`}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                    {p.lines.map((l, i) => (
+                      <li key={i} className="truncate">
+                        • {l}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card>
@@ -382,6 +548,149 @@ function SettingsPage() {
           </GhostButton>
         </Card>
       </div>
+
+      <Modal
+        open={favOpen}
+        onClose={() => setFavOpen(false)}
+        title={favEditId ? "Modifier le favori" : "Nouveau médicament favori"}
+        width="max-w-lg"
+      >
+        <div className="space-y-4">
+          <Field label="Dénomination + dosage">
+            <input
+              className={inputCls}
+              autoFocus
+              placeholder="Ex. Paracétamol 1 g"
+              value={favForm.label}
+              onChange={(e) => setFavForm({ ...favForm, label: e.target.value })}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Forme">
+              <Combobox
+                value={favForm.form}
+                onChange={(v) => setFavForm({ ...favForm, form: v })}
+                options={["comprimé", "gélule", "sachet", "sirop", "solution buvable", "inhalateur", "suppositoire", "crème", "pommade", "collyre", "injectable"]}
+                placeholder="comprimé, sirop…"
+                addLabel={(t) => `Ajouter « ${t} »`}
+              />
+            </Field>
+            <Field label="Classe thérapeutique">
+              <Combobox
+                value={favForm.drugClass}
+                onChange={(v) => setFavForm({ ...favForm, drugClass: v })}
+                options={[...DRUG_CLASSES]}
+                placeholder="Antalgique, Antibiotique…"
+                addLabel={(t) => `Ajouter la classe « ${t} »`}
+              />
+            </Field>
+          </div>
+          <Field label="Posologie">
+            <input
+              className={inputCls}
+              placeholder="Ex. 1 cp x 3/j"
+              value={favForm.posology}
+              onChange={(e) => setFavForm({ ...favForm, posology: e.target.value })}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Durée (facultatif)">
+              <input
+                className={inputCls}
+                placeholder="5 jours, traitement de fond…"
+                value={favForm.duration}
+                onChange={(e) => setFavForm({ ...favForm, duration: e.target.value })}
+              />
+            </Field>
+            <Field label="Remarque (facultatif)">
+              <input
+                className={inputCls}
+                placeholder="au milieu du repas…"
+                value={favForm.note}
+                onChange={(e) => setFavForm({ ...favForm, note: e.target.value })}
+              />
+            </Field>
+          </div>
+          <p className="rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+            Ligne générée : <span className="text-foreground">{renderFavorite({ id: "", ...favForm })}</span>
+          </p>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <GhostButton onClick={() => setFavOpen(false)}>Annuler</GhostButton>
+          <PrimaryButton onClick={saveFav}>{favEditId ? "Enregistrer" : "Ajouter"}</PrimaryButton>
+        </div>
+      </Modal>
+
+      <Modal
+        open={protoOpen}
+        onClose={() => setProtoOpen(false)}
+        title={protoEditId ? "Modifier l'ordonnance type" : "Nouvelle ordonnance type"}
+        width="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-[1fr_170px]">
+            <Field label="Nom">
+              <input
+                className={inputCls}
+                autoFocus
+                placeholder="Ex. Angine bactérienne (adulte)"
+                value={protoForm.name}
+                onChange={(e) => setProtoForm({ ...protoForm, name: e.target.value })}
+              />
+            </Field>
+            <Field label="Catégorie">
+              <input
+                className={inputCls}
+                placeholder="ORL, Digestif…"
+                value={protoForm.category}
+                onChange={(e) => setProtoForm({ ...protoForm, category: e.target.value })}
+              />
+            </Field>
+          </div>
+          <Field label="Lignes de l'ordonnance (une par ligne)">
+            <textarea
+              className={`${inputCls} min-h-36`}
+              placeholder={"Amoxicilline 1 g - 1 cp matin et soir, 6 jours\nParacétamol 1 g - 1 cp x 3/j si fièvre, 5 jours"}
+              value={protoForm.linesText}
+              onChange={(e) => setProtoForm({ ...protoForm, linesText: e.target.value })}
+            />
+          </Field>
+          {s.favorites.length > 0 && (
+            <div>
+              <p className="label-caps mb-1.5 text-muted-foreground">Insérer un favori</p>
+              <div className="flex flex-wrap gap-1.5">
+                {s.favorites.slice(0, 12).map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() =>
+                      setProtoForm((p) => ({
+                        ...p,
+                        linesText: p.linesText ? `${p.linesText}\n${renderFavorite(f)}` : renderFavorite(f),
+                      }))
+                    }
+                    className="rounded-full border border-border px-2.5 py-1 text-xs hover:border-teal hover:bg-teal/10 hover:text-teal"
+                  >
+                    + {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <Field label="Note (facultatif)">
+            <input
+              className={inputCls}
+              placeholder="Conditions d'usage, rappel de suivi…"
+              value={protoForm.note}
+              onChange={(e) => setProtoForm({ ...protoForm, note: e.target.value })}
+            />
+          </Field>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <GhostButton onClick={() => setProtoOpen(false)}>Annuler</GhostButton>
+          <PrimaryButton onClick={saveProto}>{protoEditId ? "Enregistrer" : "Ajouter"}</PrimaryButton>
+        </div>
+      </Modal>
     </ScreenTransition>
   );
 }

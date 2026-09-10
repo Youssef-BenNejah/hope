@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { buildSeed, uid } from "./seed";
 import { makePatientCode } from "./utils";
-import type { CabinetData, Settings } from "./types";
+import { parseLegacyFavorite } from "./prescriptions";
+import type { CabinetData, Favorite, Settings } from "./types";
 import { CabinetContext, type CabinetContextValue, type SessionRole } from "./context";
 
 export { useCabinet } from "./context";
@@ -33,6 +34,10 @@ function load(): CabinetData {
           : seed.settings.appointmentCategories,
         resources: parsed.settings.resources?.length ? parsed.settings.resources : seed.settings.resources,
         certificateTemplates: parsed.settings.certificateTemplates ?? [],
+        favorites: ((parsed.settings.favorites ?? []) as unknown[]).map((f) =>
+          typeof f === "string" ? parseLegacyFavorite(f) : (f as Favorite),
+        ),
+        protocols: parsed.settings.protocols ?? [],
       };
       // rétro-compatibilité : comptes médecins + rôle
       if (!parsed.doctors?.length) parsed.doctors = seed.doctors;

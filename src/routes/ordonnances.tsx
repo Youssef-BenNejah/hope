@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Pill, Printer, Save } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AlertTriangle, FlaskConical, Pill, Printer, Save, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { fmtDate, today } from "@/lib/cabinet/utils";
+import { lineConflicts, parseLegacyFavorite, renderFavorite } from "@/lib/cabinet/prescriptions";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientPicker } from "@/components/cabinet/PatientPicker";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/ordonnances")({
 });
 
 function PrescriptionsPage() {
-  const { data, update, newId, patientName } = useCabinet();
+  const { data, update, setSettings, newId, patientName } = useCabinet();
   const { patient: presetPatient } = Route.useSearch();
   const s = data.settings;
 
@@ -39,6 +40,31 @@ function PrescriptionsPage() {
 
   const patient = data.patients.find((p) => p.id === patientId);
   const name = patientId ? patientName(patientId) : "";
+
+  const addLine = (text: string) => setLines((l) => (l.trim() ? `${l.trimEnd()}\n${text}` : text));
+  const bumpUse = (id: string) =>
+    setSettings({ favorites: s.favorites.map((f) => (f.id === id ? { ...f, uses: (f.uses ?? 0) + 1 } : f)) });
+
+  const favByClass = useMemo(() => {
+    const map = new Map<string, typeof s.favorites>();
+    for (const f of [...s.favorites].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0))) {
+      const k = f.drugClass || "Autre";
+      map.set(k, [...(map.get(k) ?? []), f]);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [s.favorites]);
+
+  const conflicts = useMemo(() => {
+    if (!patient) return { allergy: [] as string[], chronic: [] as string[] };
+    const a = new Set<string>();
+    const c = new Set<string>();
+    for (const ln of lines.split("\n").filter((x) => x.trim())) {
+      const r = lineConflicts(ln, patient.allergies, patient.chronic);
+      r.allergy.forEach((x) => a.add(x));
+      r.chronic.forEach((x) => c.add(x));
+    }
+    return { allergy: [...a], chronic: [...c] };
+  }, [lines, patient]);
   const history = patientId
     ? [...data.prescriptions].filter((r) => r.patientId === patientId).sort((a, b) => b.date.localeCompare(a.date))
     : [];
@@ -114,12 +140,49 @@ function PrescriptionsPage() {
           </div>
           <Field label="Médicaments / posologie (une ligne par médicament)">
             <textarea
-              className={`${inputCls} min-h-48`}
-              placeholder={"Paracétamol 1g — 1 cp x 3/jour pendant 5 jours\nAmoxicilline 500mg — 1 gél. matin et soir, 7 jours"}
+              className={`${inputCls} min-h-44`}
+              placeholder={"Paracétamol 1 g - 1 cp x 3/jour pendant 5 jours\nAmoxicilline 1 g - 1 cp matin et soir, 7 jours"}
               value={lines}
               onChange={(e) => setLines(e.target.value)}
             />
           </Field>
+
+          {patient && (conflicts.allergy.length > 0 || conflicts.chronic.length > 0) && (
+            <div className="flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2.5 text-sm text-danger">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                {conflicts.allergy.length > 0 && (
+                  <p>
+                    <b>Allergie</b> : cette ordonnance mentionne {conflicts.allergy.join(", ")} — allergie connue de{" "}
+                    {patient.name}.
+                  </p>
+                )}
+                {conflicts.chronic.length > 0 && (
+                  <p>
+                    <b>Doublon</b> possible avec le traitement chronique : {conflicts.chronic.join(", ")}.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {lines.trim() && (
+            <button
+              onClick={() => {
+                const last = lines.split("\n").map((x) => x.trim()).filter(Boolean).at(-1);
+                if (!last) return;
+                if (s.favorites.some((f) => renderFavorite(f).toLowerCase() === last.toLowerCase())) {
+                  toast.info("Déjà dans les favoris");
+                  return;
+                }
+                setSettings({ favorites: [...s.favorites, parseLegacyFavorite(last)] });
+                toast.success("Dernière ligne ajoutée aux favoris");
+              }}
+              className="inline-flex items-center gap-1 text-xs text-teal hover:underline"
+            >
+              <Star className="h-3.5 w-3.5" /> Ajouter la dernière ligne aux favoris
+            </button>
+          )}
           {patient && history.length > 0 && (
             <div className="rounded-lg border border-border p-3">
               <p className="label-caps mb-2 text-muted-foreground">Traitements en cours — renouveler</p>
@@ -147,18 +210,54 @@ function PrescriptionsPage() {
             </div>
           )}
 
+          {s.protocols.length > 0 && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="label-caps mb-2 flex items-center gap-1.5 text-muted-foreground">
+                <FlaskConical className="h-3.5 w-3.5" /> Ordonnances types
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {s.protocols.map((p) => (
+                  <button
+                    key={p.id}
+                    title={p.lines.join("\n")}
+                    onClick={() => {
+                      p.lines.forEach((ln) => addLine(ln));
+                      toast.success(`« ${p.name} » insérée (${p.lines.length} lignes)`);
+                    }}
+                    className="rounded-full bg-frost/50 px-3 py-1 text-xs font-medium text-twilight transition-colors hover:bg-frost dark:bg-muted dark:text-frost"
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {s.favorites.length > 0 && (
             <div>
-              <p className="label-caps mb-2 text-muted-foreground">Favoris</p>
-              <div className="flex flex-wrap gap-2">
-                {s.favorites.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setLines((l) => (l ? `${l}\n${f}` : f))}
-                    className="rounded-full border border-border px-3 py-1 text-xs hover:border-teal hover:bg-cyan/40 dark:hover:bg-muted"
-                  >
-                    + {f}
-                  </button>
+              <p className="label-caps mb-2 flex items-center gap-1.5 text-muted-foreground">
+                <Pill className="h-3.5 w-3.5" /> Médicaments favoris
+              </p>
+              <div className="space-y-2">
+                {favByClass.map(([cls, items]) => (
+                  <div key={cls}>
+                    <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">{cls}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((f) => (
+                        <button
+                          key={f.id}
+                          title={renderFavorite(f)}
+                          onClick={() => {
+                            addLine(renderFavorite(f));
+                            bumpUse(f.id);
+                          }}
+                          className="rounded-full border border-border px-2.5 py-1 text-xs hover:border-teal hover:bg-cyan/40 dark:hover:bg-muted"
+                        >
+                          + {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

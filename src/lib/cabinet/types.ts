@@ -248,13 +248,57 @@ export interface Payment {
   method: PaymentMethod;
 }
 
+/** Classes thérapeutiques usuelles (le champ `drugClass` accepte aussi une valeur libre) */
+export const DRUG_CLASSES = [
+  "Antalgique",
+  "AINS",
+  "Antibiotique",
+  "Antipyrétique",
+  "IPP / anti-acide",
+  "Antihypertenseur",
+  "Antidiabétique",
+  "Hypolipémiant",
+  "Corticoïde",
+  "Antihistaminique",
+  "Bronchodilatateur",
+  "Antitussif",
+  "Antispasmodique",
+  "Anxiolytique / hypnotique",
+  "Vitamine / supplément",
+  "Dermatologie",
+  "Autre",
+] as const;
+
+/** Médicament favori — sert à générer une ligne d'ordonnance */
+export interface Favorite {
+  id: string;
+  label: string; // dénomination + dosage, ex. "Paracétamol 1 g"
+  form?: string; // comprimé, gélule, sachet, sirop, inhalateur…
+  posology: string; // "1 cp x 3/j"
+  duration?: string; // "5 jours", "traitement de fond"
+  route?: string; // orale, cutanée, inhalée…
+  note?: string; // "au milieu du repas"
+  drugClass?: string;
+  uses?: number; // compteur d'utilisation (tri « les plus utilisés »)
+}
+
+/** Ordonnance type : ensemble de lignes prêtes à insérer pour une situation fréquente */
+export interface Protocol {
+  id: string;
+  name: string; // "Angine bactérienne (adulte)"
+  category?: string;
+  note?: string;
+  lines: string[];
+}
+
 export interface Settings {
   doctorName: string;
   specialty: string;
   address: string;
   phone: string;
   licenseNumber: string;
-  favorites: string[];
+  favorites: Favorite[];
+  protocols: Protocol[];
   consultDuration: number; // durée d'une consultation en minutes
   pin: string;
   adminPin: string;
