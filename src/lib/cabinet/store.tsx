@@ -53,6 +53,12 @@ function load(): CabinetData {
       parsed.vaccinations ??= seed.vaccinations;
       parsed.documents ??= seed.documents;
       parsed.contacts ??= seed.contacts;
+      // rétro-compatibilité : donner un contenu visualisable aux documents d'exemple
+      parsed.documents = (parsed.documents ?? seed.documents).map((doc) => {
+        if (doc.dataUrl) return doc;
+        const match = seed.documents.find((s) => s.name === doc.name);
+        return match ? { ...doc, dataUrl: match.dataUrl, mime: match.mime } : doc;
+      });
       // rétro-compatibilité : anciens entretiens (trame de questions) → texte libre des réponses
       parsed.diagnostics = (parsed.diagnostics ?? seed.diagnostics).map((entry) => {
         const legacy = entry as unknown as {

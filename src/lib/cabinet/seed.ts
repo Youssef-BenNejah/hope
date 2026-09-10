@@ -9,6 +9,42 @@ const back = (offset: number) => format(subDays(new Date(), offset), "yyyy-MM-dd
 const iso = (offset: number) => new Date(Date.now() - offset * 86400000).toISOString();
 const YEAR = new Date().getFullYear();
 
+/** PDF minimal (1 page) encodé en data URL — donne un vrai contenu aux documents d'exemple. */
+function miniPdf(title: string, subtitle = "Document d'exemple — Cabinet médical"): string {
+  const ascii = (s: string) => {
+    let out = "";
+    for (const ch of s.normalize("NFD")) {
+      const c = ch.charCodeAt(0);
+      if (c >= 0x300 && c <= 0x36f) continue; // marques combinantes
+      if (ch === "(" || ch === ")" || ch === "\\") out += "\\" + ch;
+      else out += c >= 0x20 && c <= 0x7e ? ch : "?";
+    }
+    return out;
+  };
+  const content =
+    `BT /F1 20 Tf 60 780 Td (${ascii(title)}) Tj ET\n` +
+    `BT /F1 12 Tf 60 752 Td (${ascii(subtitle)}) Tj ET`;
+  const objs = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  objs.forEach((o, i) => {
+    offsets[i] = pdf.length;
+    pdf += `${i + 1} 0 obj\n${o}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
+  offsets.forEach((off) => (pdf += `${String(off).padStart(10, "0")} 00000 n \n`));
+  pdf += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  const b64 = typeof btoa === "function" ? btoa(pdf) : Buffer.from(pdf, "latin1").toString("base64");
+  return `data:application/pdf;base64,${b64}`;
+}
+
 export function buildSeed(): CabinetData {
   const p1 = "pat-salma";
   const p2 = "pat-karim";
@@ -635,7 +671,7 @@ export function buildSeed(): CabinetData {
         patientId: p4,
         name: "Bilan lipidique — laboratoire Ibn Sina.pdf",
         mime: "application/pdf",
-        dataUrl: "",
+        dataUrl: miniPdf("Bilan lipidique", "Laboratoire Ibn Sina — cholesterol, LDL, HDL, triglycerides"),
         category: "Analyse",
         uploadedAt: iso(55),
       },
@@ -644,7 +680,7 @@ export function buildSeed(): CabinetData {
         patientId: p1,
         name: "ECG de repos — cabinet Dr Hammami.pdf",
         mime: "application/pdf",
-        dataUrl: "",
+        dataUrl: miniPdf("ECG de repos", "Cabinet Dr Nour Hammami — rythme sinusal regulier, pas de trouble"),
         category: "Compte rendu",
         uploadedAt: iso(58),
       },
@@ -653,7 +689,7 @@ export function buildSeed(): CabinetData {
         patientId: p7,
         name: "Échographie de datation.pdf",
         mime: "application/pdf",
-        dataUrl: "",
+        dataUrl: miniPdf("Echographie de datation", "Grossesse intra-uterine evolutive — LCC compatible 9 SA"),
         category: "Imagerie",
         uploadedAt: iso(8),
       },
@@ -662,7 +698,7 @@ export function buildSeed(): CabinetData {
         patientId: p8,
         name: "Courrier ophtalmologie.pdf",
         mime: "application/pdf",
-        dataUrl: "",
+        dataUrl: miniPdf("Courrier — ophtalmologie", "Depistage de retinopathie diabetique, fond d'oeil demande"),
         category: "Courrier",
         uploadedAt: iso(11),
       },
@@ -670,7 +706,7 @@ export function buildSeed(): CabinetData {
         id: uid(),
         name: "Convention CNAM 2024.pdf",
         mime: "application/pdf",
-        dataUrl: "",
+        dataUrl: miniPdf("Convention CNAM 2024", "Convention de tiers payant — medecin de famille"),
         category: "Administratif",
         uploadedAt: iso(200),
       },
@@ -678,7 +714,7 @@ export function buildSeed(): CabinetData {
         id: uid(),
         name: "Contrat de maintenance — autoclave.pdf",
         mime: "application/pdf",
-        dataUrl: "",
+        dataUrl: miniPdf("Contrat de maintenance — autoclave", "MediFourniture SARL — maintenance annuelle preventive"),
         category: "Administratif",
         uploadedAt: iso(120),
       },
