@@ -822,6 +822,12 @@ export function buildSeed(): CabinetData {
         { id: "res-ecg", name: "Appareil ECG", kind: "équipement" },
         { id: "res-spiro", name: "Spiromètre", kind: "équipement" },
       ],
+      certificateTemplates: [
+        {
+          type: "Certificat de non contre-indication au voyage",
+          text: "Je soussigné certifie que l'état de santé du patient ne présente pas de contre-indication à un voyage en avion.",
+        },
+      ],
     },
   };
 }

@@ -2,13 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { addDays, format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Baby, Copy, Dumbbell, FileText, GraduationCap, Syringe } from "lucide-react";
+import { Baby, Copy, Dumbbell, FilePlus2, FileText, GraduationCap, Syringe, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { fmtDate, today } from "@/lib/cabinet/utils";
-import type { CertificateType } from "@/lib/cabinet/types";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
-import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientPicker } from "@/components/cabinet/PatientPicker";
 
 export const Route = createFileRoute("/certificats")({
@@ -26,7 +25,7 @@ export const Route = createFileRoute("/certificats")({
   component: CertificatesPage,
 });
 
-const templates: { type: CertificateType; icon: typeof FileText; base: string }[] = [
+const builtinTemplates: { type: string; icon: typeof FileText; base: string }[] = [
   { type: "Arrêt de travail", icon: FileText, base: "" },
   {
     type: "Aptitude sportive",
@@ -51,17 +50,25 @@ const templates: { type: CertificateType; icon: typeof FileText; base: string }[
 ];
 
 function CertificatesPage() {
-  const { data, update, newId, patientName } = useCabinet();
+  const { data, update, setSettings, newId, patientName } = useCabinet();
   const { patient: presetPatient } = Route.useSearch();
-  const [active, setActive] = useState<CertificateType | null>(null);
+  const [active, setActive] = useState<string | null>(null);
   const [patientId, setPatientId] = useState<string | null>(presetPatient ?? null);
   const [startDate, setStartDate] = useState(today());
   const [days, setDays] = useState(3);
   const [text, setText] = useState("");
   const [preview, setPreview] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [detail, setDetail] = useState<(typeof data.certificates)[number] | null>(null);
   const [month, setMonth] = useState(today().slice(0, 7));
+  const [newTplOpen, setNewTplOpen] = useState(false);
+  const [newTpl, setNewTpl] = useState({ type: "", text: "" });
+  const [tplToDelete, setTplToDelete] = useState<string | null>(null);
+
+  const customTemplates = data.settings.certificateTemplates ?? [];
+  const allTemplates = [
+    ...builtinTemplates.map((t) => ({ ...t, custom: false })),
+    ...customTemplates.map((t) => ({ type: t.type, icon: FileText, base: t.text, custom: true })),
+  ];
 
   const shownCertificates = month
     ? data.certificates.filter((c) => c.documentDate.startsWith(month))
@@ -75,10 +82,77 @@ function CertificatesPage() {
       } nécessite un arrêt de travail de ${days} jour(s), du ${fmtDate(startDate)} au ${fmtDate(endDate)}.`
     : text;
 
-  const openTemplate = (t: (typeof templates)[number]) => {
+  const openTemplate = (t: { type: string; base: string }) => {
     setActive(t.type);
     setText(t.base);
     setPreview(false);
+  };
+
+  const saveTemplate = () => {
+    const type = newTpl.type.trim();
+    if (!type) {
+      toast.error("Donnez un nom au modèle");
+      return;
+    }
+    if (
+      [...builtinTemplates.map((b) => b.type), ...customTemplates.map((c) => c.type)].some(
+        (t) => t.toLowerCase() === type.toLowerCase(),
+      )
+    ) {
+      toast.error("Ce modèle existe déjà");
+      return;
+    }
+    setSettings({ certificateTemplates: [...customTemplates, { type, text: newTpl.text.trim() }] });
+    toast.success("Modèle ajouté");
+    setNewTpl({ type: "", text: "" });
+    setNewTplOpen(false);
+  };
+
+  const printCertificate = (type: string, content: string, docDate: string, patient?: string) => {
+    const s = data.settings;
+    const esc = (t: string) => (t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(type)}${
+      patient ? " — " + esc(patient) : ""
+    }</title>
+<style>
+@page{size:A4;margin:22mm}
+*{box-sizing:border-box}
+body{font-family:Georgia,"Times New Roman",serif;color:#0B1220;font-size:13.5px;line-height:1.7}
+.head{border-bottom:2px solid #0077B6;padding-bottom:12px;margin-bottom:32px}
+.head .name{font-size:16px;font-weight:bold;color:#0077B6}
+.head .muted{color:#5B6472;font-size:11.5px}
+h1{text-align:center;font-size:16px;letter-spacing:.08em;text-transform:uppercase;margin:36px 0}
+.body{white-space:pre-wrap;margin:0 8px}
+.sign{margin-top:64px;text-align:right}
+.sign .place{color:#5B6472;font-size:12px}
+.sign .who{margin-top:48px;font-weight:bold}
+.foot{position:fixed;bottom:12mm;left:22mm;right:22mm;border-top:1px solid #E2E8F0;padding-top:6px;color:#8B94A3;font-size:10px;text-align:center}
+</style></head><body>
+<div class="head">
+  <div class="name">${esc(s.doctorName)}</div>
+  <div class="muted">${esc(s.specialty)}</div>
+  <div class="muted">${esc(s.address)}${s.phone ? " · Tél. " + esc(s.phone) : ""}</div>
+  <div class="muted">N° d'ordre : ${esc(s.licenseNumber)}</div>
+</div>
+<h1>${esc(type)}</h1>
+<p class="body">${esc(content) || "…"}</p>
+<div class="sign">
+  <div class="place">Sousse, le ${esc(fmtDate(docDate))}</div>
+  <div class="who">${esc(s.doctorName)}</div>
+  <div class="muted" style="color:#5B6472;font-size:11px">Signature et cachet</div>
+</div>
+<div class="foot">${esc(s.address)} · Tél. ${esc(s.phone ?? "")} · N° d'ordre ${esc(s.licenseNumber)}</div>
+</body></html>`;
+    const w = window.open("", "_blank", "width=900,height=1100");
+    if (!w) {
+      toast.error("Autorisez les fenêtres contextuelles pour générer le PDF");
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    window.setTimeout(() => w.print(), 350);
+    toast.success("Fenêtre d'impression ouverte — choisissez « Enregistrer au format PDF »");
   };
 
   const save = () => {
@@ -122,16 +196,36 @@ function CertificatesPage() {
       <PageHeader title="Certificats" subtitle="Générez un document à partir d'un modèle" />
 
       <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-5">
-        {templates.map((t) => (
-          <button
+        {allTemplates.map((t) => (
+          <div
             key={t.type}
-            onClick={() => openTemplate(t)}
-            className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-5 text-left transition-colors hover:border-teal hover:bg-cyan/40 dark:hover:bg-muted"
+            className="group relative flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-5 transition-colors hover:border-teal hover:bg-cyan/40 dark:hover:bg-muted"
           >
-            <t.icon className="h-6 w-6 text-teal" />
-            <span className="text-sm font-medium">{t.type}</span>
-          </button>
+            <button onClick={() => openTemplate(t)} className="flex flex-col items-start gap-3 text-left">
+              <t.icon className="h-6 w-6 text-teal" />
+              <span className="text-sm font-medium">{t.type}</span>
+            </button>
+            {t.custom && (
+              <button
+                onClick={() => setTplToDelete(t.type)}
+                aria-label={`Supprimer le modèle ${t.type}`}
+                className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-danger-soft hover:text-danger group-hover:opacity-100"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         ))}
+        <button
+          onClick={() => {
+            setNewTpl({ type: "", text: "" });
+            setNewTplOpen(true);
+          }}
+          className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border-strong bg-card p-5 text-left text-muted-foreground transition-colors hover:border-teal hover:text-teal"
+        >
+          <FilePlus2 className="h-6 w-6" />
+          <span className="text-sm font-medium">Nouveau modèle</span>
+        </button>
       </div>
 
       <Card className="mt-8">
@@ -244,14 +338,15 @@ function CertificatesPage() {
             <div className="flex gap-2">
               <PrimaryButton
                 onClick={() => {
-                  setGenerating(true);
-                  window.setTimeout(() => {
-                    setGenerating(false);
-                    setPreview(true);
-                  }, 900);
+                  if (!patientId) {
+                    toast.error("Sélectionnez un patient");
+                    return;
+                  }
+                  printCertificate(active ?? "", body, today(), patientName(patientId));
+                  setPreview(true);
                 }}
               >
-                {generating ? "Génération…" : "Générer le PDF"}
+                Générer le PDF
               </PrimaryButton>
               <GhostButton onClick={save}>Enregistrer dans le dossier</GhostButton>
             </div>
@@ -274,9 +369,13 @@ function CertificatesPage() {
         </div>
 
         {preview && (
-          <div className="mt-6 flex justify-end gap-2 rounded-lg bg-success-soft px-4 py-3">
-            <span className="mr-auto text-sm text-success">Document généré avec succès.</span>
-            <GhostButton onClick={() => toast.success("Téléchargement simulé du document")}>Télécharger</GhostButton>
+          <div className="mt-6 flex flex-wrap justify-end gap-2 rounded-lg bg-success-soft px-4 py-3">
+            <span className="mr-auto text-sm text-success">Fenêtre d'impression ouverte.</span>
+            <GhostButton
+              onClick={() => printCertificate(active ?? "", body, today(), patientId ? patientName(patientId) : undefined)}
+            >
+              Ré-ouvrir le PDF
+            </GhostButton>
             <PrimaryButton onClick={save}>Enregistrer dans le dossier du patient</PrimaryButton>
           </div>
         )}
@@ -351,13 +450,58 @@ function CertificatesPage() {
               >
                 <Copy className="h-4 w-4" /> Dupliquer / Renouveler
               </GhostButton>
-              <PrimaryButton onClick={() => toast.success("Téléchargement simulé du document")}>
-                Télécharger le PDF
+              <PrimaryButton
+                onClick={() =>
+                  printCertificate(detail.type, detail.text, detail.documentDate, patientName(detail.patientId))
+                }
+              >
+                Générer le PDF
               </PrimaryButton>
             </div>
           </div>
         )}
       </Modal>
+
+      <Modal open={newTplOpen} onClose={() => setNewTplOpen(false)} title="Nouveau modèle de certificat" width="max-w-lg">
+        <div className="space-y-4">
+          <Field label="Nom du modèle">
+            <input
+              className={inputCls}
+              autoFocus
+              placeholder="Ex. Certificat de non contre-indication au voyage"
+              value={newTpl.type}
+              onChange={(e) => setNewTpl({ ...newTpl, type: e.target.value })}
+            />
+          </Field>
+          <Field label="Texte par défaut">
+            <textarea
+              className={`${inputCls} min-h-32`}
+              placeholder="Je soussigné certifie que…"
+              value={newTpl.text}
+              onChange={(e) => setNewTpl({ ...newTpl, text: e.target.value })}
+            />
+          </Field>
+          <p className="text-xs text-muted-foreground">
+            Le texte reste modifiable à chaque édition de certificat. Les champs comme le nom du patient sont ajoutés
+            automatiquement à l'impression.
+          </p>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <GhostButton onClick={() => setNewTplOpen(false)}>Annuler</GhostButton>
+          <PrimaryButton onClick={saveTemplate}>Ajouter le modèle</PrimaryButton>
+        </div>
+      </Modal>
+
+      <ConfirmModal
+        open={!!tplToDelete}
+        onClose={() => setTplToDelete(null)}
+        message={`Supprimer le modèle « ${tplToDelete} » ? Les certificats déjà émis ne sont pas affectés.`}
+        onConfirm={() => {
+          if (!tplToDelete) return;
+          setSettings({ certificateTemplates: customTemplates.filter((t) => t.type !== tplToDelete) });
+          toast.success("Modèle supprimé");
+        }}
+      />
     </ScreenTransition>
   );
 }

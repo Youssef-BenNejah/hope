@@ -126,17 +126,25 @@ export interface Checkup {
   comment?: string;
 }
 
-export type CertificateType =
-  | "Arrêt de travail"
-  | "Aptitude sportive"
-  | "Certificat scolaire"
-  | "Certificat de grossesse"
-  | "Certificat de vaccination";
+/** Modèles de certificats livrés d'origine (le champ `type` accepte aussi des modèles personnalisés) */
+export const BUILTIN_CERTIFICATE_TYPES = [
+  "Arrêt de travail",
+  "Aptitude sportive",
+  "Certificat scolaire",
+  "Certificat de grossesse",
+  "Certificat de vaccination",
+] as const;
+
+/** Modèle de certificat personnalisé, ajouté par le médecin */
+export interface CertificateTemplate {
+  type: string;
+  text: string;
+}
 
 export interface Certificate {
   id: string;
   patientId: string;
-  type: CertificateType;
+  type: string;
   documentDate: string;
   startDate?: string;
   days?: number;
@@ -254,6 +262,7 @@ export interface Settings {
   theme: "light" | "dark" | "system";
   appointmentCategories: AppointmentCategory[];
   resources: Resource[];
+  certificateTemplates: CertificateTemplate[];
 }
 
 /** Compte médecin / personnel géré depuis l'écran d'administration */

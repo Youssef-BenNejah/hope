@@ -32,6 +32,7 @@ function load(): CabinetData {
           ? parsed.settings.appointmentCategories
           : seed.settings.appointmentCategories,
         resources: parsed.settings.resources?.length ? parsed.settings.resources : seed.settings.resources,
+        certificateTemplates: parsed.settings.certificateTemplates ?? [],
       };
       // rétro-compatibilité : comptes médecins + rôle
       if (!parsed.doctors?.length) parsed.doctors = seed.doctors;
