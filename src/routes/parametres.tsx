@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, RotateCcw, Trash2 } from "lucide-react";
+import { History, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
+import { today } from "@/lib/cabinet/utils";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 
@@ -19,10 +20,13 @@ export const Route = createFileRoute("/parametres")({
 });
 
 function SettingsPage() {
-  const { data, setSettings, reset } = useCabinet();
+  const { data, setSettings, reset, update, newId } = useCabinet();
   const s = data.settings;
   const [fav, setFav] = useState("");
   const [pin, setPin] = useState("");
+  const [cat, setCat] = useState({ label: "", color: "#0077B6" });
+  const [res, setRes] = useState({ name: "", kind: "salle" as "salle" | "équipement" | "praticien" });
+  const [holiday, setHoliday] = useState({ date: today(), label: "" });
 
   return (
     <ScreenTransition>
@@ -118,6 +122,157 @@ function SettingsPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             L'agenda découpe la journée en créneaux de cette durée (8h — 18h).
           </p>
+        </Card>
+
+        <Card>
+          <h2 className="mb-4 text-lg font-semibold">Catégories de rendez-vous</h2>
+          <div className="space-y-2">
+            {s.appointmentCategories.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+                <input
+                  type="color"
+                  value={c.color}
+                  onChange={(e) =>
+                    setSettings({
+                      appointmentCategories: s.appointmentCategories.map((x) =>
+                        x.id === c.id ? { ...x, color: e.target.value } : x,
+                      ),
+                    })
+                  }
+                  className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-transparent"
+                  aria-label={`Couleur ${c.label}`}
+                />
+                <input
+                  className="flex-1 bg-transparent outline-none"
+                  value={c.label}
+                  onChange={(e) =>
+                    setSettings({
+                      appointmentCategories: s.appointmentCategories.map((x) =>
+                        x.id === c.id ? { ...x, label: e.target.value } : x,
+                      ),
+                    })
+                  }
+                />
+                <button
+                  onClick={() =>
+                    setSettings({ appointmentCategories: s.appointmentCategories.filter((x) => x.id !== c.id) })
+                  }
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+                  aria-label={`Supprimer ${c.label}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <input type="color" value={cat.color} onChange={(e) => setCat({ ...cat, color: e.target.value })} className="h-9 w-10 shrink-0 cursor-pointer rounded border border-border bg-transparent" aria-label="Couleur de la nouvelle catégorie" />
+            <input className={inputCls} placeholder="Nom de la catégorie" value={cat.label} onChange={(e) => setCat({ ...cat, label: e.target.value })} />
+            <PrimaryButton
+              onClick={() => {
+                if (!cat.label.trim()) return;
+                setSettings({
+                  appointmentCategories: [
+                    ...s.appointmentCategories,
+                    { id: newId(), label: cat.label.trim(), color: cat.color },
+                  ],
+                });
+                setCat({ label: "", color: "#0077B6" });
+                toast.success("Catégorie ajoutée");
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </PrimaryButton>
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="mb-4 text-lg font-semibold">Ressources</h2>
+          <div className="space-y-2">
+            {s.resources.map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                <span>
+                  {r.name} <span className="text-xs text-muted-foreground">· {r.kind}</span>
+                </span>
+                <button
+                  onClick={() => setSettings({ resources: s.resources.filter((x) => x.id !== r.id) })}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+                  aria-label={`Supprimer ${r.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {s.resources.length === 0 && <p className="text-sm text-muted-foreground">Aucune ressource définie.</p>}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <input className={inputCls} placeholder="Salle 3, ECG, échographe…" value={res.name} onChange={(e) => setRes({ ...res, name: e.target.value })} />
+            <select className={`${inputCls} w-auto`} value={res.kind} onChange={(e) => setRes({ ...res, kind: e.target.value as typeof res.kind })}>
+              <option value="salle">Salle</option>
+              <option value="équipement">Équipement</option>
+              <option value="praticien">Praticien</option>
+            </select>
+            <PrimaryButton
+              onClick={() => {
+                if (!res.name.trim()) return;
+                setSettings({ resources: [...s.resources, { id: newId(), name: res.name.trim(), kind: res.kind }] });
+                setRes({ name: "", kind: "salle" });
+                toast.success("Ressource ajoutée");
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </PrimaryButton>
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="mb-4 text-lg font-semibold">Jours fériés</h2>
+          <p className="mb-3 text-sm text-muted-foreground">Les journées listées ici sont bloquées automatiquement dans l'agenda.</p>
+          <div className="space-y-2">
+            {[...data.holidays]
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map((h) => (
+                <div key={h.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                  <span>
+                    <span className="num text-muted-foreground">{h.date}</span> — {h.label}
+                  </span>
+                  <button
+                    onClick={() => update((d) => ({ ...d, holidays: d.holidays.filter((x) => x.id !== h.id) }))}
+                    className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+                    aria-label={`Supprimer ${h.label}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <input type="date" className={`${inputCls} num`} value={holiday.date} onChange={(e) => setHoliday({ ...holiday, date: e.target.value })} />
+            <input className={inputCls} placeholder="Intitulé" value={holiday.label} onChange={(e) => setHoliday({ ...holiday, label: e.target.value })} />
+            <PrimaryButton
+              onClick={() => {
+                if (!holiday.label.trim()) return;
+                update((d) => ({ ...d, holidays: [...d.holidays, { id: newId(), date: holiday.date, label: holiday.label.trim() }] }));
+                setHoliday({ date: today(), label: "" });
+                toast.success("Jour férié ajouté");
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </PrimaryButton>
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="mb-4 text-lg font-semibold">Journal d'activité</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            {data.audit.length} action{data.audit.length > 1 ? "s" : ""} tracée{data.audit.length > 1 ? "s" : ""} — dossiers,
+            ordonnances, certificats, paiements, contacts.
+          </p>
+          <Link to="/journal">
+            <GhostButton>
+              <History className="h-4 w-4" /> Ouvrir le journal
+            </GhostButton>
+          </Link>
         </Card>
 
         <Card>

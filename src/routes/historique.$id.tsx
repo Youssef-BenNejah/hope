@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarDays, FileText, Paperclip, StickyNote, Wallet } from "lucide-react";
+import { CalendarDays, ClipboardList, FileText, Paperclip, StickyNote, Wallet } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
 import { dt, fmtDate, statusMeta } from "@/lib/cabinet/utils";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
@@ -21,8 +21,8 @@ export const Route = createFileRoute("/historique/$id")({
   component: HistoryPage,
 });
 
-type Kind = "Consultations" | "Notes" | "Certificats" | "Comptabilité";
-const kinds: Kind[] = ["Consultations", "Notes", "Certificats", "Comptabilité"];
+type Kind = "Consultations" | "Diagnostic" | "Notes" | "Certificats" | "Comptabilité";
+const kinds: Kind[] = ["Consultations", "Diagnostic", "Notes", "Certificats", "Comptabilité"];
 
 interface Entry {
   id: string;
@@ -37,6 +37,7 @@ interface Entry {
 
 const kindStyle: Record<Kind, { icon: typeof CalendarDays; cls: string }> = {
   Consultations: { icon: CalendarDays, cls: "bg-frost text-twilight" },
+  Diagnostic: { icon: ClipboardList, cls: "bg-warning-soft text-warning" },
   Notes: { icon: StickyNote, cls: "bg-cyan text-twilight" },
   Certificats: { icon: FileText, cls: "bg-success-soft text-success" },
   Comptabilité: { icon: Wallet, cls: "bg-danger-soft text-danger" },
@@ -80,6 +81,16 @@ function HistoryPage() {
         title: c.type,
         detail: c.text,
         ...(c.days ? { badge: `${c.days} jour(s)` } : {}),
+      });
+    }
+    for (const g of data.diagnostics.filter((x) => x.patientId === patient.id)) {
+      out.push({
+        id: g.id,
+        kind: "Diagnostic",
+        date: g.date,
+        title: g.reason || "Entretien avec le patient",
+        ...(g.content.trim() ? { detail: g.content.trim() } : {}),
+        badge: g.status === "brouillon" ? "Brouillon" : "Terminé",
       });
     }
     for (const p of data.payments.filter((x) => x.patientId === patient.id)) {

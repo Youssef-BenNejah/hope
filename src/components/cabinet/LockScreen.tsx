@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Delete } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCabinet } from "@/lib/cabinet/store";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logo from "@/assets/logo.png";
 
 export function LockScreen() {
   const { data, unlock } = useCabinet();
@@ -12,15 +12,21 @@ export function LockScreen() {
 
   const submit = useCallback(
     (value: string) => {
-      if (value === data.settings.pin) {
+      const staff = data.doctors.find((d) => d.active && d.pin === value);
+      const mainDoctor =
+        data.doctors.find((d) => d.active && d.name === data.settings.doctorName) ??
+        data.doctors.find((d) => d.active && d.role === "medecin");
+
+      if (value === (data.settings.adminPin || "0000")) {
+        setError(false);
+        window.setTimeout(() => unlock({ admin: true }), 150);
+      } else if (staff || value === data.settings.pin) {
+        const user = staff ?? mainDoctor;
         setError(false);
         window.setTimeout(() => {
-          unlock(false);
+          unlock(user ? { userId: user.id } : {});
           navigate({ to: "/" });
         }, 150);
-      } else if (value === (data.settings.adminPin || "0000")) {
-        setError(false);
-        window.setTimeout(() => unlock(true), 150);
       } else {
         setError(true);
         window.setTimeout(() => {
@@ -29,7 +35,7 @@ export function LockScreen() {
         }, 500);
       }
     },
-    [data.settings.pin, data.settings.adminPin, unlock, navigate],
+    [data.doctors, data.settings.pin, data.settings.adminPin, data.settings.doctorName, unlock, navigate],
   );
 
   const push = useCallback(
@@ -59,7 +65,7 @@ export function LockScreen() {
       style={{ background: "linear-gradient(160deg, #03045E 0%, #052a7a 55%, #0077B6 100%)" }}
     >
       <img
-        src={logoAsset.url}
+        src={logo}
         alt="Cabinet"
         className="h-24 w-24 drop-shadow-[0_0_24px_rgba(144,224,239,0.35)]"
       />
@@ -80,7 +86,7 @@ export function LockScreen() {
       </div>
 
       <p className={`mt-3 h-5 text-sm ${error ? "text-[#e2705a]" : "text-frost/70"}`}>
-        {error ? "Code incorrect" : "Médecin : 1234 · Administration : 0000"}
+        {error ? "Code incorrect" : "Médecin : 1234 · Secrétariat : 2580 · Administration : 0000"}
       </p>
 
       <div className="mt-6 grid w-64 grid-cols-3 gap-3">

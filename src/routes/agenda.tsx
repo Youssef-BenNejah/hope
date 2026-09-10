@@ -56,6 +56,9 @@ function AgendaPage() {
     data.appointments.filter((a) => a.date === date && toMin(a.time) >= m && toMin(a.time) < m + duration);
   const blockAt = (date: string, m: number) =>
     data.blocks.find((b) => b.date === date && m >= toMin(b.start) && m < toMin(b.end));
+  const holidayAt = (date: string) => data.holidays.find((h) => h.date === date);
+  const catColor = (id?: string) =>
+    id ? data.settings.appointmentCategories.find((c) => c.id === id)?.color : undefined;
 
   const shift = (dir: number) => setCursor((c) => (view === "month" ? addMonths(c, dir) : addDays(c, dir * (view === "week" ? 7 : 1))));
 
@@ -109,14 +112,18 @@ function AgendaPage() {
             style={{ gridTemplateColumns: `70px repeat(${days.length}, minmax(0,1fr))` }}
           >
             <div className="border-b border-border bg-twilight px-2 py-2 text-xs text-[#EAF2FA]">Heure</div>
-            {days.map((d) => (
-              <div
-                key={d.toISOString()}
-                className="border-b border-l border-border bg-twilight px-2 py-2 text-xs font-medium capitalize text-[#EAF2FA]"
-              >
-                {format(d, "EEEE d", { locale: fr })}
-              </div>
-            ))}
+            {days.map((d) => {
+              const hol = holidayAt(format(d, "yyyy-MM-dd"));
+              return (
+                <div
+                  key={d.toISOString()}
+                  className="border-b border-l border-border bg-twilight px-2 py-2 text-xs font-medium capitalize text-[#EAF2FA]"
+                >
+                  {format(d, "EEEE d", { locale: fr })}
+                  {hol && <span className="ml-1 rounded bg-warning/30 px-1 text-[10px] normal-case">{hol.label}</span>}
+                </div>
+              );
+            })}
             {rows.map((h) => (
               <FragmentRow key={h}>
                 <div className="num border-b border-border px-2 py-3 text-xs text-muted-foreground">
@@ -124,7 +131,8 @@ function AgendaPage() {
                 </div>
                 {days.map((d) => {
                   const ds = format(d, "yyyy-MM-dd");
-                  const blocked = blockAt(ds, h);
+                  const holiday = holidayAt(ds);
+                  const blocked = blockAt(ds, h) ?? (holiday ? { reason: holiday.label } : undefined);
                   const appts = apptAt(ds, h);
                   return (
                     <div
@@ -146,6 +154,7 @@ function AgendaPage() {
                               e.stopPropagation();
                               setModal({ open: true, editId: a.id });
                             }}
+                            style={catColor(a.category) ? { borderLeft: `3px solid ${catColor(a.category)}` } : undefined}
                             className={`mb-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs ${statusColor[a.status]}`}
                           >
                             <span className="num shrink-0 rounded bg-white/60 px-1 py-0.5 font-semibold dark:bg-black/20">
@@ -260,16 +269,19 @@ function MonthView({ cursor, onPick }: { cursor: Date; onPick: (d: Date) => void
         {cells.map((d) => {
           const ds = format(d, "yyyy-MM-dd");
           const count = data.appointments.filter((a) => a.date === ds).length;
+          const hol = data.holidays.find((h) => h.date === ds);
           const inMonth = d.getMonth() === cursor.getMonth();
           return (
             <button
               key={ds}
               onClick={() => onPick(d)}
+              title={hol?.label}
               className={`flex h-20 flex-col items-start rounded-lg border border-border p-2 text-left transition-colors hover:bg-cyan/50 dark:hover:bg-muted ${
                 inMonth ? "" : "opacity-40"
-              }`}
+              } ${hol ? "bg-warning-soft" : ""}`}
             >
               <span className="num text-sm">{format(d, "d")}</span>
+              {hol && <span className="truncate text-[10px] text-warning">{hol.label}</span>}
               {count > 0 && (
                 <span className="mt-auto flex items-center gap-1 text-xs text-teal">
                   <span className="h-2 w-2 rounded-full bg-surf" /> {count}

@@ -1,12 +1,22 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Activity, Plus, Search, Users } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { ArrowUpDown, ClipboardList, FolderOpen, GitMerge, MoreHorizontal, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useCabinet } from "@/lib/cabinet/store";
+import type { CabinetData } from "@/lib/cabinet/types";
 import { ageFrom, fmtDate, levenshtein, makePatientCode, matches, sexLabel, today } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
-import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientDrawer } from "@/components/cabinet/PatientDrawer";
+import { PatientPicker } from "@/components/cabinet/PatientPicker";
+import { DiagnosticModal } from "@/components/cabinet/DiagnosticModal";
 
 export const Route = createFileRoute("/patients")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -23,7 +33,7 @@ export const Route = createFileRoute("/patients")({
   component: PatientsPage,
 });
 
-const empty = {
+const emptyForm = {
   name: "",
   phone: "",
   birthDate: "",
@@ -35,36 +45,103 @@ const empty = {
   allergies: "",
 };
 
-const countries = [
-  "Tunisie",
-  "Algérie",
-  "Maroc",
-  "Libye",
-  "France",
-  "Italie",
-  "Allemagne",
-  "Canada",
-  "Autre",
-];
+const countries = ["Tunisie", "Algérie", "Maroc", "Libye", "France", "Italie", "Allemagne", "Canada", "Autre"];
+const pageSizes = [10, 25, 50];
+type SortKey = "name" | "age" | "visit";
+
+function mergePatients(d: CabinetData, keepId: string, dropId: string): CabinetData {
+  const keep = d.patients.find((p) => p.id === keepId)!;
+  const drop = d.patients.find((p) => p.id === dropId)!;
+  const sex = keep.sex ?? drop.sex;
+  const country = keep.country || drop.country;
+  const coverage = keep.coverage ?? drop.coverage;
+  const insurer = keep.insurer || drop.insurer;
+  const merged = {
+    ...keep,
+    phone: keep.phone || drop.phone,
+    birthDate: keep.birthDate || drop.birthDate,
+    cnam: keep.cnam || drop.cnam,
+    allergies: [...new Set([...keep.allergies, ...drop.allergies])],
+    chronic: [...new Set([...keep.chronic, ...drop.chronic])],
+    ...(sex ? { sex } : {}),
+    ...(country ? { country } : {}),
+    ...(coverage ? { coverage } : {}),
+    ...(insurer ? { insurer } : {}),
+  };
+  const remap = <T extends { patientId?: string }>(arr: T[]) =>
+    arr.map((x) => (x.patientId === dropId ? { ...x, patientId: keepId } : x));
+  return {
+    ...d,
+    patients: d.patients.filter((p) => p.id !== dropId).map((p) => (p.id === keepId ? merged : p)),
+    appointments: remap(d.appointments),
+    notes: remap(d.notes),
+    prescriptions: remap(d.prescriptions),
+    analyses: remap(d.analyses),
+    certificates: remap(d.certificates),
+    checkups: remap(d.checkups),
+    payments: remap(d.payments),
+    vaccinations: remap(d.vaccinations),
+    referrals: remap(d.referrals),
+    documents: remap(d.documents),
+    messages: remap(d.messages),
+  };
+}
 
 function PatientsPage() {
-  const { data, update, newId } = useCabinet();
+  const { data, update, newId, role } = useCabinet();
   const navigate = useNavigate();
   const { p } = Route.useSearch();
+  const [diag, setDiag] = useState<{ patientId: string; id: string | null } | null>(null);
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"all" | "recent">("all");
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "name", dir: 1 });
+  const [size, setSize] = useState(10);
+  const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState(emptyForm);
   const [dup, setDup] = useState<string | null>(null);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeKeep, setMergeKeep] = useState<string | null>(null);
+  const [mergeDrop, setMergeDrop] = useState<string | null>(null);
+  const [mergeConfirm, setMergeConfirm] = useState(false);
 
-  const list = data.patients.filter(
-    (x) => matches(x.name, query) || matches(x.phone, query) || matches(x.code ?? "", query),
-  );
-
-  const lastVisit = (id: string) => {
+  const lastVisitDate = (id: string) => {
     const visits = data.appointments.filter((a) => a.patientId === id && a.status === "done");
-    if (!visits.length) return "—";
-    return fmtDate(visits.sort((a, b) => b.date.localeCompare(a.date))[0]!.date, "dd/MM/yyyy");
+    return visits.length ? visits.sort((a, b) => b.date.localeCompare(a.date))[0]!.date : "";
   };
+  const lastActivity = (id: string) => {
+    const dates = [
+      ...data.appointments.filter((a) => a.patientId === id).map((a) => a.date),
+      ...data.notes.filter((n) => n.patientId === id).map((n) => n.date),
+      data.patients.find((x) => x.id === id)?.createdAt ?? "",
+    ].filter(Boolean);
+    return dates.sort().at(-1) ?? "";
+  };
+
+  const filtered = useMemo(() => {
+    let list = data.patients.filter(
+      (x) => matches(x.name, query) || matches(x.phone, query) || matches(x.code ?? "", query),
+    );
+    if (tab === "recent") {
+      list = [...list].sort((a, b) => lastActivity(b.id).localeCompare(lastActivity(a.id))).slice(0, 10);
+    } else {
+      list = [...list].sort((a, b) => {
+        let cmp = 0;
+        if (sort.key === "name") cmp = a.name.localeCompare(b.name);
+        else if (sort.key === "age") cmp = (ageFrom(a.birthDate) ?? -1) - (ageFrom(b.birthDate) ?? -1);
+        else cmp = lastVisitDate(a.id).localeCompare(lastVisitDate(b.id));
+        return cmp * sort.dir;
+      });
+    }
+    return list;
+  }, [data.patients, data.appointments, data.notes, query, tab, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / size));
+  const safePage = Math.min(page, pageCount);
+  const shown = tab === "recent" ? filtered : filtered.slice((safePage - 1) * size, safePage * size);
+
+  const toggleSort = (key: SortKey) =>
+    setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
 
   const create = (force = false) => {
     if (!form.name.trim()) return;
@@ -76,37 +153,39 @@ function PatientsPage() {
       }
     }
     const id = newId();
-    update((d) => ({
-      ...d,
-      patients: [
-        ...d.patients,
-        {
-          id,
-          code: makePatientCode(form.name, d.patients.map((x) => x.code)),
-          name: form.name,
-          phone: form.phone,
-          birthDate: form.birthDate,
-          sex: form.sex,
-          country: form.country,
-          coverage: form.coverage,
-          insurer: form.coverage === "assurance" ? form.insurer : "",
-          cnam: form.coverage === "cnam" ? form.cnam : "",
-          allergies: form.allergies
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-          chronic: [],
-          createdAt: today(),
-        },
-      ],
-    }));
-    setForm(empty);
+    update(
+      (d) => ({
+        ...d,
+        patients: [
+          ...d.patients,
+          {
+            id,
+            code: makePatientCode(form.name, d.patients.map((x) => x.code)),
+            name: form.name,
+            phone: form.phone,
+            birthDate: form.birthDate,
+            sex: form.sex,
+            country: form.country,
+            coverage: form.coverage,
+            insurer: form.coverage === "assurance" ? form.insurer : "",
+            cnam: form.coverage === "cnam" ? form.cnam : "",
+            allergies: form.allergies.split(",").map((s) => s.trim()).filter(Boolean),
+            chronic: [],
+            createdAt: today(),
+          },
+        ],
+      }),
+      `Patient créé — ${form.name.trim()}`,
+    );
+    setForm(emptyForm);
     setDup(null);
     setOpen(false);
     toast.success("Patient créé");
   };
 
   const duplicate = dup ? data.patients.find((x) => x.id === dup) : null;
+  const keepP = data.patients.find((x) => x.id === mergeKeep);
+  const dropP = data.patients.find((x) => x.id === mergeDrop);
 
   return (
     <ScreenTransition>
@@ -114,23 +193,51 @@ function PatientsPage() {
         title="Patients"
         subtitle={`${data.patients.length} dossiers dans le répertoire`}
         actions={
-          <PrimaryButton onClick={() => setOpen(true)}>
-            <Plus className="h-4 w-4" /> Nouveau patient
-          </PrimaryButton>
+          <>
+            <GhostButton onClick={() => setMergeOpen(true)}>
+              <GitMerge className="h-4 w-4" /> Fusionner
+            </GhostButton>
+            <PrimaryButton onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" /> Nouveau patient
+            </PrimaryButton>
+          </>
         }
       />
 
-      <div className="relative mb-4 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          className={`${inputCls} pl-9`}
-          placeholder="Rechercher par nom, téléphone ou identifiant"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            className={`${inputCls} pl-9`}
+            placeholder="Rechercher par nom, téléphone ou identifiant"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+        <div className="flex gap-1.5">
+          {(
+            [
+              ["all", "Tous"],
+              ["recent", "Patients récents"],
+            ] as const
+          ).map(([k, l]) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                tab === k ? "bg-teal text-white" : "border border-border text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {list.length === 0 ? (
+      {shown.length === 0 ? (
         <EmptyState
           icon={<Users className="h-10 w-10" />}
           title="Aucun patient ne correspond à cette recherche"
@@ -141,65 +248,158 @@ function PatientsPage() {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_100px_60px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
-            <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
-            <span className="label-caps text-left text-[#CAF0F8]">Nom</span>
-            <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
-            <span className="label-caps text-left text-[#CAF0F8]">Âge</span>
-            <span className="label-caps text-left text-[#CAF0F8]">Sexe</span>
-            <span className="label-caps text-left text-[#CAF0F8]">Dernière visite</span>
-            <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
-            <span className="label-caps text-center text-[#CAF0F8]">Suivi</span>
-          </div>
-          {list.map((x) => (
-            <div
-              key={x.id}
-              className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_100px_60px] sm:items-center sm:gap-4 sm:px-5"
-            >
+        <>
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_84px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
+              <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
               <button
-                onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
-                className="contents text-left"
+                onClick={() => toggleSort("name")}
+                className="label-caps flex items-center gap-1 text-left text-[#CAF0F8] hover:text-white"
               >
-                <span className="order-2 num text-xs font-semibold tracking-wide text-teal sm:order-none">{x.code}</span>
-                <span className="order-1 truncate font-medium sm:order-none">{x.name}</span>
-                <span className="order-3 num text-xs text-muted-foreground sm:order-none sm:text-sm">{x.phone}</span>
-                <span className="order-4 num text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
-                  <span className="sm:hidden">Âge : </span>
-                  {ageFrom(x.birthDate) !== null ? `${ageFrom(x.birthDate)} ans` : "—"}
-                </span>
-                <span className="order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
-                  <span className="sm:hidden">Sexe : </span>
-                  {sexLabel(x.sex)}
-                </span>
-                <span className="num order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
-                  <span className="sm:hidden">Dernière visite : </span>
-                  {lastVisit(x.id)}
-                </span>
-                <span className="order-5 sm:order-none sm:text-right">
-                  {x.allergies.length > 0 && (
-                    <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
-                      Allergies
-                    </span>
-                  )}
-                </span>
+                Nom <ArrowUpDown className="h-3 w-3" />
               </button>
-              <div className="order-6 flex justify-end sm:order-none sm:justify-center">
-                <Link
-                  to="/suivi/$id"
-                  params={{ id: x.id }}
-                  title={`Suivi de ${x.name}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
+              <span className="label-caps text-left text-[#CAF0F8]">Téléphone</span>
+              <button
+                onClick={() => toggleSort("age")}
+                className="label-caps flex items-center gap-1 text-left text-[#CAF0F8] hover:text-white"
+              >
+                Âge <ArrowUpDown className="h-3 w-3" />
+              </button>
+              <span className="label-caps text-left text-[#CAF0F8]">Sexe</span>
+              <button
+                onClick={() => toggleSort("visit")}
+                className="label-caps flex items-center gap-1 text-left text-[#CAF0F8] hover:text-white"
+              >
+                Dernière visite <ArrowUpDown className="h-3 w-3" />
+              </button>
+              <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
+              <span className="label-caps text-center text-[#CAF0F8]">Actions</span>
+            </div>
+            {shown.map((x) => (
+              <div
+                key={x.id}
+                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_84px] sm:items-center sm:gap-4 sm:px-5"
+              >
+                <button
+                  onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
+                  className="contents text-left"
                 >
-                  <Activity className="h-4 w-4" />
-                </Link>
+                  <span className="order-2 num text-xs font-semibold tracking-wide text-teal sm:order-none">{x.code}</span>
+                  <span className="order-1 truncate font-medium sm:order-none">{x.name}</span>
+                  <span className="order-3 num text-xs text-muted-foreground sm:order-none sm:text-sm">{x.phone}</span>
+                  <span className="order-4 num text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                    <span className="sm:hidden">Âge : </span>
+                    {ageFrom(x.birthDate) !== null ? `${ageFrom(x.birthDate)} ans` : "—"}
+                  </span>
+                  <span className="order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                    <span className="sm:hidden">Sexe : </span>
+                    {sexLabel(x.sex)}
+                  </span>
+                  <span className="num order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
+                    <span className="sm:hidden">Dernière visite : </span>
+                    {lastVisitDate(x.id) ? fmtDate(lastVisitDate(x.id), "dd/MM/yyyy") : "—"}
+                  </span>
+                  <span className="order-5 sm:order-none sm:text-right">
+                    {x.allergies.length > 0 && (
+                      <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
+                        Allergies
+                      </span>
+                    )}
+                  </span>
+                </button>
+                <div className="order-6 flex items-center justify-end gap-1 sm:order-none sm:justify-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        aria-label={`Actions pour ${x.name}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-60">
+                      <DropdownMenuItem onSelect={() => navigate({ to: "/patients", search: { p: x.id } })}>
+                        <FolderOpen className="h-4 w-4" /> Ouvrir le dossier
+                      </DropdownMenuItem>
+                      {role !== "secretaire" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => setDiag({ patientId: x.id, id: null })}>
+                            <ClipboardList className="h-4 w-4" /> Nouvel entretien diagnostic
+                          </DropdownMenuItem>
+                          {data.diagnostics
+                            .filter((d) => d.patientId === x.id)
+                            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+                            .slice(0, 3)
+                            .map((d) => (
+                              <DropdownMenuItem
+                                key={d.id}
+                                onSelect={() => setDiag({ patientId: x.id, id: d.id })}
+                              >
+                                <span className="num text-xs text-muted-foreground">
+                                  {fmtDate(d.date, "dd/MM/yy")}
+                                </span>
+                                <span className="truncate">
+                                  {d.reason || (d.status === "brouillon" ? "Brouillon" : "Entretien")}
+                                </span>
+                              </DropdownMenuItem>
+                            ))}
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => navigate({ to: "/suivi/$id", params: { id: x.id } })}>
+                        Suivi &amp; courbes
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {tab === "all" && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span>Par page</span>
+                <select
+                  className={`${inputCls} w-auto py-1`}
+                  value={size}
+                  onChange={(e) => {
+                    setSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  {pageSizes.map((n) => (
+                    <option key={n}>{n}</option>
+                  ))}
+                </select>
+                <span>
+                  {filtered.length} résultat{filtered.length > 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <GhostButton
+                  className="!px-3 !py-1"
+                  onClick={() => setPage((n) => Math.max(1, n - 1))}
+                  disabled={safePage <= 1}
+                >
+                  Précédent
+                </GhostButton>
+                <span className="num">
+                  {safePage} / {pageCount}
+                </span>
+                <GhostButton
+                  className="!px-3 !py-1"
+                  onClick={() => setPage((n) => Math.min(pageCount, n + 1))}
+                  disabled={safePage >= pageCount}
+                >
+                  Suivant
+                </GhostButton>
               </div>
             </div>
-          ))}
-        </div>
-
-
+          )}
+        </>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Nouveau patient">
@@ -208,7 +408,6 @@ function PatientsPage() {
             <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-
             <Field label="Téléphone">
               <input
                 className={`${inputCls} num`}
@@ -315,7 +514,55 @@ function PatientsPage() {
         </div>
       </Modal>
 
+      <Modal open={mergeOpen} onClose={() => setMergeOpen(false)} title="Fusionner deux dossiers" width="max-w-lg">
+        <p className="mb-4 text-sm text-muted-foreground">
+          Toutes les consultations, notes, ordonnances, analyses et paiements du dossier en double seront rattachés au
+          dossier conservé. Le doublon sera supprimé.
+        </p>
+        <div className="space-y-4">
+          <Field label="Dossier à conserver">
+            <PatientPicker value={mergeKeep} onSelect={setMergeKeep} allowCreate={false} />
+          </Field>
+          <Field label="Dossier en double (sera supprimé)">
+            <PatientPicker value={mergeDrop} onSelect={setMergeDrop} allowCreate={false} />
+          </Field>
+          {mergeKeep && mergeDrop && mergeKeep === mergeDrop && (
+            <p className="text-sm text-danger">Sélectionnez deux dossiers différents.</p>
+          )}
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <GhostButton onClick={() => setMergeOpen(false)}>Annuler</GhostButton>
+          <PrimaryButton
+            disabled={!mergeKeep || !mergeDrop || mergeKeep === mergeDrop}
+            onClick={() => setMergeConfirm(true)}
+          >
+            Fusionner
+          </PrimaryButton>
+        </div>
+      </Modal>
+
+      <ConfirmModal
+        open={mergeConfirm}
+        onClose={() => setMergeConfirm(false)}
+        message={`Fusionner « ${dropP?.name} » dans « ${keepP?.name} » ? Cette action est irréversible.`}
+        onConfirm={() => {
+          if (!mergeKeep || !mergeDrop) return;
+          update((d) => mergePatients(d, mergeKeep, mergeDrop), `Fusion de dossiers — ${dropP?.name} → ${keepP?.name}`);
+          toast.success("Dossiers fusionnés");
+          setMergeOpen(false);
+          setMergeKeep(null);
+          setMergeDrop(null);
+        }}
+      />
+
       {p && <PatientDrawer patientId={p} onClose={() => navigate({ to: "/patients", search: { p: undefined } })} />}
+
+      <DiagnosticModal
+        open={!!diag}
+        onClose={() => setDiag(null)}
+        patientId={diag?.patientId ?? null}
+        diagnosticId={diag?.id ?? null}
+      />
     </ScreenTransition>
   );
 }

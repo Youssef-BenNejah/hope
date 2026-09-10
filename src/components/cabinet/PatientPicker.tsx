@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, UserPlus } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
 import { matches } from "@/lib/cabinet/utils";
 import { inputCls } from "./Modal";
@@ -35,6 +35,13 @@ export function PatientPicker({
     ? all.filter((p) => matches(p.name, query) || matches(p.phone, query) || matches(p.code ?? "", query))
     : all;
 
+  const canCreate = allowCreate && !!onCreate;
+  const create = () => {
+    onCreate?.(query.trim());
+    setQuery("");
+    setOpen(false);
+  };
+
   return (
     <div className="relative" ref={boxRef}>
       <button
@@ -63,9 +70,15 @@ export function PatientPicker({
               placeholder="Rechercher par nom ou téléphone"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && canCreate && results.length === 0 && query.trim()) {
+                  e.preventDefault();
+                  create();
+                }
+              }}
             />
           </div>
-          <div className="max-h-60 overflow-y-auto">
+          <div className="max-h-56 overflow-y-auto">
             {results.map((p) => (
               <button
                 key={p.id}
@@ -83,23 +96,21 @@ export function PatientPicker({
                 <span className="num shrink-0 text-xs text-muted-foreground">{p.phone}</span>
               </button>
             ))}
-            {results.length === 0 && allowCreate && onCreate && query.trim() && (
-              <button
-                type="button"
-                onClick={() => {
-                  onCreate(query);
-                  setQuery("");
-                  setOpen(false);
-                }}
-                className="w-full px-3 py-2 text-left text-sm text-teal hover:bg-cyan"
-              >
-                + Créer « {query} » comme nouveau patient
-              </button>
-            )}
-            {results.length === 0 && (!allowCreate || !query.trim()) && (
+            {results.length === 0 && (
               <p className="px-3 py-3 text-sm text-muted-foreground">Aucun patient trouvé</p>
             )}
           </div>
+
+          {canCreate && (
+            <button
+              type="button"
+              onClick={create}
+              className="flex w-full items-center gap-2 border-t border-border bg-muted/40 px-3 py-2.5 text-left text-sm font-medium text-teal hover:bg-cyan hover:text-twilight"
+            >
+              <UserPlus className="h-4 w-4 shrink-0" />
+              {query.trim() ? `Créer « ${query.trim()} » comme nouveau patient` : "Ajouter un nouveau patient"}
+            </button>
+          )}
         </div>
       )}
     </div>

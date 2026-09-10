@@ -18,6 +18,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CabinetProvider, useCabinet } from "@/lib/cabinet/store";
 import { Sidebar } from "@/components/cabinet/Sidebar";
 import { LockScreen } from "@/components/cabinet/LockScreen";
+import { GlobalSearch } from "@/components/cabinet/GlobalSearch";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -129,8 +130,19 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const SECRETAIRE_ALLOWED = [
+  "/",
+  "/rappels",
+  "/patients",
+  "/agenda",
+  "/tracker",
+  "/documents",
+  "/annuaire",
+  "/messages",
+];
+
 function AppFrame() {
-  const { locked, isAdmin, data } = useCabinet();
+  const { locked, isAdmin, role, data } = useCabinet();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
@@ -138,6 +150,12 @@ function AppFrame() {
   }, [pathname]);
   if (locked) return <LockScreen />;
   if (isAdmin && pathname !== "/admin") return <Navigate to="/admin" replace />;
+  if (
+    role === "secretaire" &&
+    !SECRETAIRE_ALLOWED.some((p) => (p === "/" ? pathname === "/" : pathname.startsWith(p)))
+  ) {
+    return <Navigate to="/" replace />;
+  }
   return (
     <div className="min-h-screen bg-background">
       <Sidebar mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -149,10 +167,11 @@ function AppFrame() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">Cabinet</p>
-          <p className="truncate text-xs text-muted-foreground">{data.settings.doctorName}</p>
-        </div>
+        <GlobalSearch />
+      </header>
+      <header className="sticky top-0 z-20 hidden items-center border-b border-border bg-card/80 px-6 py-2.5 backdrop-blur md:flex md:pl-[100px] xl:pl-64">
+        <GlobalSearch />
+        <span className="ml-auto text-xs text-muted-foreground">{data.settings.doctorName}</span>
       </header>
       <main className="min-h-screen p-4 animate-in fade-in duration-300 sm:p-6 md:ml-[76px] md:p-8 xl:ml-60">
         <Outlet />

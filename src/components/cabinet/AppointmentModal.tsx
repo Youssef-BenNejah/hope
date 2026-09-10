@@ -22,26 +22,32 @@ export function AppointmentModal({
   const editing = editId ? data.appointments.find((a) => a.id === editId) : undefined;
 
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [creatingNew, setCreatingNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState(today());
   const [time, setTime] = useState("09:00");
   const [reason, setReason] = useState("");
+  const [category, setCategory] = useState("");
+  const [resourceId, setResourceId] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setPatientId(editing?.patientId ?? defaults?.patientId ?? null);
+    setCreatingNew(false);
     setNewName("");
     setPhone("");
     setDate(editing?.date ?? defaults?.date ?? today());
     setTime(editing?.time ?? defaults?.time ?? "09:00");
     setReason(editing?.reason ?? "");
+    setCategory(editing?.category ?? "");
+    setResourceId(editing?.resourceId ?? "");
   }, [open, editId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = () => {
     let pid = patientId;
-    if (!pid && !newName) {
-      toast.error("Sélectionnez un patient");
+    if (!pid && !newName.trim()) {
+      toast.error("Sélectionnez un patient ou saisissez le nom du nouveau patient");
       return;
     }
     update((d) => {
@@ -52,8 +58,8 @@ export function AppointmentModal({
           ...d.patients,
           {
             id: pid,
-            code: makePatientCode(newName, d.patients.map((p) => p.code)),
-            name: newName,
+            code: makePatientCode(newName.trim(), d.patients.map((p) => p.code)),
+            name: newName.trim(),
             phone,
             birthDate: "",
             cnam: "",
@@ -63,19 +69,25 @@ export function AppointmentModal({
           },
         ];
       }
+      const extra = {
+        ...(category ? { category } : {}),
+        ...(resourceId ? { resourceId } : {}),
+      };
       if (editing) {
-        next.appointments = d.appointments.map((a) =>
-          a.id === editing.id ? { ...a, patientId: pid!, date, time, reason } : a,
-        );
+        next.appointments = d.appointments.map((a) => {
+          if (a.id !== editing.id) return a;
+          const { category: _c, resourceId: _r, ...base } = a;
+          return { ...base, patientId: pid!, date, time, reason, ...extra };
+        });
       } else {
         next.appointments = [
           ...next.appointments,
-          { id: newId(), patientId: pid!, date, time, reason: reason || "Consultation", status: "upcoming" },
+          { id: newId(), patientId: pid!, date, time, reason: reason || "Consultation", status: "upcoming", ...extra },
         ];
       }
       return next;
     });
-    const label = patientId ? patientName(patientId) : newName;
+    const label = patientId ? patientName(patientId) : newName.trim();
     toast.success(
       editing ? `Rendez-vous modifié pour ${label}` : `Rendez-vous ajouté pour ${label} à ${time}`,
     );
@@ -97,28 +109,52 @@ export function AppointmentModal({
             value={patientId}
             onSelect={(id) => {
               setPatientId(id);
+              setCreatingNew(false);
               setNewName("");
             }}
             onCreate={(name) => {
               setNewName(name);
+              setCreatingNew(true);
               setPatientId(null);
             }}
           />
         </Field>
 
-        {newName && (
-          <div className="animate-in fade-in slide-in-from-top-1 space-y-2 rounded-lg bg-cyan/60 p-3 dark:bg-muted">
-            <p className="text-sm text-twilight dark:text-foreground">
-              Nouveau patient : <strong>{newName}</strong>
+        {creatingNew && (
+          <div className="animate-in fade-in slide-in-from-top-1 space-y-3 rounded-lg bg-cyan/60 p-3 dark:bg-muted">
+            <p className="text-xs font-medium uppercase tracking-wide text-twilight dark:text-frost">
+              Nouveau patient
             </p>
-            <Field label="Téléphone">
-              <input
-                className={inputCls}
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+216 ..."
-              />
-            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Nom complet">
+                <input
+                  className={inputCls}
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Prénom Nom"
+                />
+              </Field>
+              <Field label="Téléphone">
+                <input
+                  className={inputCls}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+216 ..."
+                />
+              </Field>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCreatingNew(false);
+                setNewName("");
+                setPhone("");
+              }}
+              className="text-xs text-muted-foreground hover:text-danger"
+            >
+              Annuler la création
+            </button>
           </div>
         )}
 
@@ -131,6 +167,29 @@ export function AppointmentModal({
               {slots(data.settings.consultDuration || 30).map((s) => (
                 <option key={s} value={s}>
                   {s}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Catégorie">
+            <select className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">— Aucune —</option>
+              {data.settings.appointmentCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Ressource">
+            <select className={inputCls} value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
+              <option value="">— Aucune —</option>
+              {data.settings.resources.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
                 </option>
               ))}
             </select>

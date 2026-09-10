@@ -17,7 +17,7 @@ import {
 import { KeyRound, Pencil, Plus, Power, ShieldCheck, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import type { Doctor } from "@/lib/cabinet/types";
+import type { Doctor, UserRole } from "@/lib/cabinet/types";
 import { dt, fmtDate, today } from "@/lib/cabinet/utils";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
@@ -46,6 +46,7 @@ const emptyDoctor = {
   phone: "",
   licenseNumber: "",
   pin: "",
+  role: "medecin" as UserRole,
 };
 
 const randomPin = () => String(Math.floor(1000 + Math.random() * 9000));
@@ -110,6 +111,7 @@ function AdminPage() {
       phone: doc.phone,
       licenseNumber: doc.licenseNumber,
       pin: doc.pin,
+      role: doc.role ?? "medecin",
     });
     setFormOpen(true);
   };
@@ -255,6 +257,7 @@ function AdminPage() {
               <tr className="bg-twilight text-left text-[#EAF2FA]">
                 <th className="label-caps rounded-l-lg px-3 py-2 text-[#CAF0F8]">Médecin</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Spécialité</th>
+                <th className="label-caps px-3 py-2 text-[#CAF0F8]">Rôle</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Contact</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Code PIN</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Statut</th>
@@ -269,6 +272,11 @@ function AdminPage() {
                     <p className="num text-xs text-muted-foreground">{doc.licenseNumber}</p>
                   </td>
                   <td className="px-3 py-3 text-muted-foreground">{doc.specialty}</td>
+                  <td className="px-3 py-3">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                      {doc.role === "secretaire" ? "Secrétaire" : "Médecin"}
+                    </span>
+                  </td>
                   <td className="px-3 py-3">
                     <p className="truncate">{doc.email}</p>
                     <p className="num text-xs text-muted-foreground">{doc.phone}</p>
@@ -377,6 +385,16 @@ function AdminPage() {
               onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })}
               placeholder="MG-2020-0000"
             />
+          </Field>
+          <Field label="Rôle">
+            <select
+              className={inputCls}
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
+            >
+              <option value="medecin">Médecin</option>
+              <option value="secretaire">Secrétaire</option>
+            </select>
           </Field>
           <Field label="Code PIN (4 chiffres)">
             <div className="flex gap-2">

@@ -12,11 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgendaRouteImport } from './routes/agenda'
+import { Route as AnnuaireRouteImport } from './routes/annuaire'
 import { Route as CertificatsRouteImport } from './routes/certificats'
 import { Route as ComptabiliteRouteImport } from './routes/comptabilite'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as JournalRouteImport } from './routes/journal'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as OrdonnancesRouteImport } from './routes/ordonnances'
+import { Route as OrientationsRouteImport } from './routes/orientations'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as PatientsRouteImport } from './routes/patients'
+import { Route as PersonnelRouteImport } from './routes/personnel'
+import { Route as RappelsRouteImport } from './routes/rappels'
+import { Route as TrackerRouteImport } from './routes/tracker'
+import { Route as VaccinationsRouteImport } from './routes/vaccinations'
 import { Route as HistoriqueIdRouteImport } from './routes/historique.$id'
 import { Route as SuiviIndexRouteImport } from './routes/suivi.index'
 import { Route as SuiviIdRouteImport } from './routes/suivi.$id'
@@ -36,6 +45,11 @@ const AgendaRoute = AgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnnuaireRoute = AnnuaireRouteImport.update({
+  id: '/annuaire',
+  path: '/annuaire',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CertificatsRoute = CertificatsRouteImport.update({
   id: '/certificats',
   path: '/certificats',
@@ -46,9 +60,29 @@ const ComptabiliteRoute = ComptabiliteRouteImport.update({
   path: '/comptabilite',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JournalRoute = JournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdonnancesRoute = OrdonnancesRouteImport.update({
   id: '/ordonnances',
   path: '/ordonnances',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrientationsRoute = OrientationsRouteImport.update({
+  id: '/orientations',
+  path: '/orientations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParametresRoute = ParametresRouteImport.update({
@@ -59,6 +93,26 @@ const ParametresRoute = ParametresRouteImport.update({
 const PatientsRoute = PatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonnelRoute = PersonnelRouteImport.update({
+  id: '/personnel',
+  path: '/personnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RappelsRoute = RappelsRouteImport.update({
+  id: '/rappels',
+  path: '/rappels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackerRoute = TrackerRouteImport.update({
+  id: '/tracker',
+  path: '/tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VaccinationsRoute = VaccinationsRouteImport.update({
+  id: '/vaccinations',
+  path: '/vaccinations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoriqueIdRoute = HistoriqueIdRouteImport.update({
@@ -81,11 +135,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
+  '/annuaire': typeof AnnuaireRoute
   '/certificats': typeof CertificatsRoute
   '/comptabilite': typeof ComptabiliteRoute
+  '/documents': typeof DocumentsRoute
+  '/journal': typeof JournalRoute
+  '/messages': typeof MessagesRoute
   '/ordonnances': typeof OrdonnancesRoute
+  '/orientations': typeof OrientationsRoute
   '/parametres': typeof ParametresRoute
   '/patients': typeof PatientsRoute
+  '/personnel': typeof PersonnelRoute
+  '/rappels': typeof RappelsRoute
+  '/tracker': typeof TrackerRoute
+  '/vaccinations': typeof VaccinationsRoute
   '/historique/$id': typeof HistoriqueIdRoute
   '/suivi/$id': typeof SuiviIdRoute
   '/suivi/': typeof SuiviIndexRoute
@@ -94,11 +157,20 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
+  '/annuaire': typeof AnnuaireRoute
   '/certificats': typeof CertificatsRoute
   '/comptabilite': typeof ComptabiliteRoute
+  '/documents': typeof DocumentsRoute
+  '/journal': typeof JournalRoute
+  '/messages': typeof MessagesRoute
   '/ordonnances': typeof OrdonnancesRoute
+  '/orientations': typeof OrientationsRoute
   '/parametres': typeof ParametresRoute
   '/patients': typeof PatientsRoute
+  '/personnel': typeof PersonnelRoute
+  '/rappels': typeof RappelsRoute
+  '/tracker': typeof TrackerRoute
+  '/vaccinations': typeof VaccinationsRoute
   '/historique/$id': typeof HistoriqueIdRoute
   '/suivi/$id': typeof SuiviIdRoute
   '/suivi': typeof SuiviIndexRoute
@@ -108,11 +180,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
+  '/annuaire': typeof AnnuaireRoute
   '/certificats': typeof CertificatsRoute
   '/comptabilite': typeof ComptabiliteRoute
+  '/documents': typeof DocumentsRoute
+  '/journal': typeof JournalRoute
+  '/messages': typeof MessagesRoute
   '/ordonnances': typeof OrdonnancesRoute
+  '/orientations': typeof OrientationsRoute
   '/parametres': typeof ParametresRoute
   '/patients': typeof PatientsRoute
+  '/personnel': typeof PersonnelRoute
+  '/rappels': typeof RappelsRoute
+  '/tracker': typeof TrackerRoute
+  '/vaccinations': typeof VaccinationsRoute
   '/historique/$id': typeof HistoriqueIdRoute
   '/suivi/$id': typeof SuiviIdRoute
   '/suivi/': typeof SuiviIndexRoute
@@ -123,11 +204,20 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
+    | '/annuaire'
     | '/certificats'
     | '/comptabilite'
+    | '/documents'
+    | '/journal'
+    | '/messages'
     | '/ordonnances'
+    | '/orientations'
     | '/parametres'
     | '/patients'
+    | '/personnel'
+    | '/rappels'
+    | '/tracker'
+    | '/vaccinations'
     | '/historique/$id'
     | '/suivi/$id'
     | '/suivi/'
@@ -136,11 +226,20 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
+    | '/annuaire'
     | '/certificats'
     | '/comptabilite'
+    | '/documents'
+    | '/journal'
+    | '/messages'
     | '/ordonnances'
+    | '/orientations'
     | '/parametres'
     | '/patients'
+    | '/personnel'
+    | '/rappels'
+    | '/tracker'
+    | '/vaccinations'
     | '/historique/$id'
     | '/suivi/$id'
     | '/suivi'
@@ -149,11 +248,20 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
+    | '/annuaire'
     | '/certificats'
     | '/comptabilite'
+    | '/documents'
+    | '/journal'
+    | '/messages'
     | '/ordonnances'
+    | '/orientations'
     | '/parametres'
     | '/patients'
+    | '/personnel'
+    | '/rappels'
+    | '/tracker'
+    | '/vaccinations'
     | '/historique/$id'
     | '/suivi/$id'
     | '/suivi/'
@@ -163,11 +271,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AgendaRoute: typeof AgendaRoute
+  AnnuaireRoute: typeof AnnuaireRoute
   CertificatsRoute: typeof CertificatsRoute
   ComptabiliteRoute: typeof ComptabiliteRoute
+  DocumentsRoute: typeof DocumentsRoute
+  JournalRoute: typeof JournalRoute
+  MessagesRoute: typeof MessagesRoute
   OrdonnancesRoute: typeof OrdonnancesRoute
+  OrientationsRoute: typeof OrientationsRoute
   ParametresRoute: typeof ParametresRoute
   PatientsRoute: typeof PatientsRoute
+  PersonnelRoute: typeof PersonnelRoute
+  RappelsRoute: typeof RappelsRoute
+  TrackerRoute: typeof TrackerRoute
+  VaccinationsRoute: typeof VaccinationsRoute
   HistoriqueIdRoute: typeof HistoriqueIdRoute
   SuiviIdRoute: typeof SuiviIdRoute
   SuiviIndexRoute: typeof SuiviIndexRoute
@@ -196,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgendaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/annuaire': {
+      id: '/annuaire'
+      path: '/annuaire'
+      fullPath: '/annuaire'
+      preLoaderRoute: typeof AnnuaireRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/certificats': {
       id: '/certificats'
       path: '/certificats'
@@ -210,11 +334,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComptabiliteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journal': {
+      id: '/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ordonnances': {
       id: '/ordonnances'
       path: '/ordonnances'
       fullPath: '/ordonnances'
       preLoaderRoute: typeof OrdonnancesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orientations': {
+      id: '/orientations'
+      path: '/orientations'
+      fullPath: '/orientations'
+      preLoaderRoute: typeof OrientationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parametres': {
@@ -229,6 +381,34 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/patients'
       preLoaderRoute: typeof PatientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personnel': {
+      id: '/personnel'
+      path: '/personnel'
+      fullPath: '/personnel'
+      preLoaderRoute: typeof PersonnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rappels': {
+      id: '/rappels'
+      path: '/rappels'
+      fullPath: '/rappels'
+      preLoaderRoute: typeof RappelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tracker': {
+      id: '/tracker'
+      path: '/tracker'
+      fullPath: '/tracker'
+      preLoaderRoute: typeof TrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vaccinations': {
+      id: '/vaccinations'
+      path: '/vaccinations'
+      fullPath: '/vaccinations'
+      preLoaderRoute: typeof VaccinationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/historique/$id': {
@@ -259,11 +439,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AgendaRoute: AgendaRoute,
+  AnnuaireRoute: AnnuaireRoute,
   CertificatsRoute: CertificatsRoute,
   ComptabiliteRoute: ComptabiliteRoute,
+  DocumentsRoute: DocumentsRoute,
+  JournalRoute: JournalRoute,
+  MessagesRoute: MessagesRoute,
   OrdonnancesRoute: OrdonnancesRoute,
+  OrientationsRoute: OrientationsRoute,
   ParametresRoute: ParametresRoute,
   PatientsRoute: PatientsRoute,
+  PersonnelRoute: PersonnelRoute,
+  RappelsRoute: RappelsRoute,
+  TrackerRoute: TrackerRoute,
+  VaccinationsRoute: VaccinationsRoute,
   HistoriqueIdRoute: HistoriqueIdRoute,
   SuiviIdRoute: SuiviIdRoute,
   SuiviIndexRoute: SuiviIndexRoute,

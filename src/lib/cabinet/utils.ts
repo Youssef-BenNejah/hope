@@ -14,6 +14,28 @@ export const fmtDate = (iso: string, pattern = "d MMMM yyyy") => {
 
 export const fmtLong = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: fr });
 
+export const fmtDateTime = (iso: string) => {
+  try {
+    return format(new Date(iso), "d MMM yyyy 'à' HH'h'mm", { locale: fr });
+  } catch {
+    return iso;
+  }
+};
+
+/** "il y a 3 h", "il y a 2 j"… pour les fils de messages / journaux */
+export const fmtAgo = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(diff)) return iso;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "à l'instant";
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const j = Math.round(h / 24);
+  if (j < 30) return `il y a ${j} j`;
+  return fmtDate(iso.slice(0, 10), "dd/MM/yyyy");
+};
+
 export const dt = (n: number) => `${n.toFixed(0)} DT`;
 
 export const statusMeta: Record<AppointmentStatus, { label: string; className: string }> = {
@@ -89,3 +111,29 @@ export function ageFrom(birthDate?: string) {
 
 export const sexLabel = (sex?: "homme" | "femme") =>
   sex === "homme" ? "Homme" : sex === "femme" ? "Femme" : "—";
+
+/** Redimensionne une image (fichier) en dataUrl JPEG, côté max `max` px — pour rester léger en localStorage. */
+export function resizeImage(file: File, max = 400): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("lecture impossible"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("image invalide"));
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("canvas indisponible"));
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}

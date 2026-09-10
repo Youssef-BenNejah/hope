@@ -1,32 +1,63 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  Bell,
   CalendarDays,
   FileText,
+  FolderClosed,
+  IdCard,
   Lock,
+  Mail,
   Pill,
   Receipt,
+  Send,
   Settings as SettingsIcon,
   Shield,
   Sun,
+  Syringe,
   Users,
+  UsersRound,
   Check,
+  DoorOpen,
 } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
-import logoAsset from "@/assets/logo.png.asset.json";
+import type { SessionRole } from "@/lib/cabinet/context";
+import logo from "@/assets/logo.png";
 
-const items = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Sun;
+  roles?: SessionRole[]; // absent = médecin + secrétaire
+};
+
+const items: NavItem[] = [
   { to: "/", label: "Aujourd'hui", icon: Sun },
+  { to: "/rappels", label: "Rappels", icon: Bell },
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
-  { to: "/ordonnances", label: "Ordonnances", icon: Pill },
-  { to: "/certificats", label: "Certificats", icon: FileText },
-  { to: "/comptabilite", label: "Comptabilité", icon: Receipt },
-  { to: "/parametres", label: "Paramètres", icon: SettingsIcon },
-] as const;
+  { to: "/tracker", label: "Salle d'attente", icon: DoorOpen },
+  { to: "/ordonnances", label: "Ordonnances", icon: Pill, roles: ["medecin"] },
+  { to: "/certificats", label: "Certificats", icon: FileText, roles: ["medecin"] },
+  { to: "/orientations", label: "Orientations", icon: Send, roles: ["medecin"] },
+  { to: "/vaccinations", label: "Vaccinations", icon: Syringe, roles: ["medecin"] },
+  { to: "/documents", label: "Documents", icon: FolderClosed },
+  { to: "/comptabilite", label: "Comptabilité", icon: Receipt, roles: ["medecin"] },
+  { to: "/annuaire", label: "Annuaire", icon: UsersRound },
+  { to: "/messages", label: "Messages", icon: Mail },
+  { to: "/personnel", label: "Personnel", icon: IdCard, roles: ["medecin"] },
+  { to: "/parametres", label: "Paramètres", icon: SettingsIcon, roles: ["medecin"] },
+];
 
 export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {
-  const { data, lock, offline, setOffline, pending, syncing, justSynced, isAdmin } = useCabinet();
+  const { data, lock, offline, setOffline, pending, syncing, justSynced, isAdmin, currentUser, role } =
+    useCabinet();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const unread = data.messages.filter(
+    (m) => !m.read && (!m.toId || m.toId === currentUser?.id) && m.fromId !== currentUser?.id,
+  ).length;
+
+  const visible = items.filter((it) => !it.roles || it.roles.includes(role));
 
   return (
     <>
@@ -40,13 +71,16 @@ export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
       >
         <div className="flex items-center gap-3 px-4 py-5">
           <img
-            src={logoAsset.url}
+            src={logo}
             alt="Cabinet"
             className="h-10 w-10 shrink-0 rounded-xl bg-frost object-contain p-1.5"
           />
           <div className="min-w-0 md:hidden xl:block">
             <p className="truncate font-semibold">Cabinet</p>
-            <p className="truncate text-xs text-frost/80">{data.settings.doctorName}</p>
+            <p className="truncate text-xs text-frost/80">
+              {currentUser ? currentUser.name : data.settings.doctorName}
+              {role === "secretaire" ? " · secrétariat" : ""}
+            </p>
           </div>
         </div>
 
@@ -65,7 +99,7 @@ export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
               <span className="md:hidden xl:inline">Administration</span>
             </Link>
           ) : (
-            items.map(({ to, label, icon: Icon }) => {
+            visible.map(({ to, label, icon: Icon }) => {
               const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
               return (
                 <Link
@@ -80,6 +114,11 @@ export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
                   {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-surf" />}
                   <Icon className={`h-5 w-5 shrink-0 ${active ? "text-frost" : ""}`} />
                   <span className="md:hidden xl:inline">{label}</span>
+                  {to === "/messages" && unread > 0 && (
+                    <span className="ml-auto rounded-full bg-surf px-1.5 text-[11px] font-semibold text-twilight md:hidden xl:inline">
+                      {unread}
+                    </span>
+                  )}
                 </Link>
               );
             })

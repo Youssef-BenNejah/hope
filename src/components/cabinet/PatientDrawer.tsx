@@ -1,14 +1,33 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Activity, AlertTriangle, ArrowLeft, Download, FileUp, History, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowLeft,
+  ClipboardList,
+  Download,
+  FileUp,
+  FlaskConical,
+  History,
+  Paperclip,
+  Pencil,
+  Pill,
+  Plus,
+  Stethoscope,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
-import type { NoteAttachment } from "@/lib/cabinet/types";
+import type { AnalysisValue, IcdCode, NoteAttachment } from "@/lib/cabinet/types";
+import { diagnosticPreview } from "@/lib/cabinet/diagnostic";
 import { ageFrom, fmtDate, sexLabel, statusMeta, today } from "@/lib/cabinet/utils";
-import { GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
+import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
+import { IcdPicker } from "./IcdPicker";
+import { DiagnosticModal } from "./DiagnosticModal";
 
-const tabs = ["Aperçu", "Historique", "Notes", "Analyses", "Certificats"] as const;
+const tabs = ["Aperçu", "Historique", "Diagnostic", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
 const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
 
@@ -40,13 +59,22 @@ function HistoryList({ items }: { items: TimelineItem[] }) {
 
 
 export function PatientDrawer({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
-  const { data, update, newId } = useCabinet();
+  const { data, update, newId, currentUser } = useCabinet();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Aperçu");
   const [note, setNote] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [files, setFiles] = useState<NoteAttachment[]>([]);
-  
+  const [structured, setStructured] = useState(false);
+  const [visit, setVisit] = useState({ motif: "", exam: "", diagnosis: "", plan: "" });
+  const [icd, setIcd] = useState<IcdCode[]>([]);
+  const [labOpen, setLabOpen] = useState(false);
+  const [labDate, setLabDate] = useState(today());
+  const [labRows, setLabRows] = useState<{ label: string; value: string; unit: string; ref: string; refMin: string }[]>([
+    { label: "", value: "", unit: "", ref: "", refMin: "" },
+  ]);
+
+  const [diag, setDiag] = useState<{ open: boolean; id: string | null }>({ open: false, id: null });
   const [chronic, setChronic] = useState("");
   const [allergyEdit, setAllergyEdit] = useState(false);
   const [allergyValue, setAllergyValue] = useState("");
@@ -80,7 +108,13 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
   const notes = data.notes.filter((n) => n.patientId === patient.id).sort((a, b) => b.date.localeCompare(a.date));
   const analyses = data.analyses.filter((a) => a.patientId === patient.id).sort((a, b) => a.date.localeCompare(b.date));
+  const prescriptions = data.prescriptions
+    .filter((r) => r.patientId === patient.id)
+    .sort((a, b) => b.date.localeCompare(a.date));
   const certs = data.certificates.filter((c) => c.patientId === patient.id);
+  const diagnostics = data.diagnostics
+    .filter((x) => x.patientId === patient.id)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   const payments = data.payments.filter((p) => p.patientId === patient.id);
 
@@ -327,12 +361,15 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                   <PrimaryButton
                     onClick={() => {
                       if (!chronic.trim()) return;
-                      update((d) => ({
-                        ...d,
-                        patients: d.patients.map((p) =>
-                          p.id === patient.id ? { ...p, chronic: [...p.chronic, chronic] } : p,
-                        ),
-                      }));
+                      update(
+                        (d) => ({
+                          ...d,
+                          patients: d.patients.map((p) =>
+                            p.id === patient.id ? { ...p, chronic: [...p.chronic, chronic] } : p,
+                          ),
+                        }),
+                        `Antécédent ajouté — ${patient.name}`,
+                      );
                       setChronic("");
                       toast.success("Antécédent ajouté");
                     }}
@@ -340,6 +377,33 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                     <Plus className="h-4 w-4" />
                   </PrimaryButton>
                 </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="label-caps">Prescriptions récentes</p>
+                  <Link
+                    to="/ordonnances"
+                    search={{ patient: patient.id }}
+                    className="inline-flex items-center gap-1 text-xs text-teal hover:underline"
+                  >
+                    <Pill className="h-3.5 w-3.5" /> Nouvelle / renouveler
+                  </Link>
+                </div>
+                {prescriptions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucune ordonnance enregistrée.</p>
+                ) : (
+                  <ul className="space-y-1.5 text-sm">
+                    {prescriptions.slice(0, 4).map((r) => (
+                      <li key={r.id} className="flex items-start gap-2">
+                        <span className="num shrink-0 text-xs text-muted-foreground">
+                          {fmtDate(r.date, "dd/MM/yy")}
+                        </span>
+                        <span className="min-w-0 flex-1">{r.text.split("\n")[0]}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </section>
@@ -356,13 +420,102 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
             )}
           </section>
 
+          <section id={sectionId("Diagnostic")} className="scroll-mt-14">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="label-caps text-teal">Entretiens diagnostic</h3>
+              <GhostButton onClick={() => setDiag({ open: true, id: null })}>
+                <ClipboardList className="h-4 w-4" /> Nouvel entretien
+              </GhostButton>
+            </div>
+            {diagnostics.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Aucun entretien. Démarrez une anamnèse dirigée : le brouillon reste modifiable et visible ici.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {diagnostics.map((x) => (
+                  <button
+                    key={x.id}
+                    onClick={() => setDiag({ open: true, id: x.id })}
+                    className="flex w-full flex-col gap-1 rounded-lg border border-border p-3 text-left transition-colors hover:border-teal hover:bg-cyan/30 dark:hover:bg-muted"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="num text-sm font-medium">{fmtDate(x.date, "dd/MM/yyyy")}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          x.status === "brouillon"
+                            ? "bg-warning-soft text-warning"
+                            : "bg-success-soft text-success"
+                        }`}
+                      >
+                        {x.status === "brouillon" ? "Brouillon" : "Terminé"}
+                      </span>
+                    </div>
+                    {x.reason && <p className="text-sm font-medium">{x.reason}</p>}
+                    {x.content && (
+                      <p className="line-clamp-3 whitespace-pre-wrap text-xs text-muted-foreground">
+                        {diagnosticPreview(x, 220)}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
 
           <section id={sectionId("Notes")} className="scroll-mt-14">
-            <h3 className="label-caps mb-3 text-teal">Notes</h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="label-caps text-teal">Notes de consultation</h3>
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 accent-[#0077B6]"
+                  checked={structured}
+                  onChange={(e) => setStructured(e.target.checked)}
+                />
+                Consultation structurée
+              </label>
+            </div>
             <div className="space-y-4">
+              {structured && (
+                <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3">
+                  <Field label="Motif de consultation">
+                    <input
+                      className={inputCls}
+                      value={visit.motif}
+                      onChange={(e) => setVisit({ ...visit, motif: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Examen clinique">
+                    <textarea
+                      className={`${inputCls} min-h-20`}
+                      value={visit.exam}
+                      onChange={(e) => setVisit({ ...visit, exam: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Diagnostic">
+                    <input
+                      className={inputCls}
+                      value={visit.diagnosis}
+                      onChange={(e) => setVisit({ ...visit, diagnosis: e.target.value })}
+                    />
+                  </Field>
+                  <div>
+                    <span className="label-caps mb-1.5 block">Codes CIM-10</span>
+                    <IcdPicker value={icd} onChange={setIcd} />
+                  </div>
+                  <Field label="Conduite à tenir">
+                    <textarea
+                      className={`${inputCls} min-h-20`}
+                      value={visit.plan}
+                      onChange={(e) => setVisit({ ...visit, plan: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              )}
               <textarea
                 className={`${inputCls} min-h-24`}
-                placeholder="Nouvelle note de consultation…"
+                placeholder={structured ? "Synthèse ou remarques libres (facultatif)…" : "Nouvelle note de consultation…"}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
@@ -415,17 +568,41 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
               </div>
               <PrimaryButton
                 onClick={() => {
-                  if (!note.trim() && files.length === 0) return;
-                  update((d) => ({
-                    ...d,
-                    notes: [
-                      ...d.notes,
-                      { id: newId(), patientId: patient.id, date: today(), text: note, attachments: files },
-                    ],
-                  }));
+                  const hasStructured =
+                    structured &&
+                    (visit.motif.trim() || visit.exam.trim() || visit.diagnosis.trim() || visit.plan.trim() || icd.length);
+                  if (!note.trim() && files.length === 0 && !hasStructured) return;
+                  update(
+                    (d) => ({
+                      ...d,
+                      notes: [
+                        ...d.notes,
+                        {
+                          id: newId(),
+                          patientId: patient.id,
+                          date: today(),
+                          text: note,
+                          attachments: files,
+                          ...(hasStructured
+                            ? {
+                                ...(visit.motif.trim() ? { motif: visit.motif.trim() } : {}),
+                                ...(visit.exam.trim() ? { exam: visit.exam.trim() } : {}),
+                                ...(visit.diagnosis.trim() ? { diagnosis: visit.diagnosis.trim() } : {}),
+                                ...(visit.plan.trim() ? { plan: visit.plan.trim() } : {}),
+                                ...(icd.length ? { icd } : {}),
+                                ...(currentUser ? { authorId: currentUser.id } : {}),
+                              }
+                            : {}),
+                        },
+                      ],
+                    }),
+                    `${hasStructured ? "Consultation" : "Note"} — ${patient.name}`,
+                  );
                   setNote("");
                   setFiles([]);
-                  toast.success("Note enregistrée");
+                  setVisit({ motif: "", exam: "", diagnosis: "", plan: "" });
+                  setIcd([]);
+                  toast.success(hasStructured ? "Consultation enregistrée" : "Note enregistrée");
                 }}
               >
                 Enregistrer
@@ -435,6 +612,41 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                   <div key={n.id} className="relative pb-5">
                     <span className="absolute -left-[23px] top-1.5 h-2.5 w-2.5 rounded-full bg-surf" />
                     <p className="num text-xs text-muted-foreground">{fmtDate(n.date)}</p>
+                    {(n.motif || n.exam || n.diagnosis || n.plan || n.icd?.length) && (
+                      <dl className="mt-1 space-y-1 rounded-lg bg-muted/40 p-2.5 text-sm">
+                        {n.motif && (
+                          <div>
+                            <dt className="label-caps">Motif</dt>
+                            <dd>{n.motif}</dd>
+                          </div>
+                        )}
+                        {n.exam && (
+                          <div>
+                            <dt className="label-caps">Examen</dt>
+                            <dd className="whitespace-pre-wrap">{n.exam}</dd>
+                          </div>
+                        )}
+                        {n.diagnosis && (
+                          <div>
+                            <dt className="label-caps">Diagnostic</dt>
+                            <dd>
+                              {n.diagnosis}
+                              {n.icd?.length ? (
+                                <span className="num ml-2 text-xs text-muted-foreground">
+                                  {n.icd.map((c) => c.code).join(", ")}
+                                </span>
+                              ) : null}
+                            </dd>
+                          </div>
+                        )}
+                        {n.plan && (
+                          <div>
+                            <dt className="label-caps">Conduite à tenir</dt>
+                            <dd className="whitespace-pre-wrap">{n.plan}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    )}
                     {n.text && <p className="mt-1">{n.text}</p>}
                     {n.attachments && n.attachments.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -487,9 +699,20 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
           <section id={sectionId("Analyses")} className="scroll-mt-14">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h3 className="label-caps text-teal">Analyses</h3>
-              <GhostButton onClick={() => navigate({ to: "/suivi/$id", params: { id: patient.id } })}>
-                <Activity className="h-4 w-4" /> Suivi & courbes
-              </GhostButton>
+              <div className="flex gap-2">
+                <GhostButton
+                  onClick={() => {
+                    setLabDate(today());
+                    setLabRows([{ label: "", value: "", unit: "", ref: "", refMin: "" }]);
+                    setLabOpen(true);
+                  }}
+                >
+                  <FlaskConical className="h-4 w-4" /> Saisir un bilan
+                </GhostButton>
+                <GhostButton onClick={() => navigate({ to: "/suivi/$id", params: { id: patient.id } })}>
+                  <Activity className="h-4 w-4" /> Suivi &amp; courbes
+                </GhostButton>
+              </div>
             </div>
             <div className="space-y-5">
               <button
@@ -651,6 +874,124 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
           </>
         )}
       </Modal>
+
+      <Modal open={labOpen} onClose={() => setLabOpen(false)} title="Saisir un bilan biologique" width="max-w-2xl">
+        <Field label="Date du prélèvement">
+          <input
+            type="date"
+            className={`${inputCls} num w-48`}
+            value={labDate}
+            onChange={(e) => setLabDate(e.target.value)}
+          />
+        </Field>
+        <div className="mt-4 space-y-2">
+          <div className="hidden grid-cols-[1fr_80px_70px_70px_70px_32px] gap-2 sm:grid">
+            {["Marqueur", "Valeur", "Unité", "Réf. max", "Réf. min", ""].map((h) => (
+              <span key={h} className="label-caps">
+                {h}
+              </span>
+            ))}
+          </div>
+          {labRows.map((r, i) => (
+            <div key={i} className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_80px_70px_70px_70px_32px]">
+              <input
+                className={inputCls}
+                placeholder="Glycémie"
+                value={r.label}
+                onChange={(e) =>
+                  setLabRows((rows) => rows.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
+                }
+              />
+              <input
+                className={`${inputCls} num`}
+                inputMode="decimal"
+                placeholder="1.05"
+                value={r.value}
+                onChange={(e) =>
+                  setLabRows((rows) => rows.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
+                }
+              />
+              <input
+                className={inputCls}
+                placeholder="g/L"
+                value={r.unit}
+                onChange={(e) =>
+                  setLabRows((rows) => rows.map((x, j) => (j === i ? { ...x, unit: e.target.value } : x)))
+                }
+              />
+              <input
+                className={`${inputCls} num`}
+                inputMode="decimal"
+                placeholder="1.1"
+                value={r.ref}
+                onChange={(e) => setLabRows((rows) => rows.map((x, j) => (j === i ? { ...x, ref: e.target.value } : x)))}
+              />
+              <input
+                className={`${inputCls} num`}
+                inputMode="decimal"
+                placeholder="0.7"
+                value={r.refMin}
+                onChange={(e) =>
+                  setLabRows((rows) => rows.map((x, j) => (j === i ? { ...x, refMin: e.target.value } : x)))
+                }
+              />
+              <button
+                onClick={() => setLabRows((rows) => (rows.length > 1 ? rows.filter((_, j) => j !== i) : rows))}
+                aria-label="Retirer la ligne"
+                className="flex items-center justify-center rounded-md text-muted-foreground hover:bg-danger-soft hover:text-danger"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() =>
+            setLabRows((rows) => [...rows, { label: "", value: "", unit: "", ref: "", refMin: "" }])
+          }
+          className="mt-2 inline-flex items-center gap-1 text-sm text-teal hover:underline"
+        >
+          <Plus className="h-4 w-4" /> Ajouter un marqueur
+        </button>
+        <div className="mt-6 flex justify-end gap-2">
+          <GhostButton onClick={() => setLabOpen(false)}>Annuler</GhostButton>
+          <PrimaryButton
+            onClick={() => {
+              const values: AnalysisValue[] = labRows
+                .filter((r) => r.label.trim() && r.value.trim() && r.ref.trim())
+                .map((r) => ({
+                  label: r.label.trim(),
+                  value: Number(r.value),
+                  unit: r.unit.trim() || "",
+                  ref: Number(r.ref),
+                  ...(r.refMin.trim() ? { refMin: Number(r.refMin) } : {}),
+                }));
+              if (values.length === 0) {
+                toast.error("Renseignez au moins un marqueur (nom, valeur, référence)");
+                return;
+              }
+              update(
+                (d) => ({
+                  ...d,
+                  analyses: [...d.analyses, { id: newId(), patientId: patient.id, date: labDate, values }],
+                }),
+                `Bilan biologique — ${patient.name}`,
+              );
+              setLabOpen(false);
+              toast.success("Bilan enregistré");
+            }}
+          >
+            Enregistrer le bilan
+          </PrimaryButton>
+        </div>
+      </Modal>
+
+      <DiagnosticModal
+        open={diag.open}
+        onClose={() => setDiag({ open: false, id: null })}
+        patientId={patient.id}
+        diagnosticId={diag.id}
+      />
     </div>
   );
 }

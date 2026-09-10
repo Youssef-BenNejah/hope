@@ -35,9 +35,13 @@ function PrescriptionsPage() {
   const [city, setCity] = useState("Sousse");
   const [date, setDate] = useState(today());
   const [lines, setLines] = useState("");
+  const [renewFrom, setRenewFrom] = useState<string | null>(null);
 
   const patient = data.patients.find((p) => p.id === patientId);
   const name = patientId ? patientName(patientId) : "";
+  const history = patientId
+    ? [...data.prescriptions].filter((r) => r.patientId === patientId).sort((a, b) => b.date.localeCompare(a.date))
+    : [];
 
   const save = () => {
     if (!patientId) {
@@ -48,11 +52,20 @@ function PrescriptionsPage() {
       toast.error("Ajoutez au moins un médicament");
       return;
     }
-    update((d) => ({
-      ...d,
-      prescriptions: [...d.prescriptions, { id: newId(), patientId, date, text: lines.trim() }],
-    }));
-    toast.success("Ordonnance enregistrée dans le dossier du patient");
+    update(
+      (d) => ({
+        ...d,
+        prescriptions: [
+          ...d.prescriptions,
+          { id: newId(), patientId, date, text: lines.trim(), ...(renewFrom ? { renewedFrom: renewFrom } : {}) },
+        ],
+      }),
+      `${renewFrom ? "Renouvellement d'ordonnance" : "Ordonnance"} — ${patientName(patientId)}`,
+    );
+    toast.success(
+      renewFrom ? "Renouvellement enregistré dans le dossier" : "Ordonnance enregistrée dans le dossier du patient",
+    );
+    setRenewFrom(null);
   };
 
   const exportPdf = () => {
@@ -107,6 +120,33 @@ function PrescriptionsPage() {
               onChange={(e) => setLines(e.target.value)}
             />
           </Field>
+          {patient && history.length > 0 && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="label-caps mb-2 text-muted-foreground">Traitements en cours — renouveler</p>
+              <div className="space-y-1.5">
+                {history.slice(0, 4).map((r) => (
+                  <div key={r.id} className="flex items-start gap-2 text-xs">
+                    <span className="num shrink-0 text-muted-foreground">{fmtDate(r.date, "dd/MM/yy")}</span>
+                    <span className="min-w-0 flex-1 truncate" title={r.text}>
+                      {r.text.split("\n")[0]}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setLines(r.text);
+                        setDate(today());
+                        setRenewFrom(r.id);
+                        toast.success("Ordonnance chargée — ajustez puis enregistrez");
+                      }}
+                      className="shrink-0 rounded border border-border px-2 py-0.5 hover:bg-muted"
+                    >
+                      Renouveler
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {s.favorites.length > 0 && (
             <div>
               <p className="label-caps mb-2 text-muted-foreground">Favoris</p>

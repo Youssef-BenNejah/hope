@@ -1,9 +1,11 @@
 import { createContext, useContext } from "react";
-import type { CabinetData, Settings } from "./types";
+import type { CabinetData, Doctor, Settings, UserRole } from "./types";
+
+export type SessionRole = UserRole | "admin";
 
 export interface CabinetContextValue {
   data: CabinetData;
-  update: (fn: (data: CabinetData) => CabinetData) => void;
+  update: (fn: (data: CabinetData) => CabinetData, audit?: string) => void;
   setSettings: (settings: Partial<Settings>) => void;
   reset: () => void;
   offline: boolean;
@@ -13,8 +15,10 @@ export interface CabinetContextValue {
   justSynced: boolean;
   locked: boolean;
   isAdmin: boolean;
+  currentUser: Doctor | null;
+  role: SessionRole;
   lock: () => void;
-  unlock: (admin?: boolean) => void;
+  unlock: (opts?: { admin?: boolean; userId?: string }) => void;
   patientName: (id: string) => string;
   newId: () => string;
 }
