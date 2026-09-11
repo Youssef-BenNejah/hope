@@ -29,8 +29,9 @@ export const Route = createFileRoute("/")({
 });
 
 function TodayPage() {
-  const { data, update, patientName } = useCabinet();
+  const { data, update, patientName, role } = useCabinet();
   const navigate = useNavigate();
+  const showRevenue = role !== "secretaire";
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [payFor, setPayFor] = useState<string | null>(null);
@@ -68,7 +69,7 @@ function TodayPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className={`grid gap-4 ${showRevenue ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         <Card>
           <p className="label-caps">Rendez-vous aujourd'hui</p>
           <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{list.length}</p>
@@ -80,10 +81,12 @@ function TodayPage() {
             <div className="h-full rounded-full bg-surf" style={{ width: `${rate}%` }} />
           </div>
         </Card>
-        <Card>
-          <p className="label-caps">Recettes du jour</p>
-          <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{dt(revenue)}</p>
-        </Card>
+        {showRevenue && (
+          <Card>
+            <p className="label-caps">Recettes du jour</p>
+            <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{dt(revenue)}</p>
+          </Card>
+        )}
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold">Rendez-vous du jour</h2>
