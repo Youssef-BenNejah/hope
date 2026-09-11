@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowUpDown, ClipboardList, FolderOpen, GitMerge, MoreHorizontal, Plus, Search, Users } from "lucide-react";
+import { ArrowUpDown, ClipboardList, FolderOpen, MoreHorizontal, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -10,12 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCabinet } from "@/lib/cabinet/store";
-import type { CabinetData } from "@/lib/cabinet/types";
 import { ageFrom, fmtDate, levenshtein, makePatientCode, matches, sexLabel, today } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
-import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { PatientDrawer } from "@/components/cabinet/PatientDrawer";
-import { PatientPicker } from "@/components/cabinet/PatientPicker";
 import { DiagnosticModal } from "@/components/cabinet/DiagnosticModal";
 
 export const Route = createFileRoute("/patients")({
@@ -49,44 +47,6 @@ const countries = ["Tunisie", "Algérie", "Maroc", "Libye", "France", "Italie", 
 const pageSizes = [10, 25, 50];
 type SortKey = "name" | "age" | "visit";
 
-function mergePatients(d: CabinetData, keepId: string, dropId: string): CabinetData {
-  const keep = d.patients.find((p) => p.id === keepId)!;
-  const drop = d.patients.find((p) => p.id === dropId)!;
-  const sex = keep.sex ?? drop.sex;
-  const country = keep.country || drop.country;
-  const coverage = keep.coverage ?? drop.coverage;
-  const insurer = keep.insurer || drop.insurer;
-  const merged = {
-    ...keep,
-    phone: keep.phone || drop.phone,
-    birthDate: keep.birthDate || drop.birthDate,
-    cnam: keep.cnam || drop.cnam,
-    allergies: [...new Set([...keep.allergies, ...drop.allergies])],
-    chronic: [...new Set([...keep.chronic, ...drop.chronic])],
-    ...(sex ? { sex } : {}),
-    ...(country ? { country } : {}),
-    ...(coverage ? { coverage } : {}),
-    ...(insurer ? { insurer } : {}),
-  };
-  const remap = <T extends { patientId?: string }>(arr: T[]) =>
-    arr.map((x) => (x.patientId === dropId ? { ...x, patientId: keepId } : x));
-  return {
-    ...d,
-    patients: d.patients.filter((p) => p.id !== dropId).map((p) => (p.id === keepId ? merged : p)),
-    appointments: remap(d.appointments),
-    notes: remap(d.notes),
-    prescriptions: remap(d.prescriptions),
-    analyses: remap(d.analyses),
-    certificates: remap(d.certificates),
-    checkups: remap(d.checkups),
-    payments: remap(d.payments),
-    vaccinations: remap(d.vaccinations),
-    referrals: remap(d.referrals),
-    documents: remap(d.documents),
-    messages: remap(d.messages),
-  };
-}
-
 function PatientsPage() {
   const { data, update, newId, role } = useCabinet();
   const navigate = useNavigate();
@@ -100,10 +60,6 @@ function PatientsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [dup, setDup] = useState<string | null>(null);
-  const [mergeOpen, setMergeOpen] = useState(false);
-  const [mergeKeep, setMergeKeep] = useState<string | null>(null);
-  const [mergeDrop, setMergeDrop] = useState<string | null>(null);
-  const [mergeConfirm, setMergeConfirm] = useState(false);
 
   const lastVisitDate = (id: string) => {
     const visits = data.appointments.filter((a) => a.patientId === id && a.status === "done");
@@ -184,8 +140,6 @@ function PatientsPage() {
   };
 
   const duplicate = dup ? data.patients.find((x) => x.id === dup) : null;
-  const keepP = data.patients.find((x) => x.id === mergeKeep);
-  const dropP = data.patients.find((x) => x.id === mergeDrop);
 
   return (
     <ScreenTransition>
@@ -193,14 +147,9 @@ function PatientsPage() {
         title="Patients"
         subtitle={`${data.patients.length} dossiers dans le répertoire`}
         actions={
-          <>
-            <GhostButton onClick={() => setMergeOpen(true)}>
-              <GitMerge className="h-4 w-4" /> Fusionner
-            </GhostButton>
-            <PrimaryButton onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> Nouveau patient
-            </PrimaryButton>
-          </>
+          <PrimaryButton onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4" /> Nouveau patient
+          </PrimaryButton>
         }
       />
 
@@ -513,47 +462,6 @@ function PatientsPage() {
           <PrimaryButton onClick={() => create()}>Enregistrer le patient</PrimaryButton>
         </div>
       </Modal>
-
-      <Modal open={mergeOpen} onClose={() => setMergeOpen(false)} title="Fusionner deux dossiers" width="max-w-lg">
-        <p className="mb-4 text-sm text-muted-foreground">
-          Toutes les consultations, notes, ordonnances, analyses et paiements du dossier en double seront rattachés au
-          dossier conservé. Le doublon sera supprimé.
-        </p>
-        <div className="space-y-4">
-          <Field label="Dossier à conserver">
-            <PatientPicker value={mergeKeep} onSelect={setMergeKeep} allowCreate={false} />
-          </Field>
-          <Field label="Dossier en double (sera supprimé)">
-            <PatientPicker value={mergeDrop} onSelect={setMergeDrop} allowCreate={false} />
-          </Field>
-          {mergeKeep && mergeDrop && mergeKeep === mergeDrop && (
-            <p className="text-sm text-danger">Sélectionnez deux dossiers différents.</p>
-          )}
-        </div>
-        <div className="mt-6 flex justify-end gap-2">
-          <GhostButton onClick={() => setMergeOpen(false)}>Annuler</GhostButton>
-          <PrimaryButton
-            disabled={!mergeKeep || !mergeDrop || mergeKeep === mergeDrop}
-            onClick={() => setMergeConfirm(true)}
-          >
-            Fusionner
-          </PrimaryButton>
-        </div>
-      </Modal>
-
-      <ConfirmModal
-        open={mergeConfirm}
-        onClose={() => setMergeConfirm(false)}
-        message={`Fusionner « ${dropP?.name} » dans « ${keepP?.name} » ? Cette action est irréversible.`}
-        onConfirm={() => {
-          if (!mergeKeep || !mergeDrop) return;
-          update((d) => mergePatients(d, mergeKeep, mergeDrop), `Fusion de dossiers — ${dropP?.name} → ${keepP?.name}`);
-          toast.success("Dossiers fusionnés");
-          setMergeOpen(false);
-          setMergeKeep(null);
-          setMergeDrop(null);
-        }}
-      />
 
       {p && <PatientDrawer patientId={p} onClose={() => navigate({ to: "/patients", search: { p: undefined } })} />}
 
