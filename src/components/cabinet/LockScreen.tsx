@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCabinet } from "@/lib/cabinet/store";
 import logo from "@/assets/logo.png";
@@ -13,11 +13,10 @@ export function LockScreen() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const submit = useCallback(
-    (e?: React.FormEvent) => {
-      e?.preventDefault();
-      const mail = email.trim().toLowerCase();
-      if (!mail || !password) {
+  const attemptLogin = useCallback(
+    (mailRaw: string, passwordRaw: string) => {
+      const mail = mailRaw.trim().toLowerCase();
+      if (!mail || !passwordRaw) {
         setError("Renseignez l'email et le mot de passe");
         return;
       }
@@ -25,9 +24,9 @@ export function LockScreen() {
       window.setTimeout(() => {
         const isAdmin =
           mail === (data.settings.adminEmail || "admin@cabinet.tn").toLowerCase() &&
-          password === (data.settings.adminPassword || "Admin@2024");
+          passwordRaw === (data.settings.adminPassword || "Admin@2024");
         const staff = data.doctors.find(
-          (d) => d.active && d.email.trim().toLowerCase() === mail && d.password === password,
+          (d) => d.active && d.email.trim().toLowerCase() === mail && d.password === passwordRaw,
         );
 
         if (isAdmin) {
@@ -43,8 +42,45 @@ export function LockScreen() {
         setSubmitting(false);
       }, 250);
     },
-    [email, password, data.doctors, data.settings.adminEmail, data.settings.adminPassword, unlock, navigate],
+    [data.doctors, data.settings.adminEmail, data.settings.adminPassword, unlock, navigate],
   );
+
+  const submit = useCallback(
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      attemptLogin(email, password);
+    },
+    [attemptLogin, email, password],
+  );
+
+  const quickLogin = useCallback(
+    (mail: string, pass: string) => {
+      setEmail(mail);
+      setPassword(pass);
+      attemptLogin(mail, pass);
+    },
+    [attemptLogin],
+  );
+
+  const quickDoctor =
+    data.doctors.find((d) => d.active && d.role === "medecin" && d.name === data.settings.doctorName) ??
+    data.doctors.find((d) => d.active && d.role === "medecin");
+  const quickSecretaire = data.doctors.find((d) => d.active && d.role === "secretaire");
+  const quickOptions = [
+    quickDoctor && { label: "Médecin", icon: Stethoscope, email: quickDoctor.email, password: quickDoctor.password },
+    quickSecretaire && {
+      label: "Secrétaire",
+      icon: UsersRound,
+      email: quickSecretaire.email,
+      password: quickSecretaire.password,
+    },
+    {
+      label: "Admin",
+      icon: ShieldCheck,
+      email: data.settings.adminEmail || "admin@cabinet.tn",
+      password: data.settings.adminPassword || "Admin@2024",
+    },
+  ].filter((o): o is { label: string; icon: typeof Stethoscope; email: string; password: string } => !!o);
 
   return (
     <div
@@ -114,6 +150,23 @@ export function LockScreen() {
           <LogIn className="h-4 w-4" /> {submitting ? "Connexion…" : "Se connecter"}
         </button>
       </form>
+
+      <div className="mt-6 w-full max-w-sm">
+        <p className="mb-2 text-center text-[11px] uppercase tracking-wide text-frost/50">Connexion rapide (démo)</p>
+        <div className="flex justify-center gap-2">
+          {quickOptions.map((o) => (
+            <button
+              key={o.label}
+              type="button"
+              disabled={submitting}
+              onClick={() => quickLogin(o.email, o.password)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-frost transition-colors hover:border-frost/60 hover:bg-white/15 disabled:opacity-60"
+            >
+              <o.icon className="h-3.5 w-3.5" /> {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <p className="mt-6 text-center text-xs text-frost/60">
         Identifiants créés et communiqués par l'administration (page Administration).
