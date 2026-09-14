@@ -26,9 +26,9 @@ export const Route = createFileRoute("/parametres")({
 });
 
 function SettingsPage() {
-  const { data, setSettings, reset, update, newId } = useCabinet();
+  const { data, setSettings, reset, update, newId, currentUser } = useCabinet();
   const s = data.settings;
-  const [pin, setPin] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [favOpen, setFavOpen] = useState(false);
   const [favEditId, setFavEditId] = useState<string | null>(null);
   const [favForm, setFavForm] = useState(emptyFav);
@@ -444,23 +444,30 @@ function SettingsPage() {
         <Card>
           <h2 className="mb-4 text-lg font-semibold">Sécurité</h2>
           <div className="space-y-4">
-            <Field label="Nouveau code PIN (4 chiffres)">
+            <Field label="Nouveau mot de passe (au moins 6 caractères)">
               <div className="flex gap-2">
                 <input
-                  className={`${inputCls} num`}
-                  maxLength={4}
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                  className={inputCls}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                 />
                 <PrimaryButton
                   onClick={() => {
-                    if (pin.length !== 4) {
-                      toast.error("Le code doit contenir 4 chiffres");
+                    if (newPassword.trim().length < 6) {
+                      toast.error("Le mot de passe doit contenir au moins 6 caractères");
                       return;
                     }
-                    setSettings({ pin });
-                    setPin("");
-                    toast.success("Code PIN mis à jour");
+                    setSettings({ password: newPassword });
+                    if (currentUser) {
+                      update((d) => ({
+                        ...d,
+                        doctors: d.doctors.map((x) =>
+                          x.id === currentUser.id ? { ...x, password: newPassword } : x,
+                        ),
+                      }));
+                    }
+                    setNewPassword("");
+                    toast.success("Mot de passe mis à jour");
                   }}
                 >
                   Changer

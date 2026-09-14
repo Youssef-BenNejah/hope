@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import {
   BadgeCheck,
+  Eye,
+  EyeOff,
   KeyRound,
+  Mail,
   Pencil,
   Power,
   Printer,
@@ -15,8 +18,10 @@ import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { Doctor } from "@/lib/cabinet/types";
 import { fmtDate, resizeImage, today } from "@/lib/cabinet/utils";
+import { randomPassword } from "@/lib/cabinet/credentials";
 import { Card, EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { SendCredentialsModal } from "@/components/cabinet/SendCredentialsModal";
 
 export const Route = createFileRoute("/personnel")({
   head: () => ({
@@ -30,14 +35,12 @@ export const Route = createFileRoute("/personnel")({
   component: PersonnelPage,
 });
 
-const randomPin = () => String(Math.floor(1000 + Math.random() * 9000));
-
 const empty = {
   name: "",
   specialty: "Secrétariat médical",
   email: "",
   phone: "",
-  pin: "",
+  password: "",
   photo: "",
   birthDate: "",
   cin: "",
@@ -60,8 +63,11 @@ function PersonnelPage() {
   const [form, setForm] = useState(empty);
   const [toDelete, setToDelete] = useState<Doctor | null>(null);
   const [resetTarget, setResetTarget] = useState<Doctor | null>(null);
-  const [newPin, setNewPin] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [detail, setDetail] = useState<Doctor | null>(null);
+  const [sendTarget, setSendTarget] = useState<Doctor | null>(null);
+  const [sendPassword, setSendPassword] = useState("");
 
   if (role === "secretaire") {
     return (
@@ -74,7 +80,7 @@ function PersonnelPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...empty, hiredAt: today(), pin: randomPin() });
+    setForm({ ...empty, hiredAt: today(), password: randomPassword() });
     setFormOpen(true);
   };
 
@@ -85,7 +91,7 @@ function PersonnelPage() {
       specialty: d.specialty || "Secrétariat médical",
       email: d.email,
       phone: d.phone,
-      pin: d.pin,
+      password: d.password,
       photo: d.photo ?? "",
       birthDate: d.birthDate ?? "",
       cin: d.cin ?? "",
@@ -114,12 +120,16 @@ function PersonnelPage() {
       toast.error("Le nom est obligatoire");
       return;
     }
-    if (!/^\d{4}$/.test(form.pin)) {
-      toast.error("Le code PIN doit contenir 4 chiffres");
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      toast.error("Une adresse email valide est obligatoire (identifiant de connexion)");
       return;
     }
-    if (data.doctors.some((d) => d.pin === form.pin && d.id !== editing?.id)) {
-      toast.error("Ce code PIN est déjà utilisé par un autre compte");
+    if (data.doctors.some((d) => d.email.trim().toLowerCase() === form.email.trim().toLowerCase() && d.id !== editing?.id)) {
+      toast.error("Cet email est déjà utilisé par un autre compte");
+      return;
+    }
+    if (form.password.trim().length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
     const opt = (v: string) => v.trim();
@@ -128,7 +138,7 @@ function PersonnelPage() {
       specialty: form.specialty.trim() || "Secrétariat médical",
       email: form.email.trim(),
       phone: form.phone.trim(),
-      pin: form.pin,
+      password: form.password,
       role: "secretaire" as const,
       ...(form.photo ? { photo: form.photo } : {}),
       ...(opt(form.birthDate) ? { birthDate: form.birthDate } : {}),
@@ -168,17 +178,17 @@ function PersonnelPage() {
       );
       toast.success("Fiche mise à jour");
     } else {
+      const newDoc: Doctor = { id: newId(), licenseNumber: "—", active: true, createdAt: today(), ...fields };
       update(
         (d) => ({
           ...d,
-          doctors: [
-            ...d.doctors,
-            { id: newId(), licenseNumber: "—", active: true, createdAt: today(), ...fields },
-          ],
+          doctors: [...d.doctors, newDoc],
         }),
         `Personnel ajouté — ${fields.name}`,
       );
-      toast.success(`${fields.name} ajouté(e) — code PIN ${fields.pin}`);
+      toast.success(`${fields.name} ajouté(e) — mot de passe ${fields.password}`);
+      setSendTarget(newDoc);
+      setSendPassword(newDoc.password);
     }
     setFormOpen(false);
   };
@@ -196,23 +206,21 @@ function PersonnelPage() {
 
   const confirmReset = () => {
     if (!resetTarget) return;
-    if (!/^\d{4}$/.test(newPin)) {
-      toast.error("Le code PIN doit contenir 4 chiffres");
-      return;
-    }
-    if (data.doctors.some((d) => d.pin === newPin && d.id !== resetTarget.id)) {
-      toast.error("Ce code PIN est déjà utilisé");
+    if (newPassword.trim().length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
     const id = resetTarget.id;
     update(
       (d) => ({
         ...d,
-        doctors: d.doctors.map((x) => (x.id === id ? { ...x, pin: newPin, lastPinResetAt: today() } : x)),
+        doctors: d.doctors.map((x) => (x.id === id ? { ...x, password: newPassword, lastPasswordResetAt: today() } : x)),
       }),
-      `Code PIN réinitialisé — ${resetTarget.name}`,
+      `Mot de passe réinitialisé — ${resetTarget.name}`,
     );
-    toast.success(`Nouveau code PIN pour ${resetTarget.name} : ${newPin}`);
+    toast.success(`Nouveau mot de passe pour ${resetTarget.name} : ${newPassword}`);
+    setSendTarget(resetTarget);
+    setSendPassword(newPassword);
     setResetTarget(null);
   };
 
@@ -345,12 +353,22 @@ ${row("Notes", d.notes)}
                 <button
                   onClick={() => {
                     setResetTarget(d);
-                    setNewPin(randomPin());
+                    setNewPassword(randomPassword());
                   }}
-                  title="Réinitialiser le code PIN"
+                  title="Réinitialiser le mot de passe"
                   className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
                 >
                   <KeyRound className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setSendTarget(d);
+                    setSendPassword(d.password);
+                  }}
+                  title="Envoyer les identifiants par email"
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
+                >
+                  <Mail className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => toggleActive(d)}
@@ -499,16 +517,24 @@ ${row("Notes", d.notes)}
                 />
               </Field>
             </div>
-            <Field label="Code PIN de connexion (4 chiffres)">
+            <Field label="Mot de passe de connexion">
               <div className="flex gap-2">
-                <input
-                  className={`${inputCls} num`}
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={form.pin}
-                  onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
-                />
-                <GhostButton type="button" onClick={() => setForm({ ...form, pin: randomPin() })}>
+                <div className="relative flex-1">
+                  <input
+                    className={`${inputCls} pr-10`}
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <GhostButton type="button" onClick={() => setForm({ ...form, password: randomPassword() })}>
                   Générer
                 </GhostButton>
               </div>
@@ -589,21 +615,19 @@ ${row("Notes", d.notes)}
         )}
       </Modal>
 
-      <Modal open={!!resetTarget} onClose={() => setResetTarget(null)} title="Réinitialiser le code PIN" width="max-w-md">
+      <Modal open={!!resetTarget} onClose={() => setResetTarget(null)} title="Réinitialiser le mot de passe" width="max-w-md">
         <p className="text-sm text-muted-foreground">
-          Un nouveau code de connexion sera attribué à {resetTarget?.name}. Communiquez-le à la personne concernée.
+          Un nouveau mot de passe sera attribué à {resetTarget?.name}. Communiquez-le à la personne concernée (par email).
         </p>
         <div className="mt-4">
-          <Field label="Nouveau code PIN">
+          <Field label="Nouveau mot de passe">
             <div className="flex gap-2">
               <input
-                className={`${inputCls} num tracking-[0.3em]`}
-                inputMode="numeric"
-                maxLength={4}
-                value={newPin}
-                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className={inputCls}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
               />
-              <GhostButton type="button" onClick={() => setNewPin(randomPin())}>
+              <GhostButton type="button" onClick={() => setNewPassword(randomPassword())}>
                 Générer
               </GhostButton>
             </div>
@@ -627,6 +651,14 @@ ${row("Notes", d.notes)}
           update((d) => ({ ...d, doctors: d.doctors.filter((x) => x.id !== id) }), `Personnel supprimé — ${toDelete.name}`);
           toast.success("Fiche supprimée");
         }}
+      />
+
+      <SendCredentialsModal
+        open={!!sendTarget}
+        onClose={() => setSendTarget(null)}
+        doc={sendTarget}
+        password={sendPassword}
+        cabinetName={data.settings.doctorName}
       />
     </ScreenTransition>
   );

@@ -300,8 +300,9 @@ export interface Settings {
   favorites: Favorite[];
   protocols: Protocol[];
   consultDuration: number; // durée d'une consultation en minutes
-  pin: string;
-  adminPin: string;
+  password: string; // secours pour le compte médecin principal
+  adminEmail: string;
+  adminPassword: string;
   lockDelay: number; // minutes, 0 = jamais
   theme: "light" | "dark" | "system";
   appointmentCategories: AppointmentCategory[];
@@ -314,13 +315,13 @@ export interface Doctor {
   id: string;
   name: string;
   specialty: string;
-  email: string;
+  email: string; // sert aussi d'identifiant de connexion
   phone: string;
   licenseNumber: string;
-  pin: string;
+  password: string;
   active: boolean;
   createdAt: string;
-  lastPinResetAt?: string;
+  lastPasswordResetAt?: string;
   role: UserRole;
   // Dossier personnel (surtout utilisé pour le personnel non médical)
   photo?: string; // dataUrl

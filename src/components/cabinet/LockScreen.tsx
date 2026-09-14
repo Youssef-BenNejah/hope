@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Delete } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCabinet } from "@/lib/cabinet/store";
 import logo from "@/assets/logo.png";
@@ -7,61 +7,48 @@ import logo from "@/assets/logo.png";
 export function LockScreen() {
   const { data, unlock } = useCabinet();
   const navigate = useNavigate();
-  const [code, setCode] = useState("");
-  const [error, setError] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const submit = useCallback(
-    (value: string) => {
-      const staff = data.doctors.find((d) => d.active && d.pin === value);
-      const mainDoctor =
-        data.doctors.find((d) => d.active && d.name === data.settings.doctorName) ??
-        data.doctors.find((d) => d.active && d.role === "medecin");
-
-      if (value === (data.settings.adminPin || "0000")) {
-        setError(false);
-        window.setTimeout(() => unlock({ admin: true }), 150);
-      } else if (staff || value === data.settings.pin) {
-        const user = staff ?? mainDoctor;
-        setError(false);
-        window.setTimeout(() => {
-          unlock(user ? { userId: user.id } : {});
-          navigate({ to: "/" });
-        }, 150);
-      } else {
-        setError(true);
-        window.setTimeout(() => {
-          setCode("");
-          setError(false);
-        }, 500);
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      const mail = email.trim().toLowerCase();
+      if (!mail || !password) {
+        setError("Renseignez l'email et le mot de passe");
+        return;
       }
-    },
-    [data.doctors, data.settings.pin, data.settings.adminPin, data.settings.doctorName, unlock, navigate],
-  );
+      setSubmitting(true);
+      window.setTimeout(() => {
+        const isAdmin =
+          mail === (data.settings.adminEmail || "admin@cabinet.tn").toLowerCase() &&
+          password === (data.settings.adminPassword || "Admin@2024");
+        const staff = data.doctors.find(
+          (d) => d.active && d.email.trim().toLowerCase() === mail && d.password === password,
+        );
 
-  const push = useCallback(
-    (digit: string) => {
-      setCode((prev) => {
-        if (prev.length >= 4) return prev;
-        const next = prev + digit;
-        if (next.length === 4) window.setTimeout(() => submit(next), 120);
-        return next;
-      });
+        if (isAdmin) {
+          setError("");
+          unlock({ admin: true });
+        } else if (staff) {
+          setError("");
+          unlock({ userId: staff.id });
+          navigate({ to: "/" });
+        } else {
+          setError("Email ou mot de passe incorrect");
+        }
+        setSubmitting(false);
+      }, 250);
     },
-    [submit],
+    [email, password, data.doctors, data.settings.adminEmail, data.settings.adminPassword, unlock, navigate],
   );
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (/^[0-9]$/.test(e.key)) push(e.key);
-      if (e.key === "Backspace") setCode((p) => p.slice(0, -1));
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [push]);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-4"
       style={{ background: "linear-gradient(160deg, #03045E 0%, #052a7a 55%, #0077B6 100%)" }}
     >
       <img
@@ -72,48 +59,65 @@ export function LockScreen() {
       <h1 className="mt-6 text-2xl font-semibold text-[#EAF2FA]">Cabinet</h1>
       <p className="mt-1 text-sm text-frost">{data.settings.doctorName}</p>
 
-      <div className={`mt-10 flex gap-3 ${error ? "animate-shake" : ""}`}>
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`flex h-14 w-12 items-center justify-center rounded-xl border-2 text-2xl num text-[#EAF2FA] transition-colors ${
-              error ? "border-[#C4432E]" : code.length > i ? "border-frost bg-white/10" : "border-white/25"
+      <form onSubmit={submit} className={`mt-8 w-full max-w-sm space-y-3 ${error ? "animate-shake" : ""}`}>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-frost/80">Email</label>
+          <input
+            type="email"
+            autoComplete="username"
+            autoFocus
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError("");
+            }}
+            placeholder="nom@cabinet.tn"
+            className={`w-full rounded-xl border-2 bg-white/10 px-4 py-3 text-sm text-[#EAF2FA] placeholder:text-frost/40 outline-none transition-colors focus:bg-white/15 ${
+              error ? "border-[#C4432E]" : "border-white/25 focus:border-frost"
             }`}
-          >
-            {code[i] ? "•" : ""}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-frost/80">Mot de passe</label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              placeholder="••••••••"
+              className={`w-full rounded-xl border-2 bg-white/10 px-4 py-3 pr-11 text-sm text-[#EAF2FA] placeholder:text-frost/40 outline-none transition-colors focus:bg-white/15 ${
+                error ? "border-[#C4432E]" : "border-white/25 focus:border-frost"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-frost/70 hover:text-frost"
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <p className={`mt-3 h-5 text-sm ${error ? "text-[#e2705a]" : "text-frost/70"}`}>
-        {error ? "Code incorrect" : "Médecin : 1234 · Secrétariat : 2580 · Administration : 0000"}
+        <p className={`h-5 text-sm ${error ? "text-[#e2705a]" : "text-transparent"}`}>{error || "-"}</p>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-frost py-3 text-sm font-semibold text-twilight transition-colors hover:bg-white disabled:opacity-60"
+        >
+          <LogIn className="h-4 w-4" /> {submitting ? "Connexion…" : "Se connecter"}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-xs text-frost/60">
+        Identifiants créés et communiqués par l'administration (page Administration).
       </p>
-
-      <div className="mt-6 grid w-64 grid-cols-3 gap-3">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
-          <button
-            key={n}
-            onClick={() => push(n)}
-            className="h-14 rounded-xl border border-white/20 bg-white/5 text-lg num text-[#EAF2FA] transition-colors hover:bg-white/15"
-          >
-            {n}
-          </button>
-        ))}
-        <span />
-        <button
-          onClick={() => push("0")}
-          className="h-14 rounded-xl border border-white/20 bg-white/5 text-lg num text-[#EAF2FA] transition-colors hover:bg-white/15"
-        >
-          0
-        </button>
-        <button
-          onClick={() => setCode((p) => p.slice(0, -1))}
-          aria-label="Effacer"
-          className="flex h-14 items-center justify-center rounded-xl border border-white/20 bg-white/5 text-[#EAF2FA] transition-colors hover:bg-white/15"
-        >
-          <Delete className="h-5 w-5" />
-        </button>
-      </div>
     </div>
   );
 }

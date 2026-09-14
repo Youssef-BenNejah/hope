@@ -24,11 +24,14 @@ function load(): CabinetData {
         taken.push(code);
         return { ...p, code };
       });
+      const legacySettings = parsed.settings as unknown as { pin?: string; adminPin?: string };
       parsed.settings = {
         ...seed.settings,
         ...parsed.settings,
         consultDuration: parsed.settings.consultDuration || 30,
-        adminPin: parsed.settings.adminPin || "0000",
+        password: parsed.settings.password || legacySettings.pin || seed.settings.password,
+        adminEmail: parsed.settings.adminEmail || seed.settings.adminEmail,
+        adminPassword: parsed.settings.adminPassword || legacySettings.adminPin || seed.settings.adminPassword,
         appointmentCategories: parsed.settings.appointmentCategories?.length
           ? parsed.settings.appointmentCategories
           : seed.settings.appointmentCategories,
@@ -41,7 +44,17 @@ function load(): CabinetData {
       };
       // rétro-compatibilité : comptes médecins + rôle
       if (!parsed.doctors?.length) parsed.doctors = seed.doctors;
-      parsed.doctors = parsed.doctors.map((d) => ({ ...d, role: d.role ?? "medecin" }));
+      parsed.doctors = parsed.doctors.map((d) => {
+        const legacy = d as unknown as { pin?: string; lastPinResetAt?: string };
+        return {
+          ...d,
+          role: d.role ?? "medecin",
+          password: d.password || legacy.pin || "changeme123",
+          ...((d.lastPasswordResetAt ?? legacy.lastPinResetAt)
+            ? { lastPasswordResetAt: d.lastPasswordResetAt ?? legacy.lastPinResetAt }
+            : {}),
+        };
+      });
       // rétro-compatibilité : garantir au moins un compte secrétariat (connexion + module Personnel)
       if (!parsed.doctors.some((d) => d.role === "secretaire")) {
         parsed.doctors = [...parsed.doctors, ...seed.doctors.filter((d) => d.role === "secretaire")];

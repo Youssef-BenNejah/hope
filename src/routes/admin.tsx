@@ -14,13 +14,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { KeyRound, Pencil, Plus, Power, ShieldCheck, Trash2, UserPlus } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Mail, Pencil, Plus, Power, ShieldCheck, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { Doctor, UserRole } from "@/lib/cabinet/types";
 import { dt, fmtDate, today } from "@/lib/cabinet/utils";
+import { randomPassword } from "@/lib/cabinet/credentials";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
+import { SendCredentialsModal } from "@/components/cabinet/SendCredentialsModal";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -28,10 +30,10 @@ export const Route = createFileRoute("/admin")({
       { title: "Administration — Cabinet" },
       {
         name: "description",
-        content: "Gérez les comptes médecins du cabinet, réinitialisez leurs codes PIN et suivez les statistiques.",
+        content: "Gérez les comptes médecins du cabinet, réinitialisez leurs mots de passe et suivez les statistiques.",
       },
       { property: "og:title", content: "Administration — Cabinet" },
-      { property: "og:description", content: "Comptes médecins, codes PIN et statistiques du cabinet." },
+      { property: "og:description", content: "Comptes médecins, mots de passe et statistiques du cabinet." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -45,11 +47,9 @@ const emptyDoctor = {
   email: "",
   phone: "",
   licenseNumber: "",
-  pin: "",
+  password: "",
   role: "medecin" as UserRole,
 };
-
-const randomPin = () => String(Math.floor(1000 + Math.random() * 9000));
 
 function AdminPage() {
   const { data, update, newId } = useCabinet();
@@ -60,7 +60,10 @@ function AdminPage() {
   const [form, setForm] = useState(emptyDoctor);
   const [toDelete, setToDelete] = useState<Doctor | null>(null);
   const [resetTarget, setResetTarget] = useState<Doctor | null>(null);
-  const [newPin, setNewPin] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [sendTarget, setSendTarget] = useState<Doctor | null>(null);
+  const [sendPassword, setSendPassword] = useState("");
 
   const stats = useMemo(() => {
     const monthStart = format(subDays(new Date(), 29), "yyyy-MM-dd");
@@ -98,7 +101,7 @@ function AdminPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...emptyDoctor, pin: randomPin() });
+    setForm({ ...emptyDoctor, password: randomPassword() });
     setFormOpen(true);
   };
 
@@ -110,7 +113,7 @@ function AdminPage() {
       email: doc.email,
       phone: doc.phone,
       licenseNumber: doc.licenseNumber,
-      pin: doc.pin,
+      password: doc.password,
       role: doc.role ?? "medecin",
     });
     setFormOpen(true);
@@ -121,8 +124,16 @@ function AdminPage() {
       toast.error("Le nom du médecin est obligatoire");
       return;
     }
-    if (!/^\d{4}$/.test(form.pin)) {
-      toast.error("Le code PIN doit contenir 4 chiffres");
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      toast.error("Une adresse email valide est obligatoire (identifiant de connexion)");
+      return;
+    }
+    if (data.doctors.some((d) => d.email.trim().toLowerCase() === form.email.trim().toLowerCase() && d.id !== editing?.id)) {
+      toast.error("Cet email est déjà utilisé par un autre compte");
+      return;
+    }
+    if (form.password.trim().length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
     if (editing) {
@@ -140,7 +151,9 @@ function AdminPage() {
         createdAt: today(),
       };
       update((d) => ({ ...d, doctors: [...d.doctors, doc] }));
-      toast.success(`${doc.name} ajouté — code PIN ${doc.pin}`);
+      toast.success(`${doc.name} ajouté — mot de passe ${doc.password}`);
+      setSendTarget(doc);
+      setSendPassword(doc.password);
     }
     setFormOpen(false);
   };
@@ -155,21 +168,23 @@ function AdminPage() {
 
   const confirmReset = () => {
     if (!resetTarget) return;
-    if (!/^\d{4}$/.test(newPin)) {
-      toast.error("Le code PIN doit contenir 4 chiffres");
+    if (newPassword.trim().length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
     const id = resetTarget.id;
     update((d) => ({
       ...d,
       doctors: d.doctors.map((x) =>
-        x.id === id ? { ...x, pin: newPin, lastPinResetAt: today() } : x,
+        x.id === id ? { ...x, password: newPassword, lastPasswordResetAt: today() } : x,
       ),
       settings: d.doctors.find((x) => x.id === id)?.name === d.settings.doctorName
-        ? { ...d.settings, pin: newPin }
+        ? { ...d.settings, password: newPassword }
         : d.settings,
     }));
-    toast.success(`Nouveau code PIN pour ${resetTarget.name} : ${newPin}`);
+    toast.success(`Nouveau mot de passe pour ${resetTarget.name} : ${newPassword}`);
+    setSendTarget(resetTarget);
+    setSendPassword(newPassword);
     setResetTarget(null);
   };
 
@@ -259,7 +274,7 @@ function AdminPage() {
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Spécialité</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Rôle</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Contact</th>
-                <th className="label-caps px-3 py-2 text-[#CAF0F8]">Code PIN</th>
+                <th className="label-caps px-3 py-2 text-[#CAF0F8]">Mot de passe</th>
                 <th className="label-caps px-3 py-2 text-[#CAF0F8]">Statut</th>
                 <th className="label-caps rounded-r-lg px-3 py-2 text-right text-[#CAF0F8]">Actions</th>
               </tr>
@@ -282,10 +297,10 @@ function AdminPage() {
                     <p className="num text-xs text-muted-foreground">{doc.phone}</p>
                   </td>
                   <td className="px-3 py-3">
-                    <span className="num rounded-md bg-muted px-2 py-1 tracking-[0.2em]">••••</span>
-                    {doc.lastPinResetAt && (
+                    <span className="num rounded-md bg-muted px-2 py-1 tracking-[0.15em]">••••••••</span>
+                    {doc.lastPasswordResetAt && (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        réinit. {fmtDate(doc.lastPinResetAt, "dd/MM/yyyy")}
+                        réinit. {fmtDate(doc.lastPasswordResetAt, "dd/MM/yyyy")}
                       </p>
                     )}
                   </td>
@@ -303,12 +318,22 @@ function AdminPage() {
                       <button
                         onClick={() => {
                           setResetTarget(doc);
-                          setNewPin(randomPin());
+                          setNewPassword(randomPassword());
                         }}
-                        title="Réinitialiser le code PIN"
+                        title="Réinitialiser le mot de passe"
                         className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
                       >
                         <KeyRound className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSendTarget(doc);
+                          setSendPassword(doc.password);
+                        }}
+                        title="Envoyer les identifiants par email"
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
+                      >
+                        <Mail className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => openEdit(doc)}
@@ -396,16 +421,24 @@ function AdminPage() {
               <option value="secretaire">Secrétaire</option>
             </select>
           </Field>
-          <Field label="Code PIN (4 chiffres)">
+          <Field label="Mot de passe">
             <div className="flex gap-2">
-              <input
-                className={inputCls}
-                value={form.pin}
-                inputMode="numeric"
-                maxLength={4}
-                onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
-              />
-              <GhostButton type="button" onClick={() => setForm({ ...form, pin: randomPin() })}>
+              <div className="relative flex-1">
+                <input
+                  className={`${inputCls} pr-10`}
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <GhostButton type="button" onClick={() => setForm({ ...form, password: randomPassword() })}>
                 Générer
               </GhostButton>
             </div>
@@ -420,23 +453,21 @@ function AdminPage() {
       <Modal
         open={!!resetTarget}
         onClose={() => setResetTarget(null)}
-        title="Réinitialiser le code PIN"
+        title="Réinitialiser le mot de passe"
         width="max-w-md"
       >
         <p className="text-sm text-muted-foreground">
-          Un nouveau code d'accès sera attribué à {resetTarget?.name}. Communiquez-le au médecin concerné.
+          Un nouveau mot de passe sera attribué à {resetTarget?.name}. Communiquez-le au médecin concerné (par email).
         </p>
         <div className="mt-4">
-          <Field label="Nouveau code PIN">
+          <Field label="Nouveau mot de passe">
             <div className="flex gap-2">
               <input
-                className={`${inputCls} num tracking-[0.3em]`}
-                value={newPin}
-                inputMode="numeric"
-                maxLength={4}
-                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className={`${inputCls} num`}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
               />
-              <GhostButton type="button" onClick={() => setNewPin(randomPin())}>
+              <GhostButton type="button" onClick={() => setNewPassword(randomPassword())}>
                 Générer
               </GhostButton>
             </div>
@@ -458,6 +489,14 @@ function AdminPage() {
           toast.success("Compte médecin supprimé");
         }}
         message={`Supprimer définitivement le compte de ${toDelete?.name} ?`}
+      />
+
+      <SendCredentialsModal
+        open={!!sendTarget}
+        onClose={() => setSendTarget(null)}
+        doc={sendTarget}
+        password={sendPassword}
+        cabinetName={data.settings.doctorName}
       />
     </ScreenTransition>
   );
