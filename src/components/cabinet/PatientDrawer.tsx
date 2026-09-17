@@ -21,11 +21,11 @@ import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { AnalysisValue, IcdCode, NoteAttachment } from "@/lib/cabinet/types";
-import { diagnosticPreview } from "@/lib/cabinet/diagnostic";
 import { ageFrom, fmtDate, sexLabel, statusMeta, today } from "@/lib/cabinet/utils";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 import { IcdPicker } from "./IcdPicker";
 import { DiagnosticModal } from "./DiagnosticModal";
+import { DiagnosticReportView } from "./DiagnosticReportView";
 
 const tabs = ["Aperçu", "Historique", "Diagnostic", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
@@ -452,11 +452,7 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                       </span>
                     </div>
                     {x.reason && <p className="text-sm font-medium">{x.reason}</p>}
-                    {x.content && (
-                      <p className="line-clamp-3 whitespace-pre-wrap text-xs text-muted-foreground">
-                        {diagnosticPreview(x, 220)}
-                      </p>
-                    )}
+                    {x.content && <DiagnosticReportView content={x.content} maxLines={3} className="text-xs" />}
                   </button>
                 ))}
               </div>

@@ -5,6 +5,7 @@ import { useCabinet } from "@/lib/cabinet/store";
 import { dt, fmtDate, statusMeta } from "@/lib/cabinet/utils";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { GhostButton } from "@/components/cabinet/Modal";
+import { DiagnosticReportView } from "@/components/cabinet/DiagnosticReportView";
 
 export const Route = createFileRoute("/historique/$id")({
   head: () => ({
@@ -175,7 +176,13 @@ function HistoryPage() {
                     )}
                   </div>
                   <p className="mt-1 font-medium">{e.title}</p>
-                  {e.detail && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{e.detail}</p>}
+                  {e.detail && e.kind === "Diagnostic" ? (
+                    <div className="mt-1.5 rounded-lg border border-border bg-muted/30 p-3">
+                      <DiagnosticReportView content={e.detail} />
+                    </div>
+                  ) : (
+                    e.detail && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{e.detail}</p>
+                  )}
                   {!!e.attachments && (
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <Paperclip className="h-3 w-3" /> {e.attachments} pièce(s) jointe(s)

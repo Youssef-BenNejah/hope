@@ -6,6 +6,7 @@ import type { Diagnostic } from "@/lib/cabinet/types";
 import { today } from "@/lib/cabinet/utils";
 import { Field, GhostButton, PrimaryButton, inputCls } from "./Modal";
 import { GiInterviewForm } from "./GiInterviewForm";
+import { DiagnosticReportView } from "./DiagnosticReportView";
 
 export function DiagnosticModal({
   open,
@@ -31,12 +32,12 @@ export function DiagnosticModal({
     setDate(existing?.date ?? today());
     setReason(existing?.reason ?? "");
     setStructured("");
-    setNotes(existing?.content ?? "");
+    setNotes("");
   }, [open, diagnosticId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
-  const finalContent = () => [structured.trim(), notes.trim()].filter(Boolean).join("\n\n");
+  const finalContent = () => [existing?.content.trim(), structured.trim(), notes.trim()].filter(Boolean).join("\n\n");
 
   const persist = (status: Diagnostic["status"]) => {
     if (!patientId) return;
@@ -132,8 +133,19 @@ export function DiagnosticModal({
               </Field>
             </div>
 
+            {existing?.content && (
+              <div>
+                <span className="label-caps mb-1.5 block">Compte-rendu enregistré</span>
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <DiagnosticReportView content={existing.content} />
+                </div>
+              </div>
+            )}
+
             <div>
-              <span className="label-caps mb-1.5 block">Interrogatoire structuré (HGE)</span>
+              <span className="label-caps mb-1.5 block">
+                {existing?.content ? "Compléter l'interrogatoire (HGE)" : "Interrogatoire structuré (HGE)"}
+              </span>
               <GiInterviewForm onChange={setStructured} />
             </div>
 
