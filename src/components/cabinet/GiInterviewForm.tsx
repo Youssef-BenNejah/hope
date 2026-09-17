@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, ChevronDown } from "lucide-react";
 import {
   ATCD_CHIR,
@@ -20,7 +20,7 @@ import {
   SYMPTOM_GROUPS,
   type SymptomItem,
 } from "@/lib/cabinet/gi-interview";
-import { GhostButton, PrimaryButton, inputCls } from "./Modal";
+import { GhostButton, inputCls } from "./Modal";
 
 type Checked = Record<string, boolean>;
 type Extra = Record<string, string>;
@@ -118,7 +118,7 @@ function itemsLabel(items: SymptomItem[], checked: Checked, prefix: string) {
   return items.filter((it) => checked[`${prefix}:${it.id}`]).map((it) => it.label);
 }
 
-export function GiInterviewForm({ onInsert }: { onInsert: (text: string) => void }) {
+export function GiInterviewForm({ onChange }: { onChange: (text: string) => void }) {
   const [checked, setChecked] = useState<Checked>({});
   const [extra, setExtra] = useState<Extra>({});
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ flags: true, douleur: false });
@@ -208,7 +208,10 @@ export function GiInterviewForm({ onInsert }: { onInsert: (text: string) => void
     return lines.join("\n");
   };
 
-  const hasAnySelection = Object.values(checked).some(Boolean);
+  useEffect(() => {
+    onChange(buildText());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checked, extra]);
 
   return (
     <div className="space-y-3">
@@ -451,7 +454,7 @@ export function GiInterviewForm({ onInsert }: { onInsert: (text: string) => void
         </div>
       </Section>
 
-      <div className="sticky bottom-0 flex justify-end gap-2 bg-card pt-1">
+      <div className="flex justify-end">
         <GhostButton
           type="button"
           onClick={() => {
@@ -459,11 +462,8 @@ export function GiInterviewForm({ onInsert }: { onInsert: (text: string) => void
             setExtra({});
           }}
         >
-          Réinitialiser
+          Réinitialiser l'interrogatoire
         </GhostButton>
-        <PrimaryButton type="button" disabled={!hasAnySelection} onClick={() => onInsert(buildText())}>
-          Insérer dans les réponses
-        </PrimaryButton>
       </div>
     </div>
   );

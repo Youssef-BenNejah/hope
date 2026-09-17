@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, X } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { Diagnostic } from "@/lib/cabinet/types";
@@ -23,29 +23,26 @@ export function DiagnosticModal({
 
   const [date, setDate] = useState(today());
   const [reason, setReason] = useState("");
-  const [content, setContent] = useState("");
-  const [assist, setAssist] = useState(false);
+  const [structured, setStructured] = useState("");
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setDate(existing?.date ?? today());
     setReason(existing?.reason ?? "");
-    setContent(existing?.content ?? "");
-    setAssist(false);
+    setStructured("");
+    setNotes(existing?.content ?? "");
   }, [open, diagnosticId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
-  const insertStructured = (text: string) => {
-    if (!text.trim()) return;
-    setContent((c) => (c.trim() ? `${c.trim()}\n\n${text}` : text));
-    toast.success("Interrogatoire structuré inséré dans les réponses");
-  };
+  const finalContent = () => [structured.trim(), notes.trim()].filter(Boolean).join("\n\n");
 
   const persist = (status: Diagnostic["status"]) => {
     if (!patientId) return;
-    if (!content.trim() && !reason.trim()) {
-      toast.error("Notez au moins une réponse du patient");
+    const content = finalContent();
+    if (!content && !reason.trim()) {
+      toast.error("Renseignez l'interrogatoire ou au moins une note");
       return;
     }
     const now = new Date().toISOString();
@@ -60,7 +57,7 @@ export function DiagnosticModal({
                   ...x,
                   date,
                   ...(reason.trim() ? { reason: reason.trim() } : {}),
-                  content: content.trim(),
+                  content,
                   status,
                   updatedAt: now,
                 }
@@ -80,7 +77,7 @@ export function DiagnosticModal({
               patientId,
               date,
               ...(reason.trim() ? { reason: reason.trim() } : {}),
-              content: content.trim(),
+              content,
               status,
               ...(currentUser ? { authorId: currentUser.id } : {}),
               createdAt: now,
@@ -112,67 +109,42 @@ export function DiagnosticModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className={`grid gap-6 ${assist ? "lg:grid-cols-[1fr_440px]" : ""}`}>
-            <div className="space-y-5">
-              <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm">
-                <p className="text-xs text-muted-foreground">
-                  Interrogez le patient et notez ici uniquement ses réponses. Le brouillon reste modifiable et visible
-                  dans le dossier et l'historique.
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
-                <Field label="Date de l'entretien">
-                  <input
-                    type="date"
-                    className={`${inputCls} num`}
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </Field>
-                <Field label="Motif (facultatif)">
-                  <input
-                    className={inputCls}
-                    placeholder="Ex. douleur thoracique à l'effort depuis 1 semaine"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                  />
-                </Field>
-              </div>
-
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <span className="label-caps">Réponses du patient</span>
-                  <button
-                    type="button"
-                    onClick={() => setAssist((v) => !v)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
-                      assist ? "bg-teal text-white" : "border border-border text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <ClipboardList className="h-3.5 w-3.5" /> Aide à la saisie structurée (HGE)
-                  </button>
-                </div>
-                <textarea
-                  className={`${inputCls} min-h-72 leading-relaxed`}
-                  placeholder={
-                    "Notez librement ce que le patient répond…\n\nEx.\nDouleur depuis 3 jours, bas du dos à droite.\nPas d'irradiation dans la jambe, pas de fièvre.\nAggravée en se penchant, soulagée allongé."
-                  }
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                />
-              </div>
+          <div className="mx-auto max-w-4xl space-y-5">
+            <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm">
+              <p className="text-xs text-muted-foreground">
+                Interrogez le patient à l'aide de la grille ci-dessous. Cochez ce qui est retrouvé — le compte-rendu se
+                construit automatiquement à partir de vos réponses. Le brouillon reste modifiable et visible dans le
+                dossier et l'historique.
+              </p>
             </div>
 
-            {assist && (
-              <div className="lg:max-h-[calc(100vh-260px)] lg:overflow-y-auto lg:pr-1">
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Cochez les éléments retrouvés à l'interrogatoire, puis insérez-les dans les réponses ci-contre. Le
-                  texte reste ensuite librement modifiable.
-                </p>
-                <GiInterviewForm onInsert={insertStructured} />
-              </div>
-            )}
+            <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
+              <Field label="Date de l'entretien">
+                <input type="date" className={`${inputCls} num`} value={date} onChange={(e) => setDate(e.target.value)} />
+              </Field>
+              <Field label="Motif (facultatif)">
+                <input
+                  className={inputCls}
+                  placeholder="Ex. douleur thoracique à l'effort depuis 1 semaine"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            <div>
+              <span className="label-caps mb-1.5 block">Interrogatoire structuré (HGE)</span>
+              <GiInterviewForm onChange={setStructured} />
+            </div>
+
+            <Field label="Notes complémentaires (facultatif)">
+              <textarea
+                className={`${inputCls} min-h-28 leading-relaxed`}
+                placeholder="Toute réponse du patient non couverte par la grille ci-dessus…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </Field>
           </div>
         </div>
 
