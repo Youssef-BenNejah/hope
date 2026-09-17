@@ -243,7 +243,7 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
-      <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-hidden border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-200 md:max-w-[560px] xl:max-w-[60%]">
+      <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-hidden border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-200">
         <div className="shrink-0 border-b border-border bg-card p-4 sm:p-6">
           <div className="flex items-center gap-2">
             <button
