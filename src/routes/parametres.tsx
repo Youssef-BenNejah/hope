@@ -43,6 +43,11 @@ function SettingsPage() {
   const [builtinOpen, setBuiltinOpen] = useState(false);
   const myGroups = currentUser?.customSymptomGroups ?? [];
   const builtinGroups = [{ id: "flags", title: "Red flags", items: RED_FLAGS.map((f) => f.label) }, ...SYMPTOM_GROUPS.map((g) => ({ id: g.id, title: g.title, items: g.items.map((i) => i.label) }))];
+  const myOwnGroups = myGroups.filter((g) => !g.extendsGroupId && g.id !== symEditId);
+  const cibleOptions = [
+    ...EXTENDABLE_GROUPS,
+    ...myOwnGroups.map((g) => ({ id: `custom:${g.id}`, title: g.title })),
+  ];
 
   const favClasses = [...new Set([...DRUG_CLASSES, ...s.favorites.map((f) => f.drugClass ?? "")].filter(Boolean))];
 
@@ -136,7 +141,7 @@ function SettingsPage() {
       toast.error("Ajoutez au moins un élément");
       return;
     }
-    const target = EXTENDABLE_GROUPS.find((t) => t.id === symForm.extendsGroupId);
+    const target = cibleOptions.find((t) => t.id === symForm.extendsGroupId);
     const payload: CustomSymptomGroup = extending
       ? { id: symEditId ?? newId(), title: target?.title ?? "", items, extendsGroupId: symForm.extendsGroupId }
       : { id: symEditId ?? newId(), title: symForm.title.trim(), items };
@@ -859,7 +864,7 @@ function SettingsPage() {
               onChange={(e) => setSymForm({ ...symForm, extendsGroupId: e.target.value })}
             >
               <option value="">Nouveau groupe indépendant</option>
-              {EXTENDABLE_GROUPS.map((t) => (
+              {cibleOptions.map((t) => (
                 <option key={t.id} value={t.id}>
                   Ajouter à « {t.title} »
                 </option>

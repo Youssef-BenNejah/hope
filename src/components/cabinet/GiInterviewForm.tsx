@@ -147,11 +147,14 @@ export function GiInterviewForm({
     })),
     ...customGroups
       .filter((g) => !g.extendsGroupId)
-      .map((g) => ({
-        id: `custom:${g.id}`,
-        title: g.title,
-        items: toItems(g.items),
-      })),
+      .map((g) => {
+        const ownId = `custom:${g.id}`;
+        return {
+          id: ownId,
+          title: g.title,
+          items: [...toItems(g.items), ...toItems(extensionsByTarget.get(ownId) ?? [])],
+        };
+      }),
   ];
 
   const toggle = (key: string) => setChecked((c) => ({ ...c, [key]: !c[key] }));
