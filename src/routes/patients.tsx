@@ -199,7 +199,7 @@ function PatientsPage() {
       ) : (
         <>
           <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_170px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
+            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_170px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
               <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
               <button
                 onClick={() => toggleSort("name")}
@@ -221,13 +221,12 @@ function PatientsPage() {
               >
                 Dernière visite <ArrowUpDown className="h-3 w-3" />
               </button>
-              <span className="label-caps text-right text-[#CAF0F8]">Statut</span>
               <span className="label-caps text-center text-[#CAF0F8]">Actions</span>
             </div>
             {shown.map((x) => (
               <div
                 key={x.id}
-                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_170px] sm:items-center sm:gap-4 sm:px-5"
+                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_170px] sm:items-center sm:gap-4 sm:px-5"
               >
                 <button
                   onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
@@ -247,13 +246,6 @@ function PatientsPage() {
                   <span className="num order-4 text-left text-xs text-muted-foreground sm:order-none sm:text-sm">
                     <span className="sm:hidden">Dernière visite : </span>
                     {lastVisitDate(x.id) ? fmtDate(lastVisitDate(x.id), "dd/MM/yyyy") : "—"}
-                  </span>
-                  <span className="order-5 sm:order-none sm:text-right">
-                    {x.allergies.length > 0 && (
-                      <span className="inline-block rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
-                        Allergies
-                      </span>
-                    )}
                   </span>
                 </button>
                 <div className="order-6 flex items-center justify-end gap-2 sm:order-none sm:justify-center">
