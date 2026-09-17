@@ -257,6 +257,19 @@ function PatientsPage() {
                   </span>
                 </button>
                 <div className="order-6 flex items-center justify-end gap-1 sm:order-none sm:justify-center">
+                  {role !== "secretaire" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDiag({ patientId: x.id, id: null });
+                      }}
+                      title="Nouvel entretien diagnostic"
+                      aria-label={`Nouvel entretien diagnostic pour ${x.name}`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                    </button>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
