@@ -131,13 +131,27 @@ export function GiInterviewForm({
   const [extra, setExtra] = useState<Extra>({});
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ flags: true, douleur: false });
 
+  const toItems = (labels: string[]): SymptomItem[] => labels.map((label) => ({ id: label, label }));
+  const extensionsByTarget = new Map<string, string[]>();
+  for (const g of customGroups) {
+    if (!g.extendsGroupId) continue;
+    extensionsByTarget.set(g.extendsGroupId, [...(extensionsByTarget.get(g.extendsGroupId) ?? []), ...g.items]);
+  }
+
+  const effectiveFlags: SymptomItem[] = [...RED_FLAGS, ...toItems(extensionsByTarget.get("flags") ?? [])];
+
   const allGroups: SymptomGroup[] = [
-    ...SYMPTOM_GROUPS,
-    ...customGroups.map((g) => ({
-      id: `custom:${g.id}`,
-      title: g.title,
-      items: g.items.map((label) => ({ id: label, label })),
+    ...SYMPTOM_GROUPS.map((g) => ({
+      ...g,
+      items: [...g.items, ...toItems(extensionsByTarget.get(g.id) ?? [])],
     })),
+    ...customGroups
+      .filter((g) => !g.extendsGroupId)
+      .map((g) => ({
+        id: `custom:${g.id}`,
+        title: g.title,
+        items: toItems(g.items),
+      })),
   ];
 
   const toggle = (key: string) => setChecked((c) => ({ ...c, [key]: !c[key] }));
@@ -145,12 +159,12 @@ export function GiInterviewForm({
   const setField = (key: string, value: string) => setExtra((e) => ({ ...e, [key]: value }));
   const toggleSection = (id: string) => setOpenSections((s) => ({ ...s, [id]: !s[id] }));
 
-  const redFlagCount = RED_FLAGS.filter((f) => checked[`flag:${f.id}`]).length;
+  const redFlagCount = effectiveFlags.filter((f) => checked[`flag:${f.id}`]).length;
 
   const buildText = () => {
     const lines: string[] = [];
 
-    const activeFlags = itemsLabel(RED_FLAGS, checked, "flag");
+    const activeFlags = itemsLabel(effectiveFlags, checked, "flag");
     if (activeFlags.length) lines.push(`🚨 Red flags : ${activeFlags.join(", ")}`);
 
     for (const g of allGroups) {
@@ -239,7 +253,7 @@ export function GiInterviewForm({
         onToggle={() => toggleSection("flags")}
         tone="danger"
       >
-        <ChipGroup options={RED_FLAGS.map((f) => f.label)} selected={(v) => isOn(`flag:${v}`)} onToggle={(v) => toggle(`flag:${v}`)} />
+        <ChipGroup options={effectiveFlags.map((f) => f.label)} selected={(v) => isOn(`flag:${v}`)} onToggle={(v) => toggle(`flag:${v}`)} />
       </Section>
 
       {allGroups.map((g) => {

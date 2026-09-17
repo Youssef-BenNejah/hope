@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ClipboardList, FlaskConical, History, Pencil, Pill, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronDown, ClipboardList, FlaskConical, History, Pencil, Pill, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { today } from "@/lib/cabinet/utils";
 import { renderFavorite } from "@/lib/cabinet/prescriptions";
+import { EXTENDABLE_GROUPS, RED_FLAGS, SYMPTOM_GROUPS } from "@/lib/cabinet/gi-interview";
 import { DRUG_CLASSES, type CustomSymptomGroup, type Favorite, type Protocol } from "@/lib/cabinet/types";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
@@ -12,7 +13,7 @@ import { Combobox } from "@/components/cabinet/Combobox";
 
 const emptyFav = { label: "", form: "", posology: "", duration: "", note: "", drugClass: "" };
 const emptyProto = { name: "", category: "", note: "", linesText: "" };
-const emptySymGroup = { title: "", itemsText: "" };
+const emptySymGroup = { title: "", itemsText: "", extendsGroupId: "" };
 
 export const Route = createFileRoute("/parametres")({
   head: () => ({
@@ -39,7 +40,9 @@ function SettingsPage() {
   const [symOpen, setSymOpen] = useState(false);
   const [symEditId, setSymEditId] = useState<string | null>(null);
   const [symForm, setSymForm] = useState(emptySymGroup);
+  const [builtinOpen, setBuiltinOpen] = useState(false);
   const myGroups = currentUser?.customSymptomGroups ?? [];
+  const builtinGroups = [{ id: "flags", title: "Red flags", items: RED_FLAGS.map((f) => f.label) }, ...SYMPTOM_GROUPS.map((g) => ({ id: g.id, title: g.title, items: g.items.map((i) => i.label) }))];
 
   const favClasses = [...new Set([...DRUG_CLASSES, ...s.favorites.map((f) => f.drugClass ?? "")].filter(Boolean))];
 
@@ -114,17 +117,29 @@ function SettingsPage() {
   };
   const openSym = (g?: CustomSymptomGroup) => {
     setSymEditId(g?.id ?? null);
-    setSymForm(g ? { title: g.title, itemsText: g.items.join("\n") } : emptySymGroup);
+    setSymForm(
+      g
+        ? { title: g.title, itemsText: g.items.join("\n"), extendsGroupId: g.extendsGroupId ?? "" }
+        : emptySymGroup,
+    );
     setSymOpen(true);
   };
   const saveSym = () => {
     if (!currentUser) return;
     const items = symForm.itemsText.split("\n").map((l) => l.trim()).filter(Boolean);
-    if (!symForm.title.trim() || items.length === 0) {
-      toast.error("Titre et au moins un élément sont obligatoires");
+    const extending = !!symForm.extendsGroupId;
+    if (!extending && !symForm.title.trim()) {
+      toast.error("Le titre du groupe est obligatoire");
       return;
     }
-    const payload: CustomSymptomGroup = { id: symEditId ?? newId(), title: symForm.title.trim(), items };
+    if (items.length === 0) {
+      toast.error("Ajoutez au moins un élément");
+      return;
+    }
+    const target = EXTENDABLE_GROUPS.find((t) => t.id === symForm.extendsGroupId);
+    const payload: CustomSymptomGroup = extending
+      ? { id: symEditId ?? newId(), title: target?.title ?? "", items, extendsGroupId: symForm.extendsGroupId }
+      : { id: symEditId ?? newId(), title: symForm.title.trim(), items };
     const nextGroups = symEditId
       ? myGroups.map((x) => (x.id === symEditId ? payload : x))
       : [...myGroups, payload];
@@ -324,18 +339,49 @@ function SettingsPage() {
               </GhostButton>
             </div>
             <p className="mb-3 text-sm text-muted-foreground">
-              Ajoutez vos propres groupes de symptômes (titre + éléments à cocher) — ils apparaissent, sous votre
-              compte uniquement, dans la grille de l'entretien avec le patient, au même titre que les groupes HGE
-              intégrés.
+              Créez vos propres groupes de symptômes, ou ajoutez des éléments à un groupe déjà intégré (ex. « Douleur
+              abdominale ») — ils apparaissent, sous votre compte uniquement, dans la grille de l'entretien avec le
+              patient.
             </p>
+
+            <button
+              type="button"
+              onClick={() => setBuiltinOpen((v) => !v)}
+              className="mb-3 flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-left text-sm font-medium hover:bg-muted"
+            >
+              Voir les groupes déjà intégrés (HGE)
+              <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${builtinOpen ? "rotate-180" : ""}`} />
+            </button>
+            {builtinOpen && (
+              <div className="mb-4 space-y-3 rounded-lg border border-border p-3">
+                {builtinGroups.map((g) => (
+                  <div key={g.id}>
+                    <p className="mb-1 text-xs font-semibold text-muted-foreground">{g.title}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {g.items.map((it) => (
+                        <span key={it} className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {it}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {myGroups.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun groupe personnalisé pour l'instant.</p>
+              <p className="text-sm text-muted-foreground">Aucun ajout personnalisé pour l'instant.</p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {myGroups.map((g) => (
                   <div key={g.id} className="rounded-lg border border-border p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium">{g.title}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium">{g.title}</p>
+                        {g.extendsGroupId && (
+                          <p className="text-xs text-muted-foreground">Ajout au groupe existant</p>
+                        )}
+                      </div>
                       <div className="flex shrink-0 gap-1">
                         <button
                           onClick={() => openSym(g)}
@@ -355,7 +401,7 @@ function SettingsPage() {
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {g.items.map((it) => (
-                        <span key={it} className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                        <span key={it} className="rounded-full bg-teal/10 px-2 py-0.5 text-xs text-teal">
                           {it}
                         </span>
                       ))}
@@ -806,16 +852,32 @@ function SettingsPage() {
         width="max-w-lg"
       >
         <div className="space-y-4">
-          <Field label="Titre du groupe">
-            <input
+          <Field label="Cible">
+            <select
               className={inputCls}
-              autoFocus
-              placeholder="Ex. Symptômes urinaires"
-              value={symForm.title}
-              onChange={(e) => setSymForm({ ...symForm, title: e.target.value })}
-            />
+              value={symForm.extendsGroupId}
+              onChange={(e) => setSymForm({ ...symForm, extendsGroupId: e.target.value })}
+            >
+              <option value="">Nouveau groupe indépendant</option>
+              {EXTENDABLE_GROUPS.map((t) => (
+                <option key={t.id} value={t.id}>
+                  Ajouter à « {t.title} »
+                </option>
+              ))}
+            </select>
           </Field>
-          <Field label="Éléments à cocher (un par ligne)">
+          {!symForm.extendsGroupId && (
+            <Field label="Titre du groupe">
+              <input
+                className={inputCls}
+                autoFocus
+                placeholder="Ex. Symptômes urinaires"
+                value={symForm.title}
+                onChange={(e) => setSymForm({ ...symForm, title: e.target.value })}
+              />
+            </Field>
+          )}
+          <Field label={symForm.extendsGroupId ? "Éléments à ajouter (un par ligne)" : "Éléments à cocher (un par ligne)"}>
             <textarea
               className={`${inputCls} min-h-36`}
               placeholder={"Brûlures mictionnelles\nPollakiurie\nHématurie"}
@@ -824,8 +886,9 @@ function SettingsPage() {
             />
           </Field>
           <p className="text-xs text-muted-foreground">
-            Une fois enregistré, ce groupe apparaît dans la grille de l'entretien (Début / Évolution / EVA se
-            complètent automatiquement, comme pour les groupes intégrés).
+            {symForm.extendsGroupId
+              ? "Ces éléments s'ajoutent à la liste existante du groupe choisi, sans le dupliquer."
+              : "Une fois enregistré, ce groupe apparaît dans la grille de l'entretien (Début / Évolution / EVA se complètent automatiquement, comme pour les groupes intégrés)."}
           </p>
         </div>
         <div className="mt-6 flex justify-end gap-2">

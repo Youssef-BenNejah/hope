@@ -315,6 +315,8 @@ export interface CustomSymptomGroup {
   id: string;
   title: string;
   items: string[];
+  /** Si défini, ces éléments sont ajoutés à un groupe existant (id) au lieu de former une nouvelle rubrique. */
+  extendsGroupId?: string;
 }
 
 /** Compte médecin / personnel géré depuis l'écran d'administration */

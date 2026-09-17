@@ -152,6 +152,12 @@ export const SYMPTOM_GROUPS: SymptomGroup[] = [
   },
 ];
 
+/** Cibles pouvant recevoir des éléments ajoutés par un médecin (extension d'un groupe existant). */
+export const EXTENDABLE_GROUPS: { id: string; title: string }[] = [
+  { id: "flags", title: "Red flags" },
+  ...SYMPTOM_GROUPS.map((g) => ({ id: g.id, title: g.title })),
+];
+
 export const LOCALISATIONS = [
   "Épigastre",
   "HCD",
