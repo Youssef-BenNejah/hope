@@ -47,18 +47,58 @@ function ChipGroup({
   options,
   selected,
   onToggle,
+  onAdd,
 }: {
   options: readonly string[];
   selected: (v: string) => boolean;
   onToggle: (v: string) => void;
+  onAdd?: (v: string) => void;
 }) {
+  const [adding, setAdding] = useState(false);
+  const [val, setVal] = useState("");
+
+  const submit = () => {
+    const v = val.trim();
+    if (v) onAdd?.(v);
+    setVal("");
+    setAdding(false);
+  };
+
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
       {options.map((o) => (
         <Chip key={o} active={selected(o)} onClick={() => onToggle(o)}>
           {o}
         </Chip>
       ))}
+      {onAdd &&
+        (adding ? (
+          <input
+            autoFocus
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submit();
+              } else if (e.key === "Escape") {
+                setVal("");
+                setAdding(false);
+              }
+            }}
+            onBlur={submit}
+            placeholder="Ajouter…"
+            className="w-28 rounded-full border border-teal bg-background px-2.5 py-1 text-xs outline-none"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-teal hover:text-teal"
+          >
+            + Ajouter
+          </button>
+        ))}
     </div>
   );
 }
@@ -130,20 +170,41 @@ export function GiInterviewForm({
   const [checked, setChecked] = useState<Checked>({});
   const [extra, setExtra] = useState<Extra>({});
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ flags: true, douleur: false });
+  const [customOptions, setCustomOptions] = useState<Record<string, string[]>>({});
 
   const toItems = (labels: string[]): SymptomItem[] => labels.map((label) => ({ id: label, label }));
-  const extensionsByTarget = new Map<string, string[]>();
-  for (const g of customGroups) {
-    if (!g.extendsGroupId) continue;
-    extensionsByTarget.set(g.extendsGroupId, [...(extensionsByTarget.get(g.extendsGroupId) ?? []), ...g.items]);
-  }
 
-  const effectiveFlags: SymptomItem[] = [...RED_FLAGS, ...toItems(extensionsByTarget.get("flags") ?? [])];
+  // Fusionne : ajouts persistants (Paramètres, extendsGroupId) + ajouts ponctuels de cet entretien (customOptions)
+  const mergedExtras = new Map<string, string[]>();
+  const addToMerged = (key: string, vals: string[]) =>
+    mergedExtras.set(key, [...(mergedExtras.get(key) ?? []), ...vals]);
+  for (const g of customGroups) {
+    if (g.extendsGroupId) addToMerged(g.extendsGroupId, g.items);
+  }
+  for (const [key, vals] of Object.entries(customOptions)) addToMerged(key, vals);
+  const extrasFor = (key: string) => mergedExtras.get(key) ?? [];
+
+  const addCustom = (key: string, value: string) => {
+    const v = value.trim();
+    if (!v) return;
+    setCustomOptions((c) => (c[key]?.includes(v) ? c : { ...c, [key]: [...(c[key] ?? []), v] }));
+  };
+  const withCustom = (key: string, base: readonly string[]) => {
+    const added = customOptions[key] ?? [];
+    return [...base, ...added.filter((v) => !base.includes(v))];
+  };
+
+  const effectiveFlags: SymptomItem[] = [...RED_FLAGS, ...toItems(extrasFor("flags"))];
+  const effAtcdMed: SymptomItem[] = [...ATCD_MED, ...toItems(extrasFor("atcd:med"))];
+  const effAtcdDig: SymptomItem[] = [...ATCD_DIG, ...toItems(extrasFor("atcd:dig"))];
+  const effAtcdHepato: SymptomItem[] = [...ATCD_HEPATO, ...toItems(extrasFor("atcd:hepato"))];
+  const effAtcdChir: SymptomItem[] = [...ATCD_CHIR, ...toItems(extrasFor("atcd:chir"))];
+  const effAtcdFam: SymptomItem[] = [...ATCD_FAM, ...toItems(extrasFor("atcd:fam"))];
 
   const allGroups: SymptomGroup[] = [
     ...SYMPTOM_GROUPS.map((g) => ({
       ...g,
-      items: [...g.items, ...toItems(extensionsByTarget.get(g.id) ?? [])],
+      items: [...g.items, ...toItems(extrasFor(g.id))],
     })),
     ...customGroups
       .filter((g) => !g.extendsGroupId)
@@ -152,7 +213,7 @@ export function GiInterviewForm({
         return {
           id: ownId,
           title: g.title,
-          items: [...toItems(g.items), ...toItems(extensionsByTarget.get(ownId) ?? [])],
+          items: [...toItems(g.items), ...toItems(extrasFor(ownId))],
         };
       }),
   ];
@@ -176,12 +237,12 @@ export function GiInterviewForm({
       lines.push(`${g.title} : ${active.join(", ")}`);
 
       if (g.id === "douleur") {
-        const loc = LOCALISATIONS.filter((v) => checked[`douleur:loc:${v}`]);
-        const carac = CARACTERISTIQUES.filter((v) => checked[`douleur:carac:${v}`]);
-        const irr = IRRADIATIONS.filter((v) => checked[`douleur:irr:${v}`]);
-        const rel = RELATIONS_REPAS.filter((v) => checked[`douleur:rel:${v}`]);
-        const agg = FACTEURS_AGGRAVANTS.filter((v) => checked[`douleur:agg:${v}`]);
-        const soul = FACTEURS_SOULAGEANTS.filter((v) => checked[`douleur:soul:${v}`]);
+        const loc = withCustom("douleur:loc", LOCALISATIONS).filter((v) => checked[`douleur:loc:${v}`]);
+        const carac = withCustom("douleur:carac", CARACTERISTIQUES).filter((v) => checked[`douleur:carac:${v}`]);
+        const irr = withCustom("douleur:irr", IRRADIATIONS).filter((v) => checked[`douleur:irr:${v}`]);
+        const rel = withCustom("douleur:rel", RELATIONS_REPAS).filter((v) => checked[`douleur:rel:${v}`]);
+        const agg = withCustom("douleur:agg", FACTEURS_AGGRAVANTS).filter((v) => checked[`douleur:agg:${v}`]);
+        const soul = withCustom("douleur:soul", FACTEURS_SOULAGEANTS).filter((v) => checked[`douleur:soul:${v}`]);
         if (loc.length) lines.push(`  - Localisation : ${loc.join(", ")}`);
         if (carac.length) lines.push(`  - Caractéristique : ${carac.join(", ")}`);
         if (extra["douleur:eva"]) lines.push(`  - EVA : ${extra["douleur:eva"]}/10`);
@@ -213,17 +274,17 @@ export function GiInterviewForm({
       }
     }
 
-    const med = itemsLabel(ATCD_MED, checked, "atcd:med");
+    const med = itemsLabel(effAtcdMed, checked, "atcd:med");
     if (med.length) lines.push(`ATCD médicaux : ${med.join(", ")}`);
-    const dig = itemsLabel(ATCD_DIG, checked, "atcd:dig");
+    const dig = itemsLabel(effAtcdDig, checked, "atcd:dig");
     if (dig.length) lines.push(`ATCD digestifs : ${dig.join(", ")}`);
-    const hep = itemsLabel(ATCD_HEPATO, checked, "atcd:hepato");
+    const hep = itemsLabel(effAtcdHepato, checked, "atcd:hepato");
     if (hep.length) lines.push(`ATCD hépato-bilio-pancréatiques : ${hep.join(", ")}`);
-    const chir = itemsLabel(ATCD_CHIR, checked, "atcd:chir");
+    const chir = itemsLabel(effAtcdChir, checked, "atcd:chir");
     if (chir.length) {
       lines.push(`ATCD chirurgicaux : ${chir.join(", ")}${extra["chir:details"] ? ` — ${extra["chir:details"]}` : ""}`);
     }
-    const fam = itemsLabel(ATCD_FAM, checked, "atcd:fam");
+    const fam = itemsLabel(effAtcdFam, checked, "atcd:fam");
     if (fam.length) {
       const parente = extra["fam:parente"];
       const age = extra["fam:age"];
@@ -256,7 +317,7 @@ export function GiInterviewForm({
         onToggle={() => toggleSection("flags")}
         tone="danger"
       >
-        <ChipGroup options={effectiveFlags.map((f) => f.label)} selected={(v) => isOn(`flag:${v}`)} onToggle={(v) => toggle(`flag:${v}`)} />
+        <ChipGroup options={effectiveFlags.map((f) => f.label)} selected={(v) => isOn(`flag:${v}`)} onToggle={(v) => toggle(`flag:${v}`)} onAdd={(v) => { addCustom("flags", v); toggle(`flag:${v}`); }} />
       </Section>
 
       {allGroups.map((g) => {
@@ -267,27 +328,31 @@ export function GiInterviewForm({
               options={g.items.map((it) => it.label)}
               selected={(v) => isOn(`grp:${g.id}:${v}`)}
               onToggle={(v) => toggle(`grp:${g.id}:${v}`)}
+              onAdd={(v) => {
+                addCustom(g.id, v);
+                toggle(`grp:${g.id}:${v}`);
+              }}
             />
 
             {g.id === "douleur" && count > 0 && (
               <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
                 <MiniField label="Localisation">
-                  <ChipGroup options={LOCALISATIONS} selected={(v) => isOn(`douleur:loc:${v}`)} onToggle={(v) => toggle(`douleur:loc:${v}`)} />
+                  <ChipGroup options={withCustom("douleur:loc", LOCALISATIONS)} selected={(v) => isOn(`douleur:loc:${v}`)} onToggle={(v) => toggle(`douleur:loc:${v}`)} onAdd={(v) => { addCustom("douleur:loc", v); toggle(`douleur:loc:${v}`); }} />
                 </MiniField>
                 <MiniField label="Caractéristique">
-                  <ChipGroup options={CARACTERISTIQUES} selected={(v) => isOn(`douleur:carac:${v}`)} onToggle={(v) => toggle(`douleur:carac:${v}`)} />
+                  <ChipGroup options={withCustom("douleur:carac", CARACTERISTIQUES)} selected={(v) => isOn(`douleur:carac:${v}`)} onToggle={(v) => toggle(`douleur:carac:${v}`)} onAdd={(v) => { addCustom("douleur:carac", v); toggle(`douleur:carac:${v}`); }} />
                 </MiniField>
                 <MiniField label="Relation aux repas">
-                  <ChipGroup options={RELATIONS_REPAS} selected={(v) => isOn(`douleur:rel:${v}`)} onToggle={(v) => toggle(`douleur:rel:${v}`)} />
+                  <ChipGroup options={withCustom("douleur:rel", RELATIONS_REPAS)} selected={(v) => isOn(`douleur:rel:${v}`)} onToggle={(v) => toggle(`douleur:rel:${v}`)} onAdd={(v) => { addCustom("douleur:rel", v); toggle(`douleur:rel:${v}`); }} />
                 </MiniField>
                 <MiniField label="Irradiation">
-                  <ChipGroup options={IRRADIATIONS} selected={(v) => isOn(`douleur:irr:${v}`)} onToggle={(v) => toggle(`douleur:irr:${v}`)} />
+                  <ChipGroup options={withCustom("douleur:irr", IRRADIATIONS)} selected={(v) => isOn(`douleur:irr:${v}`)} onToggle={(v) => toggle(`douleur:irr:${v}`)} onAdd={(v) => { addCustom("douleur:irr", v); toggle(`douleur:irr:${v}`); }} />
                 </MiniField>
                 <MiniField label="Aggravée par">
-                  <ChipGroup options={FACTEURS_AGGRAVANTS} selected={(v) => isOn(`douleur:agg:${v}`)} onToggle={(v) => toggle(`douleur:agg:${v}`)} />
+                  <ChipGroup options={withCustom("douleur:agg", FACTEURS_AGGRAVANTS)} selected={(v) => isOn(`douleur:agg:${v}`)} onToggle={(v) => toggle(`douleur:agg:${v}`)} onAdd={(v) => { addCustom("douleur:agg", v); toggle(`douleur:agg:${v}`); }} />
                 </MiniField>
                 <MiniField label="Soulagée par">
-                  <ChipGroup options={FACTEURS_SOULAGEANTS} selected={(v) => isOn(`douleur:soul:${v}`)} onToggle={(v) => toggle(`douleur:soul:${v}`)} />
+                  <ChipGroup options={withCustom("douleur:soul", FACTEURS_SOULAGEANTS)} selected={(v) => isOn(`douleur:soul:${v}`)} onToggle={(v) => toggle(`douleur:soul:${v}`)} onAdd={(v) => { addCustom("douleur:soul", v); toggle(`douleur:soul:${v}`); }} />
                 </MiniField>
                 <MiniField label="Début / durée">
                   <input
@@ -333,20 +398,28 @@ export function GiInterviewForm({
                   />
                 </MiniField>
                 <MiniField label="Consistance — échelle de Bristol">
-                  <ChipGroup options={BRISTOL} selected={(v) => extra["transit:bristol"] === v} onToggle={(v) => setField("transit:bristol", extra["transit:bristol"] === v ? "" : v)} />
+                  <ChipGroup options={withCustom("bristol", BRISTOL)} selected={(v) => extra["transit:bristol"] === v} onToggle={(v) => setField("transit:bristol", extra["transit:bristol"] === v ? "" : v)} onAdd={(v) => { addCustom("bristol", v); setField("transit:bristol", v); }} />
                 </MiniField>
                 <MiniField label="Début">
                   <ChipGroup
-                    options={DEBUTS}
+                    options={withCustom("debuts", DEBUTS)}
                     selected={(v) => extra[`grpExtra:${g.id}:debut`] === v}
                     onToggle={(v) => setField(`grpExtra:${g.id}:debut`, extra[`grpExtra:${g.id}:debut`] === v ? "" : v)}
+                    onAdd={(v) => {
+                      addCustom("debuts", v);
+                      setField(`grpExtra:${g.id}:debut`, v);
+                    }}
                   />
                 </MiniField>
                 <MiniField label="Évolution">
                   <ChipGroup
-                    options={EVOLUTIONS}
+                    options={withCustom("evolutions", EVOLUTIONS)}
                     selected={(v) => extra[`grpExtra:${g.id}:evolution`] === v}
                     onToggle={(v) => setField(`grpExtra:${g.id}:evolution`, extra[`grpExtra:${g.id}:evolution`] === v ? "" : v)}
+                    onAdd={(v) => {
+                      addCustom("evolutions", v);
+                      setField(`grpExtra:${g.id}:evolution`, v);
+                    }}
                   />
                 </MiniField>
               </div>
@@ -356,16 +429,24 @@ export function GiInterviewForm({
               <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-3">
                 <MiniField label="Début">
                   <ChipGroup
-                    options={DEBUTS}
+                    options={withCustom("debuts", DEBUTS)}
                     selected={(v) => extra[`grpExtra:${g.id}:debut`] === v}
                     onToggle={(v) => setField(`grpExtra:${g.id}:debut`, extra[`grpExtra:${g.id}:debut`] === v ? "" : v)}
+                    onAdd={(v) => {
+                      addCustom("debuts", v);
+                      setField(`grpExtra:${g.id}:debut`, v);
+                    }}
                   />
                 </MiniField>
                 <MiniField label="Évolution">
                   <ChipGroup
-                    options={EVOLUTIONS}
+                    options={withCustom("evolutions", EVOLUTIONS)}
                     selected={(v) => extra[`grpExtra:${g.id}:evolution`] === v}
                     onToggle={(v) => setField(`grpExtra:${g.id}:evolution`, extra[`grpExtra:${g.id}:evolution`] === v ? "" : v)}
+                    onAdd={(v) => {
+                      addCustom("evolutions", v);
+                      setField(`grpExtra:${g.id}:evolution`, v);
+                    }}
                   />
                 </MiniField>
                 <MiniField label="Intensité EVA (0–10)">
@@ -390,7 +471,7 @@ export function GiInterviewForm({
         open={!!openSections['atcdMed']}
         onToggle={() => toggleSection("atcdMed")}
       >
-        <ChipGroup options={ATCD_MED.map((i) => i.label)} selected={(v) => isOn(`atcd:med:${v}`)} onToggle={(v) => toggle(`atcd:med:${v}`)} />
+        <ChipGroup options={effAtcdMed.map((i) => i.label)} selected={(v) => isOn(`atcd:med:${v}`)} onToggle={(v) => toggle(`atcd:med:${v}`)} onAdd={(v) => { addCustom("atcd:med", v); toggle(`atcd:med:${v}`); }} />
       </Section>
 
       <Section
@@ -399,7 +480,7 @@ export function GiInterviewForm({
         open={!!openSections['atcdDig']}
         onToggle={() => toggleSection("atcdDig")}
       >
-        <ChipGroup options={ATCD_DIG.map((i) => i.label)} selected={(v) => isOn(`atcd:dig:${v}`)} onToggle={(v) => toggle(`atcd:dig:${v}`)} />
+        <ChipGroup options={effAtcdDig.map((i) => i.label)} selected={(v) => isOn(`atcd:dig:${v}`)} onToggle={(v) => toggle(`atcd:dig:${v}`)} onAdd={(v) => { addCustom("atcd:dig", v); toggle(`atcd:dig:${v}`); }} />
       </Section>
 
       <Section
@@ -408,7 +489,7 @@ export function GiInterviewForm({
         open={!!openSections['atcdHepato']}
         onToggle={() => toggleSection("atcdHepato")}
       >
-        <ChipGroup options={ATCD_HEPATO.map((i) => i.label)} selected={(v) => isOn(`atcd:hepato:${v}`)} onToggle={(v) => toggle(`atcd:hepato:${v}`)} />
+        <ChipGroup options={effAtcdHepato.map((i) => i.label)} selected={(v) => isOn(`atcd:hepato:${v}`)} onToggle={(v) => toggle(`atcd:hepato:${v}`)} onAdd={(v) => { addCustom("atcd:hepato", v); toggle(`atcd:hepato:${v}`); }} />
       </Section>
 
       <Section
@@ -417,7 +498,7 @@ export function GiInterviewForm({
         open={!!openSections['atcdChir']}
         onToggle={() => toggleSection("atcdChir")}
       >
-        <ChipGroup options={ATCD_CHIR.map((i) => i.label)} selected={(v) => isOn(`atcd:chir:${v}`)} onToggle={(v) => toggle(`atcd:chir:${v}`)} />
+        <ChipGroup options={effAtcdChir.map((i) => i.label)} selected={(v) => isOn(`atcd:chir:${v}`)} onToggle={(v) => toggle(`atcd:chir:${v}`)} onAdd={(v) => { addCustom("atcd:chir", v); toggle(`atcd:chir:${v}`); }} />
         <MiniField label="Détails (intervention – année – indication)">
           <input
             className={`${inputCls} py-1.5 text-xs`}
@@ -434,10 +515,10 @@ export function GiInterviewForm({
         open={!!openSections['atcdFam']}
         onToggle={() => toggleSection("atcdFam")}
       >
-        <ChipGroup options={ATCD_FAM.map((i) => i.label)} selected={(v) => isOn(`atcd:fam:${v}`)} onToggle={(v) => toggle(`atcd:fam:${v}`)} />
+        <ChipGroup options={effAtcdFam.map((i) => i.label)} selected={(v) => isOn(`atcd:fam:${v}`)} onToggle={(v) => toggle(`atcd:fam:${v}`)} onAdd={(v) => { addCustom("atcd:fam", v); toggle(`atcd:fam:${v}`); }} />
         <div className="grid gap-3 sm:grid-cols-2">
           <MiniField label="Parenté">
-            <ChipGroup options={PARENTES} selected={(v) => extra["fam:parente"] === v} onToggle={(v) => setField("fam:parente", extra["fam:parente"] === v ? "" : v)} />
+            <ChipGroup options={withCustom("parente", PARENTES)} selected={(v) => extra["fam:parente"] === v} onToggle={(v) => setField("fam:parente", extra["fam:parente"] === v ? "" : v)} onAdd={(v) => { addCustom("parente", v); setField("fam:parente", v); }} />
           </MiniField>
           <MiniField label="Âge au diagnostic">
             <input
@@ -455,7 +536,7 @@ export function GiInterviewForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <MiniField label="Tabac">
             <div className="flex items-center gap-2">
-              <ChipGroup options={["Non", "Oui"]} selected={(v) => extra["hab:tabac"] === v} onToggle={(v) => setField("hab:tabac", extra["hab:tabac"] === v ? "" : v)} />
+              <ChipGroup options={withCustom("hab:tabac", ["Non", "Oui"])} selected={(v) => extra["hab:tabac"] === v} onToggle={(v) => setField("hab:tabac", extra["hab:tabac"] === v ? "" : v)} onAdd={(v) => { addCustom("hab:tabac", v); setField("hab:tabac", v); }} />
               {extra["hab:tabac"] === "Oui" && (
                 <input
                   className={`${inputCls} num w-24 py-1.5 text-xs`}
@@ -468,7 +549,7 @@ export function GiInterviewForm({
           </MiniField>
           <MiniField label="Alcool">
             <div className="flex items-center gap-2">
-              <ChipGroup options={["Non", "Oui"]} selected={(v) => extra["hab:alcool"] === v} onToggle={(v) => setField("hab:alcool", extra["hab:alcool"] === v ? "" : v)} />
+              <ChipGroup options={withCustom("hab:alcool", ["Non", "Oui"])} selected={(v) => extra["hab:alcool"] === v} onToggle={(v) => setField("hab:alcool", extra["hab:alcool"] === v ? "" : v)} onAdd={(v) => { addCustom("hab:alcool", v); setField("hab:alcool", v); }} />
               {extra["hab:alcool"] === "Oui" && (
                 <input
                   className={`${inputCls} num w-28 py-1.5 text-xs`}
@@ -480,10 +561,10 @@ export function GiInterviewForm({
             </div>
           </MiniField>
           <MiniField label="AINS">
-            <ChipGroup options={["Non", "Oui"]} selected={(v) => extra["hab:ains"] === v} onToggle={(v) => setField("hab:ains", extra["hab:ains"] === v ? "" : v)} />
+            <ChipGroup options={withCustom("hab:ains", ["Non", "Oui"])} selected={(v) => extra["hab:ains"] === v} onToggle={(v) => setField("hab:ains", extra["hab:ains"] === v ? "" : v)} onAdd={(v) => { addCustom("hab:ains", v); setField("hab:ains", v); }} />
           </MiniField>
           <MiniField label="Cannabis / autres toxiques">
-            <ChipGroup options={["Non", "Oui"]} selected={(v) => extra["hab:cannabis"] === v} onToggle={(v) => setField("hab:cannabis", extra["hab:cannabis"] === v ? "" : v)} />
+            <ChipGroup options={withCustom("hab:cannabis", ["Non", "Oui"])} selected={(v) => extra["hab:cannabis"] === v} onToggle={(v) => setField("hab:cannabis", extra["hab:cannabis"] === v ? "" : v)} onAdd={(v) => { addCustom("hab:cannabis", v); setField("hab:cannabis", v); }} />
           </MiniField>
         </div>
       </Section>
@@ -494,6 +575,7 @@ export function GiInterviewForm({
           onClick={() => {
             setChecked({});
             setExtra({});
+            setCustomOptions({});
           }}
         >
           Réinitialiser l'interrogatoire
