@@ -199,7 +199,7 @@ function PatientsPage() {
       ) : (
         <>
           <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_84px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
+            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_170px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
               <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
               <button
                 onClick={() => toggleSort("name")}
@@ -227,7 +227,7 @@ function PatientsPage() {
             {shown.map((x) => (
               <div
                 key={x.id}
-                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_84px] sm:items-center sm:gap-4 sm:px-5"
+                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_96px_170px] sm:items-center sm:gap-4 sm:px-5"
               >
                 <button
                   onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
@@ -256,7 +256,7 @@ function PatientsPage() {
                     )}
                   </span>
                 </button>
-                <div className="order-6 flex items-center justify-end gap-1 sm:order-none sm:justify-center">
+                <div className="order-6 flex items-center justify-end gap-2 sm:order-none sm:justify-center">
                   {role !== "secretaire" && (
                     <button
                       onClick={(e) => {
@@ -265,9 +265,9 @@ function PatientsPage() {
                       }}
                       title="Nouvel entretien diagnostic"
                       aria-label={`Nouvel entretien diagnostic pour ${x.name}`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-teal/10 hover:text-teal"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-teal hover:bg-teal/10 hover:text-teal"
                     >
-                      <ClipboardList className="h-4 w-4" />
+                      <ClipboardList className="h-3.5 w-3.5" /> Entretien
                     </button>
                   )}
                   <DropdownMenu>
