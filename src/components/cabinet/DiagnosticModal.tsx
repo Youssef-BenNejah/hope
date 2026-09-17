@@ -146,7 +146,7 @@ export function DiagnosticModal({
               <span className="label-caps mb-1.5 block">
                 {existing?.content ? "Compléter l'interrogatoire (HGE)" : "Interrogatoire structuré (HGE)"}
               </span>
-              <GiInterviewForm onChange={setStructured} />
+              <GiInterviewForm onChange={setStructured} customGroups={currentUser?.customSymptomGroups ?? []} />
             </div>
 
             <Field label="Notes complémentaires (facultatif)">

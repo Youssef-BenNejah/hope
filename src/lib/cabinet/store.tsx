@@ -50,6 +50,7 @@ function load(): CabinetData {
           ...d,
           role: d.role ?? "medecin",
           password: d.password || legacy.pin || "changeme123",
+          customSymptomGroups: d.customSymptomGroups ?? [],
           ...((d.lastPasswordResetAt ?? legacy.lastPinResetAt)
             ? { lastPasswordResetAt: d.lastPasswordResetAt ?? legacy.lastPinResetAt }
             : {}),

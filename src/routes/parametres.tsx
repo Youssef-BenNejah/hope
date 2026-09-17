@@ -1,17 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { FlaskConical, History, Pencil, Pill, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ClipboardList, FlaskConical, History, Pencil, Pill, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import { today } from "@/lib/cabinet/utils";
 import { renderFavorite } from "@/lib/cabinet/prescriptions";
-import { DRUG_CLASSES, type Favorite, type Protocol } from "@/lib/cabinet/types";
+import { DRUG_CLASSES, type CustomSymptomGroup, type Favorite, type Protocol } from "@/lib/cabinet/types";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
 import { Combobox } from "@/components/cabinet/Combobox";
 
 const emptyFav = { label: "", form: "", posology: "", duration: "", note: "", drugClass: "" };
 const emptyProto = { name: "", category: "", note: "", linesText: "" };
+const emptySymGroup = { title: "", itemsText: "" };
 
 export const Route = createFileRoute("/parametres")({
   head: () => ({
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/parametres")({
 });
 
 function SettingsPage() {
-  const { data, setSettings, reset, update, newId, currentUser } = useCabinet();
+  const { data, setSettings, reset, update, newId, currentUser, role } = useCabinet();
   const s = data.settings;
   const [newPassword, setNewPassword] = useState("");
   const [favOpen, setFavOpen] = useState(false);
@@ -35,6 +36,10 @@ function SettingsPage() {
   const [protoOpen, setProtoOpen] = useState(false);
   const [protoEditId, setProtoEditId] = useState<string | null>(null);
   const [protoForm, setProtoForm] = useState(emptyProto);
+  const [symOpen, setSymOpen] = useState(false);
+  const [symEditId, setSymEditId] = useState<string | null>(null);
+  const [symForm, setSymForm] = useState(emptySymGroup);
+  const myGroups = currentUser?.customSymptomGroups ?? [];
 
   const favClasses = [...new Set([...DRUG_CLASSES, ...s.favorites.map((f) => f.drugClass ?? "")].filter(Boolean))];
 
@@ -106,6 +111,47 @@ function SettingsPage() {
     });
     toast.success(protoEditId ? "Ordonnance type modifiée" : "Ordonnance type ajoutée");
     setProtoOpen(false);
+  };
+  const openSym = (g?: CustomSymptomGroup) => {
+    setSymEditId(g?.id ?? null);
+    setSymForm(g ? { title: g.title, itemsText: g.items.join("\n") } : emptySymGroup);
+    setSymOpen(true);
+  };
+  const saveSym = () => {
+    if (!currentUser) return;
+    const items = symForm.itemsText.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (!symForm.title.trim() || items.length === 0) {
+      toast.error("Titre et au moins un élément sont obligatoires");
+      return;
+    }
+    const payload: CustomSymptomGroup = { id: symEditId ?? newId(), title: symForm.title.trim(), items };
+    const nextGroups = symEditId
+      ? myGroups.map((x) => (x.id === symEditId ? payload : x))
+      : [...myGroups, payload];
+    update(
+      (d) => ({
+        ...d,
+        doctors: d.doctors.map((x) => (x.id === currentUser.id ? { ...x, customSymptomGroups: nextGroups } : x)),
+      }),
+      `Groupe d'interrogatoire ${symEditId ? "modifié" : "ajouté"} — ${payload.title}`,
+    );
+    toast.success(symEditId ? "Groupe modifié" : "Groupe ajouté à votre interrogatoire");
+    setSymOpen(false);
+  };
+  const deleteSym = (g: CustomSymptomGroup) => {
+    if (!currentUser) return;
+    update(
+      (d) => ({
+        ...d,
+        doctors: d.doctors.map((x) =>
+          x.id === currentUser.id
+            ? { ...x, customSymptomGroups: myGroups.filter((y) => y.id !== g.id) }
+            : x,
+        ),
+      }),
+      `Groupe d'interrogatoire supprimé — ${g.title}`,
+    );
+    toast.success("Groupe supprimé");
   };
   const [cat, setCat] = useState({ label: "", color: "#0077B6" });
   const [res, setRes] = useState({ name: "", kind: "salle" as "salle" | "équipement" | "praticien" });
@@ -266,6 +312,60 @@ function SettingsPage() {
             </div>
           )}
         </Card>
+
+        {role === "medecin" && currentUser && (
+          <Card className="xl:col-span-2">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-lg font-semibold">
+                <ClipboardList className="h-4 w-4 text-teal" /> Interrogatoire structuré — mes groupes
+              </h2>
+              <GhostButton onClick={() => openSym()}>
+                <Plus className="h-4 w-4" /> Ajouter
+              </GhostButton>
+            </div>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Ajoutez vos propres groupes de symptômes (titre + éléments à cocher) — ils apparaissent, sous votre
+              compte uniquement, dans la grille de l'entretien avec le patient, au même titre que les groupes HGE
+              intégrés.
+            </p>
+            {myGroups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun groupe personnalisé pour l'instant.</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {myGroups.map((g) => (
+                  <div key={g.id} className="rounded-lg border border-border p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium">{g.title}</p>
+                      <div className="flex shrink-0 gap-1">
+                        <button
+                          onClick={() => openSym(g)}
+                          aria-label={`Modifier ${g.title}`}
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-teal/10 hover:text-teal"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteSym(g)}
+                          aria-label={`Supprimer ${g.title}`}
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {g.items.map((it) => (
+                        <span key={it} className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                          {it}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
 
         <Card>
           <h2 className="mb-4 text-lg font-semibold">Agenda</h2>
@@ -696,6 +796,41 @@ function SettingsPage() {
         <div className="mt-6 flex justify-end gap-2">
           <GhostButton onClick={() => setProtoOpen(false)}>Annuler</GhostButton>
           <PrimaryButton onClick={saveProto}>{protoEditId ? "Enregistrer" : "Ajouter"}</PrimaryButton>
+        </div>
+      </Modal>
+
+      <Modal
+        open={symOpen}
+        onClose={() => setSymOpen(false)}
+        title={symEditId ? "Modifier le groupe" : "Nouveau groupe de symptômes"}
+        width="max-w-lg"
+      >
+        <div className="space-y-4">
+          <Field label="Titre du groupe">
+            <input
+              className={inputCls}
+              autoFocus
+              placeholder="Ex. Symptômes urinaires"
+              value={symForm.title}
+              onChange={(e) => setSymForm({ ...symForm, title: e.target.value })}
+            />
+          </Field>
+          <Field label="Éléments à cocher (un par ligne)">
+            <textarea
+              className={`${inputCls} min-h-36`}
+              placeholder={"Brûlures mictionnelles\nPollakiurie\nHématurie"}
+              value={symForm.itemsText}
+              onChange={(e) => setSymForm({ ...symForm, itemsText: e.target.value })}
+            />
+          </Field>
+          <p className="text-xs text-muted-foreground">
+            Une fois enregistré, ce groupe apparaît dans la grille de l'entretien (Début / Évolution / EVA se
+            complètent automatiquement, comme pour les groupes intégrés).
+          </p>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <GhostButton onClick={() => setSymOpen(false)}>Annuler</GhostButton>
+          <PrimaryButton onClick={saveSym}>{symEditId ? "Enregistrer" : "Ajouter"}</PrimaryButton>
         </div>
       </Modal>
     </ScreenTransition>

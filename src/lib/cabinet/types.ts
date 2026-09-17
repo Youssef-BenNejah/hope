@@ -310,6 +310,13 @@ export interface Settings {
   certificateTemplates: CertificateTemplate[];
 }
 
+/** Groupe de symptômes personnalisé ajouté par un médecin à son interrogatoire structuré */
+export interface CustomSymptomGroup {
+  id: string;
+  title: string;
+  items: string[];
+}
+
 /** Compte médecin / personnel géré depuis l'écran d'administration */
 export interface Doctor {
   id: string;
@@ -334,6 +341,7 @@ export interface Doctor {
   rib?: string; // relevé d'identité bancaire (20 chiffres)
   emergencyContact?: string;
   notes?: string;
+  customSymptomGroups?: CustomSymptomGroup[]; // interrogatoire structuré personnalisé (médecin)
 }
 
 export interface CabinetData {

@@ -18,8 +18,10 @@ import {
   RED_FLAGS,
   RELATIONS_REPAS,
   SYMPTOM_GROUPS,
+  type SymptomGroup,
   type SymptomItem,
 } from "@/lib/cabinet/gi-interview";
+import type { CustomSymptomGroup } from "@/lib/cabinet/types";
 import { GhostButton, inputCls } from "./Modal";
 
 type Checked = Record<string, boolean>;
@@ -118,10 +120,25 @@ function itemsLabel(items: SymptomItem[], checked: Checked, prefix: string) {
   return items.filter((it) => checked[`${prefix}:${it.id}`]).map((it) => it.label);
 }
 
-export function GiInterviewForm({ onChange }: { onChange: (text: string) => void }) {
+export function GiInterviewForm({
+  onChange,
+  customGroups = [],
+}: {
+  onChange: (text: string) => void;
+  customGroups?: CustomSymptomGroup[];
+}) {
   const [checked, setChecked] = useState<Checked>({});
   const [extra, setExtra] = useState<Extra>({});
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ flags: true, douleur: false });
+
+  const allGroups: SymptomGroup[] = [
+    ...SYMPTOM_GROUPS,
+    ...customGroups.map((g) => ({
+      id: `custom:${g.id}`,
+      title: g.title,
+      items: g.items.map((label) => ({ id: label, label })),
+    })),
+  ];
 
   const toggle = (key: string) => setChecked((c) => ({ ...c, [key]: !c[key] }));
   const isOn = (key: string) => !!checked[key];
@@ -136,7 +153,7 @@ export function GiInterviewForm({ onChange }: { onChange: (text: string) => void
     const activeFlags = itemsLabel(RED_FLAGS, checked, "flag");
     if (activeFlags.length) lines.push(`🚨 Red flags : ${activeFlags.join(", ")}`);
 
-    for (const g of SYMPTOM_GROUPS) {
+    for (const g of allGroups) {
       const active = itemsLabel(g.items, checked, `grp:${g.id}`);
       if (!active.length) continue;
       lines.push(`${g.title} : ${active.join(", ")}`);
@@ -225,7 +242,7 @@ export function GiInterviewForm({ onChange }: { onChange: (text: string) => void
         <ChipGroup options={RED_FLAGS.map((f) => f.label)} selected={(v) => isOn(`flag:${v}`)} onToggle={(v) => toggle(`flag:${v}`)} />
       </Section>
 
-      {SYMPTOM_GROUPS.map((g) => {
+      {allGroups.map((g) => {
         const count = itemsLabel(g.items, checked, `grp:${g.id}`).length;
         return (
           <Section key={g.id} title={g.title} count={count} open={!!openSections[g.id]} onToggle={() => toggleSection(g.id)}>
