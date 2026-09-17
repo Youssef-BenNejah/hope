@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { Diagnostic } from "@/lib/cabinet/types";
-import { today } from "@/lib/cabinet/utils";
+import { ageFrom, sexLabel, today } from "@/lib/cabinet/utils";
 import { Field, GhostButton, PrimaryButton, inputCls } from "./Modal";
 import { GiInterviewForm } from "./GiInterviewForm";
 import { DiagnosticReportView } from "./DiagnosticReportView";
@@ -21,6 +21,7 @@ export function DiagnosticModal({
 }) {
   const { data, update, newId, currentUser, patientName } = useCabinet();
   const existing = diagnosticId ? data.diagnostics.find((x) => x.id === diagnosticId) : undefined;
+  const patient = patientId ? data.patients.find((p) => p.id === patientId) : undefined;
 
   const [date, setDate] = useState(today());
   const [reason, setReason] = useState("");
@@ -97,12 +98,29 @@ export function DiagnosticModal({
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
       <aside className="absolute right-0 top-0 flex h-full w-full flex-col overflow-hidden bg-card shadow-2xl animate-in slide-in-from-right duration-200">
-        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border p-4 sm:p-6">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border p-4 sm:p-6">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold sm:text-xl">
               {existing ? "Entretien avec le patient" : "Nouvel entretien"}
             </h2>
-            <p className="truncate text-sm text-muted-foreground">{patientId ? patientName(patientId) : "—"}</p>
+            {patient ? (
+              <>
+                <p className="truncate text-sm font-medium">{patient.name}</p>
+                <p className="num truncate text-xs text-muted-foreground sm:text-sm">
+                  <span className="font-semibold text-teal">{patient.code}</span>
+                  {patient.phone && ` · ${patient.phone}`}
+                  {ageFrom(patient.birthDate) !== null && ` · ${ageFrom(patient.birthDate)} ans`}
+                  {patient.sex && ` · ${sexLabel(patient.sex)}`}
+                </p>
+                {patient.allergies.length > 0 && (
+                  <p className="mt-1 flex items-center gap-1 text-xs font-medium text-danger">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Allergies : {patient.allergies.join(", ")}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="truncate text-sm text-muted-foreground">{patientId ? patientName(patientId) : "—"}</p>
+            )}
           </div>
           <button onClick={onClose} aria-label="Fermer" className="shrink-0 rounded-md p-2 hover:bg-muted">
             <X className="h-5 w-5" />
