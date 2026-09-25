@@ -48,25 +48,11 @@ export function DiagnosticModal({
       return;
     }
     const now = new Date().toISOString();
-    const id = existing?.id ?? newId();
-    const finalReason = reason.trim() || existing?.reason;
-    const ficheNoteId = `entretien-${id}`;
-    const ficheText = [finalReason, content].filter(Boolean).join(" — ");
-    const upsertFicheNote = (d: typeof data) => ({
-      ...d,
-      patients: d.patients.map((p) =>
-        p.id === patientId
-          ? {
-              ...p,
-              ficheNotes: [...(p.ficheNotes || []).filter((n) => n.id !== ficheNoteId), { id: ficheNoteId, date, text: ficheText }],
-            }
-          : p,
-      ),
-    });
     if (existing) {
+      const id = existing.id;
       update(
         (d) => ({
-          ...upsertFicheNote(d),
+          ...d,
           diagnostics: d.diagnostics.map((x) =>
             x.id === id
               ? {
@@ -85,11 +71,11 @@ export function DiagnosticModal({
     } else {
       update(
         (d) => ({
-          ...upsertFicheNote(d),
+          ...d,
           diagnostics: [
             ...d.diagnostics,
             {
-              id,
+              id: newId(),
               patientId,
               date,
               ...(reason.trim() ? { reason: reason.trim() } : {}),
@@ -105,9 +91,7 @@ export function DiagnosticModal({
       );
     }
     toast.success(
-      status === "termine"
-        ? "Consultation terminée, classée au dossier et reportée sur la fiche patient"
-        : "Brouillon enregistré au dossier et sur la fiche patient",
+      status === "termine" ? "Consultation terminée et classée au dossier" : "Brouillon enregistré au dossier",
     );
     onClose();
   };

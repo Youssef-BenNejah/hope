@@ -3,16 +3,6 @@ export type PaymentMethod = "cash" | "cnam_pending" | "cnam_paid";
 export type TrackerStatus = "waiting" | "in_consult" | "done";
 export type UserRole = "medecin" | "secretaire";
 
-/** Filière de prise en charge CNAM cochée sur la fiche patient papier */
-export type CnamFiliere = "N" | "P" | "R" | "MF";
-
-/** Ligne d'observation datée, saisie directement dans le tableau de la fiche patient */
-export interface FicheNote {
-  id: string;
-  date: string;
-  text: string;
-}
-
 export interface Patient {
   id: string;
   code: string; // identifiant unique : initiales + 6 chiffres
@@ -29,9 +19,6 @@ export interface Patient {
   createdAt: string;
   profession?: string;
   address?: string;
-  fileNumber?: string; // "FICHE N°" — numéro de dossier papier
-  cnamFiliere?: CnamFiliere[]; // cases cochées N / P / R / MF
-  ficheNotes?: FicheNote[]; // tableau daté d'observations saisi sur la fiche
 }
 
 export interface Appointment {
