@@ -98,7 +98,6 @@ function load(): CabinetData {
         const content = [...lines, legacy.freeNotes].filter(Boolean).join("\n");
         return { ...entry, content } as (typeof parsed.diagnostics)[number];
       });
-      parsed.messages ??= seed.messages;
       parsed.audit ??= [];
       return parsed;
     }

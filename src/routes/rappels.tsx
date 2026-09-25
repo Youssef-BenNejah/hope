@@ -312,8 +312,8 @@ function RemindersPage() {
             render={(it) =>
               row(
                 it,
-                <Link to="/comptabilite">
-                  <GhostButton className="!px-2 !py-1 text-xs">Comptabilité</GhostButton>
+                <Link to="/patients" search={{ p: it.patientId }}>
+                  <GhostButton className="!px-2 !py-1 text-xs">Voir le dossier</GhostButton>
                 </Link>,
               )
             }

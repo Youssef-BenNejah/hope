@@ -41,6 +41,8 @@ const emptyForm = {
   insurer: "",
   cnam: "",
   allergies: "",
+  profession: "",
+  address: "",
 };
 
 const countries = ["Tunisie", "Algérie", "Maroc", "Libye", "France", "Italie", "Allemagne", "Canada", "Autre"];
@@ -128,6 +130,8 @@ function PatientsPage() {
             allergies: form.allergies.split(",").map((s) => s.trim()).filter(Boolean),
             chronic: [],
             createdAt: today(),
+            profession: form.profession.trim(),
+            address: form.address.trim(),
           },
         ],
       }),
@@ -433,6 +437,22 @@ function PatientsPage() {
               />
             </Field>
           )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Profession">
+              <input
+                className={inputCls}
+                value={form.profession}
+                onChange={(e) => setForm({ ...form, profession: e.target.value })}
+              />
+            </Field>
+            <Field label="Adresse">
+              <input
+                className={inputCls}
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+              />
+            </Field>
+          </div>
           <Field label="Allergies (séparées par des virgules)">
             <input
               className={inputCls}

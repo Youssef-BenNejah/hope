@@ -138,7 +138,6 @@ const SECRETAIRE_ALLOWED = [
   "/tracker",
   "/documents",
   "/annuaire",
-  "/messages",
 ];
 
 function AppFrame() {

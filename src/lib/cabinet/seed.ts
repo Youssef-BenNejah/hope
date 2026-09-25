@@ -771,22 +771,6 @@ export function buildSeed(): CabinetData {
         updatedAt: iso(0.2),
       },
     ],
-    messages: [
-      // Canal Équipe
-      { id: uid(), fromId: "doc-leila", text: "Bonjour à tous 👋 Trois patients doivent repasser signer leur volet CNAM : Mme Trabelsi, M. Sfaxi et M. Bouazizi.", date: iso(2), read: true },
-      { id: uid(), fromId: "doc-amine", text: "Merci Leïla. On les rappelle cet après-midi.", date: iso(2 - 0.02), read: true },
-      { id: uid(), fromId: "doc-leila", text: "Il reste 2 boîtes de bandelettes glycémie. Je passe commande chez MédiFourniture ?", date: iso(0.9), read: true },
-      { id: uid(), fromId: "doc-amine", text: "Oui, commande 5 boîtes. 👍", date: iso(0.85), read: false },
-      // Fil Dr Amine ↔ Leïla
-      { id: uid(), fromId: "doc-amine", toId: "doc-leila", patientId: p3, text: "Peux-tu rappeler Mme Chaabane pour reprogrammer son rendez-vous ? Elle était absente hier.", date: iso(0.3), read: false },
-      { id: uid(), fromId: "doc-leila", toId: "doc-amine", text: "C'est noté, je l'appelle ce matin.", date: iso(0.28), read: false },
-      // Fil Dr Amine ↔ Emna
-      { id: uid(), fromId: "doc-emna", toId: "doc-amine", patientId: p7, text: "Le bilan de Mme Ferjani est arrivé par mail, je l'ai classé dans ses documents. Hémoglobine basse (10,6 g/dL).", date: iso(1), read: false },
-      { id: uid(), fromId: "doc-amine", toId: "doc-emna", text: "Parfait, merci. Je regarde ça avant sa consultation de jeudi.", date: iso(0.95), read: false },
-      // Fil Leïla ↔ Emna
-      { id: uid(), fromId: "doc-leila", toId: "doc-emna", text: "Tu peux couvrir l'accueil demain après-midi ? J'ai un rendez-vous à la CNAM.", date: iso(3), read: true },
-      { id: uid(), fromId: "doc-emna", toId: "doc-leila", text: "Pas de souci 🙂", date: iso(3 - 0.05), read: true },
-    ],
     audit: [],
     payments,
     settings: {

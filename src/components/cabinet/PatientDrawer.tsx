@@ -20,16 +20,23 @@ import {
 import { toast } from "sonner";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useCabinet } from "@/lib/cabinet/store";
-import type { AnalysisValue, IcdCode, NoteAttachment } from "@/lib/cabinet/types";
+import type { AnalysisValue, CnamFiliere, IcdCode, NoteAttachment } from "@/lib/cabinet/types";
 import { ageFrom, fmtDate, sexLabel, statusMeta, today } from "@/lib/cabinet/utils";
 import { Field, GhostButton, Modal, PrimaryButton, inputCls } from "./Modal";
 import { IcdPicker } from "./IcdPicker";
 import { DiagnosticModal } from "./DiagnosticModal";
 import { DiagnosticReportView } from "./DiagnosticReportView";
 
-const tabs = ["Aperçu", "Historique", "Diagnostic", "Notes", "Analyses", "Certificats"] as const;
+const tabs = ["Aperçu", "Fiche", "Historique", "Diagnostic", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
 const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
+
+const cnamFiliereLabels: Record<CnamFiliere, string> = {
+  N: "Non conventionné",
+  P: "Filière publique",
+  R: "Remboursement",
+  MF: "Médecin de famille",
+};
 
 type TimelineItem = {
   id: string;
@@ -240,6 +247,99 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
     toast.success("Dossier prêt — choisissez « Enregistrer au format PDF »");
   };
 
+  const patchPatient = (patch: Partial<typeof patient>) => {
+    update((d) => ({
+      ...d,
+      patients: d.patients.map((p) => (p.id === patient.id ? { ...p, ...patch } : p)),
+    }));
+  };
+
+  const toggleCnamFiliere = (k: CnamFiliere) => {
+    const cur = patient.cnamFiliere || [];
+    patchPatient({ cnamFiliere: cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k] });
+  };
+
+  const ficheNotes = [...(patient.ficheNotes || [])].sort((a, b) => a.date.localeCompare(b.date));
+
+  const addFicheNote = () => {
+    patchPatient({ ficheNotes: [...(patient.ficheNotes || []), { id: newId(), date: today(), text: "" }] });
+  };
+  const updateFicheNote = (id: string, patch: Partial<{ date: string; text: string }>) => {
+    patchPatient({
+      ficheNotes: (patient.ficheNotes || []).map((n) => (n.id === id ? { ...n, ...patch } : n)),
+    });
+  };
+  const removeFicheNote = (id: string) => {
+    patchPatient({ ficheNotes: (patient.ficheNotes || []).filter((n) => n.id !== id) });
+  };
+
+  const printFiche = () => {
+    const s = data.settings;
+    const box = (checked: boolean) => (checked ? "&#9746;" : "&#9744;");
+    const blankRows = Math.max(0, 12 - ficheNotes.length);
+    const rowsHtml = [
+      ...ficheNotes.map((n) => `<tr><td class="d">${esc(n.date ? fmtDate(n.date, "dd/MM/yyyy") : "")}</td><td>${esc(n.text)}</td></tr>`),
+      ...Array.from({ length: blankRows }, () => `<tr><td class="d">&nbsp;</td><td>&nbsp;</td></tr>`),
+    ].join("");
+    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Fiche — ${esc(patient.name)}</title>
+<style>
+@page{size:A4;margin:16mm}
+*{box-sizing:border-box}
+body{font-family:Georgia,"Times New Roman",serif;color:#0B1220;font-size:13px}
+.card{border:1.5px solid #0B1220;padding:16px 20px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #0B1220;padding-bottom:10px;margin-bottom:14px}
+.head .name{font-weight:bold;font-size:15px}
+.head .spec{font-size:12px}
+.head .num{font-size:12px;white-space:nowrap}
+.row{display:flex;gap:24px;margin-bottom:10px}
+.f{flex:1;border-bottom:1px dotted #5B6472;padding-bottom:3px}
+.f .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#5B6472;margin-right:6px}
+.cnam{display:flex;align-items:center;gap:6px;border:1px solid #0B1220;padding:8px 10px;margin:14px 0}
+.cnam b{font-size:11px;text-transform:uppercase;margin-right:8px}
+.cnam span{margin-right:16px;font-size:12.5px;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+th{border:1px solid #0B1220;background:#F1F5F9;font-size:11px;text-transform:uppercase;padding:5px}
+td{border:1px solid #0B1220;padding:6px 8px;font-size:12px;vertical-align:top;height:22px}
+td.d{width:100px;white-space:nowrap}
+</style></head><body>
+<div class="card">
+  <div class="head">
+    <div><div class="name">${esc(s.doctorName)}</div><div class="spec">${esc(s.specialty)}</div></div>
+    <div class="num">FICHE N° : ${esc(patient.fileNumber || patient.code)}</div>
+  </div>
+  <div class="row"><div class="f"><span class="lbl">Nom &amp; prénom</span>${esc(patient.name)}</div></div>
+  <div class="row">
+    <div class="f"><span class="lbl">Né(e) le</span>${patient.birthDate ? esc(fmtDate(patient.birthDate)) : ""}</div>
+    <div class="f"><span class="lbl">Profession</span>${esc(patient.profession || "")}</div>
+  </div>
+  <div class="row">
+    <div class="f"><span class="lbl">Adresse</span>${esc(patient.address || "")}</div>
+    <div class="f"><span class="lbl">Tél</span>${esc(patient.phone || "")}</div>
+  </div>
+  <div class="cnam">
+    <b>CNAM</b>
+    ${(["N", "P", "R", "MF"] as CnamFiliere[])
+      .map((k) => `<span>${box(!!patient.cnamFiliere?.includes(k))} ${k}</span>`)
+      .join("")}
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Observations</th></tr></thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+</div>
+</body></html>`;
+    const w = window.open("", "_blank", "width=900,height=1100");
+    if (!w) {
+      toast.error("Autorisez les fenêtres contextuelles pour générer le PDF");
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    window.setTimeout(() => w.print(), 350);
+    toast.success("Fenêtre d'impression ouverte — choisissez « Enregistrer au format PDF »");
+  };
+
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-[#03045E]/50" onClick={onClose} />
@@ -404,6 +504,160 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #E2E8F0;
                     ))}
                   </ul>
                 )}
+              </div>
+            </div>
+          </section>
+
+          <section id={sectionId("Fiche")} className="scroll-mt-14">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="label-caps text-teal">Fiche patient</h3>
+              <PrimaryButton onClick={printFiche}>
+                <Download className="h-4 w-4" /> Exporter en PDF
+              </PrimaryButton>
+            </div>
+            <div className="rounded-xl border-2 border-foreground/80 p-4 font-serif sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-foreground/60 pb-3">
+                <div>
+                  <p className="font-bold">{data.settings.doctorName}</p>
+                  <p className="text-sm">{data.settings.specialty}</p>
+                </div>
+                <label className="flex items-center gap-1.5 text-sm">
+                  <span className="num shrink-0">FICHE N° :</span>
+                  <input
+                    className="num w-32 border-b border-dotted border-muted-foreground bg-transparent px-1 py-0.5 outline-none focus:border-teal"
+                    placeholder={patient.code}
+                    defaultValue={patient.fileNumber || ""}
+                    onBlur={(e) => patchPatient({ fileNumber: e.target.value.trim() })}
+                  />
+                </label>
+              </div>
+              <div className="mt-4 space-y-3">
+                <label className="block border-b border-dotted border-muted-foreground pb-1">
+                  <span className="label-caps mr-2">Nom &amp; prénom</span>
+                  <input
+                    className="w-full bg-transparent outline-none"
+                    defaultValue={patient.name}
+                    onBlur={(e) => {
+                      if (e.target.value.trim()) patchPatient({ name: e.target.value.trim() });
+                      else e.target.value = patient.name;
+                    }}
+                  />
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block border-b border-dotted border-muted-foreground pb-1">
+                    <span className="label-caps mr-2">Né(e) le</span>
+                    <input
+                      type="date"
+                      className="num bg-transparent outline-none"
+                      defaultValue={patient.birthDate || ""}
+                      onBlur={(e) => patchPatient({ birthDate: e.target.value })}
+                    />
+                  </label>
+                  <label className="block border-b border-dotted border-muted-foreground pb-1">
+                    <span className="label-caps mr-2">Profession</span>
+                    <input
+                      className="w-[60%] bg-transparent outline-none"
+                      defaultValue={patient.profession || ""}
+                      onBlur={(e) => patchPatient({ profession: e.target.value.trim() })}
+                    />
+                  </label>
+                  <label className="block border-b border-dotted border-muted-foreground pb-1">
+                    <span className="label-caps mr-2">Adresse</span>
+                    <input
+                      className="w-[60%] bg-transparent outline-none"
+                      defaultValue={patient.address || ""}
+                      onBlur={(e) => patchPatient({ address: e.target.value.trim() })}
+                    />
+                  </label>
+                  <label className="block border-b border-dotted border-muted-foreground pb-1">
+                    <span className="label-caps mr-2">Tél</span>
+                    <input
+                      className="num w-[60%] bg-transparent outline-none"
+                      defaultValue={patient.phone || ""}
+                      onBlur={(e) => patchPatient({ phone: e.target.value.trim() })}
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-foreground/60 px-3 py-2.5">
+                  <span className="label-caps">CNAM</span>
+                  {(["N", "P", "R", "MF"] as CnamFiliere[]).map((k) => (
+                    <label
+                      key={k}
+                      className="inline-flex cursor-pointer items-center gap-1.5 text-sm"
+                      title={cnamFiliereLabels[k]}
+                    >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={!!patient.cnamFiliere?.includes(k)}
+                        onChange={() => toggleCnamFiliere(k)}
+                      />
+                      <span
+                        className={`flex h-4 w-4 items-center justify-center rounded-[3px] border ${
+                          patient.cnamFiliere?.includes(k)
+                            ? "border-teal bg-teal text-white"
+                            : "border-muted-foreground"
+                        }`}
+                      >
+                        {patient.cnamFiliere?.includes(k) ? "✓" : ""}
+                      </span>
+                      {k}
+                    </label>
+                  ))}
+                </div>
+                <table className="mt-2 w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="border border-foreground/60 px-2 py-1.5 text-left text-xs uppercase">Date</th>
+                      <th className="border border-foreground/60 px-2 py-1.5 text-left text-xs uppercase">
+                        Observations
+                      </th>
+                      <th className="w-8 border border-foreground/60" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ficheNotes.length === 0 ? (
+                      <tr>
+                        <td className="num border border-foreground/60 px-2 py-2 text-muted-foreground" colSpan={3}>
+                          Aucune observation — utilisez « Ajouter une ligne » ci-dessous
+                        </td>
+                      </tr>
+                    ) : (
+                      ficheNotes.map((n) => (
+                        <tr key={n.id}>
+                          <td className="border border-foreground/60 p-0 align-top">
+                            <input
+                              type="date"
+                              className="num w-full bg-transparent px-2 py-1.5 outline-none"
+                              defaultValue={n.date}
+                              onBlur={(e) => updateFicheNote(n.id, { date: e.target.value })}
+                            />
+                          </td>
+                          <td className="border border-foreground/60 p-0 align-top">
+                            <textarea
+                              className="min-h-9 w-full resize-y bg-transparent px-2 py-1.5 outline-none"
+                              defaultValue={n.text}
+                              placeholder="Observation…"
+                              onBlur={(e) => updateFicheNote(n.id, { text: e.target.value })}
+                            />
+                          </td>
+                          <td className="border border-foreground/60 p-0 text-center align-top">
+                            <button
+                              onClick={() => removeFicheNote(n.id)}
+                              aria-label="Supprimer la ligne"
+                              className="p-1.5 text-muted-foreground hover:text-danger"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+                <GhostButton onClick={addFicheNote}>
+                  <Plus className="h-4 w-4" /> Ajouter une ligne
+                </GhostButton>
               </div>
             </div>
           </section>

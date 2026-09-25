@@ -14,10 +14,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AnnuaireRouteImport } from './routes/annuaire'
 import { Route as CertificatsRouteImport } from './routes/certificats'
-import { Route as ComptabiliteRouteImport } from './routes/comptabilite'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as JournalRouteImport } from './routes/journal'
-import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as OrdonnancesRouteImport } from './routes/ordonnances'
 import { Route as OrientationsRouteImport } from './routes/orientations'
 import { Route as ParametresRouteImport } from './routes/parametres'
@@ -55,11 +53,6 @@ const CertificatsRoute = CertificatsRouteImport.update({
   path: '/certificats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ComptabiliteRoute = ComptabiliteRouteImport.update({
-  id: '/comptabilite',
-  path: '/comptabilite',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DocumentsRoute = DocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
@@ -68,11 +61,6 @@ const DocumentsRoute = DocumentsRouteImport.update({
 const JournalRoute = JournalRouteImport.update({
   id: '/journal',
   path: '/journal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MessagesRoute = MessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdonnancesRoute = OrdonnancesRouteImport.update({
@@ -137,10 +125,8 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AgendaRoute
   '/annuaire': typeof AnnuaireRoute
   '/certificats': typeof CertificatsRoute
-  '/comptabilite': typeof ComptabiliteRoute
   '/documents': typeof DocumentsRoute
   '/journal': typeof JournalRoute
-  '/messages': typeof MessagesRoute
   '/ordonnances': typeof OrdonnancesRoute
   '/orientations': typeof OrientationsRoute
   '/parametres': typeof ParametresRoute
@@ -159,10 +145,8 @@ export interface FileRoutesByTo {
   '/agenda': typeof AgendaRoute
   '/annuaire': typeof AnnuaireRoute
   '/certificats': typeof CertificatsRoute
-  '/comptabilite': typeof ComptabiliteRoute
   '/documents': typeof DocumentsRoute
   '/journal': typeof JournalRoute
-  '/messages': typeof MessagesRoute
   '/ordonnances': typeof OrdonnancesRoute
   '/orientations': typeof OrientationsRoute
   '/parametres': typeof ParametresRoute
@@ -182,10 +166,8 @@ export interface FileRoutesById {
   '/agenda': typeof AgendaRoute
   '/annuaire': typeof AnnuaireRoute
   '/certificats': typeof CertificatsRoute
-  '/comptabilite': typeof ComptabiliteRoute
   '/documents': typeof DocumentsRoute
   '/journal': typeof JournalRoute
-  '/messages': typeof MessagesRoute
   '/ordonnances': typeof OrdonnancesRoute
   '/orientations': typeof OrientationsRoute
   '/parametres': typeof ParametresRoute
@@ -206,10 +188,8 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/annuaire'
     | '/certificats'
-    | '/comptabilite'
     | '/documents'
     | '/journal'
-    | '/messages'
     | '/ordonnances'
     | '/orientations'
     | '/parametres'
@@ -228,10 +208,8 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/annuaire'
     | '/certificats'
-    | '/comptabilite'
     | '/documents'
     | '/journal'
-    | '/messages'
     | '/ordonnances'
     | '/orientations'
     | '/parametres'
@@ -250,10 +228,8 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/annuaire'
     | '/certificats'
-    | '/comptabilite'
     | '/documents'
     | '/journal'
-    | '/messages'
     | '/ordonnances'
     | '/orientations'
     | '/parametres'
@@ -273,10 +249,8 @@ export interface RootRouteChildren {
   AgendaRoute: typeof AgendaRoute
   AnnuaireRoute: typeof AnnuaireRoute
   CertificatsRoute: typeof CertificatsRoute
-  ComptabiliteRoute: typeof ComptabiliteRoute
   DocumentsRoute: typeof DocumentsRoute
   JournalRoute: typeof JournalRoute
-  MessagesRoute: typeof MessagesRoute
   OrdonnancesRoute: typeof OrdonnancesRoute
   OrientationsRoute: typeof OrientationsRoute
   ParametresRoute: typeof ParametresRoute
@@ -327,13 +301,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CertificatsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/comptabilite': {
-      id: '/comptabilite'
-      path: '/comptabilite'
-      fullPath: '/comptabilite'
-      preLoaderRoute: typeof ComptabiliteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/documents': {
       id: '/documents'
       path: '/documents'
@@ -346,13 +313,6 @@ declare module '@tanstack/react-router' {
       path: '/journal'
       fullPath: '/journal'
       preLoaderRoute: typeof JournalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/messages': {
-      id: '/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ordonnances': {
@@ -441,10 +401,8 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaRoute: AgendaRoute,
   AnnuaireRoute: AnnuaireRoute,
   CertificatsRoute: CertificatsRoute,
-  ComptabiliteRoute: ComptabiliteRoute,
   DocumentsRoute: DocumentsRoute,
   JournalRoute: JournalRoute,
-  MessagesRoute: MessagesRoute,
   OrdonnancesRoute: OrdonnancesRoute,
   OrientationsRoute: OrientationsRoute,
   ParametresRoute: ParametresRoute,

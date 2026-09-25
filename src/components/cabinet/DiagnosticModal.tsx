@@ -48,11 +48,25 @@ export function DiagnosticModal({
       return;
     }
     const now = new Date().toISOString();
+    const id = existing?.id ?? newId();
+    const finalReason = reason.trim() || existing?.reason;
+    const ficheNoteId = `entretien-${id}`;
+    const ficheText = [finalReason, content].filter(Boolean).join(" — ");
+    const upsertFicheNote = (d: typeof data) => ({
+      ...d,
+      patients: d.patients.map((p) =>
+        p.id === patientId
+          ? {
+              ...p,
+              ficheNotes: [...(p.ficheNotes || []).filter((n) => n.id !== ficheNoteId), { id: ficheNoteId, date, text: ficheText }],
+            }
+          : p,
+      ),
+    });
     if (existing) {
-      const id = existing.id;
       update(
         (d) => ({
-          ...d,
+          ...upsertFicheNote(d),
           diagnostics: d.diagnostics.map((x) =>
             x.id === id
               ? {
@@ -71,11 +85,11 @@ export function DiagnosticModal({
     } else {
       update(
         (d) => ({
-          ...d,
+          ...upsertFicheNote(d),
           diagnostics: [
             ...d.diagnostics,
             {
-              id: newId(),
+              id,
               patientId,
               date,
               ...(reason.trim() ? { reason: reason.trim() } : {}),
@@ -90,7 +104,11 @@ export function DiagnosticModal({
         `Entretien ${status === "termine" ? "terminé" : "créé (brouillon)"} — ${patientName(patientId)}`,
       );
     }
-    toast.success(status === "termine" ? "Entretien terminé et classé au dossier" : "Brouillon enregistré au dossier");
+    toast.success(
+      status === "termine"
+        ? "Entretien terminé, classé au dossier et reporté sur la fiche patient"
+        : "Brouillon enregistré au dossier et sur la fiche patient",
+    );
     onClose();
   };
 

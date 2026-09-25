@@ -14,9 +14,7 @@ const pages = [
   { label: "Orientations", to: "/orientations" },
   { label: "Vaccinations", to: "/vaccinations" },
   { label: "Documents", to: "/documents" },
-  { label: "Comptabilité & rapports", to: "/comptabilite" },
   { label: "Annuaire", to: "/annuaire" },
-  { label: "Messages", to: "/messages" },
   { label: "Personnel", to: "/personnel" },
   { label: "Paramètres", to: "/parametres" },
 ] as const;
