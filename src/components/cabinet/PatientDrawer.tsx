@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-  Activity,
   AlertTriangle,
   ArrowLeft,
   ClipboardList,
@@ -27,7 +26,7 @@ import { IcdPicker } from "./IcdPicker";
 import { DiagnosticModal } from "./DiagnosticModal";
 import { DiagnosticReportView } from "./DiagnosticReportView";
 
-const tabs = ["Aperçu", "Fiche", "Historique", "Diagnostic", "Notes", "Analyses", "Certificats"] as const;
+const tabs = ["Aperçu", "Fiche", "Historique", "Consultations", "Notes", "Analyses", "Certificats"] as const;
 type Tab = (typeof tabs)[number];
 const sectionId = (t: Tab) => `patient-section-${tabs.indexOf(t)}`;
 
@@ -123,8 +122,6 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
     .filter((x) => x.patientId === patient.id)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-  const payments = data.payments.filter((p) => p.patientId === patient.id);
-
   const timeline: TimelineItem[] = [
     ...visits.map((v) => ({
       id: `v-${v.id}`,
@@ -146,13 +143,6 @@ export function PatientDrawer({ patientId, onClose }: { patientId: string | null
       date: c.documentDate,
       label: c.type,
       badge: "Certificat",
-      badgeClass: "bg-frost text-twilight",
-    })),
-    ...payments.map((p) => ({
-      id: `p-${p.id}`,
-      date: p.date,
-      label: `Paiement — ${p.amount} DT`,
-      badge: p.method === "cash" ? "Espèces" : p.method === "cnam_paid" ? "CNAM payé" : "CNAM en attente",
       badgeClass: "bg-frost text-twilight",
     })),
   ].sort((a: TimelineItem, b: TimelineItem) => (b.date + (b.time ?? "")).localeCompare(a.date + (a.time ?? "")));
@@ -674,16 +664,16 @@ td.d{width:100px;white-space:nowrap}
             )}
           </section>
 
-          <section id={sectionId("Diagnostic")} className="scroll-mt-14">
+          <section id={sectionId("Consultations")} className="scroll-mt-14">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="label-caps text-teal">Entretiens diagnostic</h3>
+              <h3 className="label-caps text-teal">Consultations</h3>
               <GhostButton onClick={() => setDiag({ open: true, id: null })}>
-                <ClipboardList className="h-4 w-4" /> Nouvel entretien
+                <ClipboardList className="h-4 w-4" /> Nouvelle consultation
               </GhostButton>
             </div>
             {diagnostics.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aucun entretien. Démarrez une anamnèse dirigée : le brouillon reste modifiable et visible ici.
+                Aucune consultation. Démarrez une anamnèse dirigée : le brouillon reste modifiable et visible ici.
               </p>
             ) : (
               <div className="space-y-2">
@@ -958,9 +948,6 @@ td.d{width:100px;white-space:nowrap}
                   }}
                 >
                   <FlaskConical className="h-4 w-4" /> Saisir un bilan
-                </GhostButton>
-                <GhostButton onClick={() => navigate({ to: "/suivi/$id", params: { id: patient.id } })}>
-                  <Activity className="h-4 w-4" /> Suivi &amp; courbes
                 </GhostButton>
               </div>
             </div>

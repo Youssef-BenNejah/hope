@@ -10,31 +10,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
-import { dt, fmtLong, statusMeta, today } from "@/lib/cabinet/utils";
+import { fmtLong, statusMeta, today } from "@/lib/cabinet/utils";
 import { Card, EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { AppointmentModal } from "@/components/cabinet/AppointmentModal";
-import { PaymentModal } from "@/components/cabinet/PaymentModal";
 import { ConfirmModal, PrimaryButton } from "@/components/cabinet/Modal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Aujourd'hui — Cabinet" },
-      { name: "description", content: "Vue du jour : rendez-vous, présence et recettes du cabinet." },
+      { name: "description", content: "Vue du jour : rendez-vous et présence du cabinet." },
       { property: "og:title", content: "Aujourd'hui — Cabinet" },
-      { property: "og:description", content: "Vue du jour : rendez-vous, présence et recettes du cabinet." },
+      { property: "og:description", content: "Vue du jour : rendez-vous et présence du cabinet." },
     ],
   }),
   component: TodayPage,
 });
 
 function TodayPage() {
-  const { data, update, patientName, role } = useCabinet();
+  const { data, update, patientName } = useCabinet();
   const navigate = useNavigate();
-  const showRevenue = role !== "secretaire";
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [payFor, setPayFor] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const day = today();
@@ -47,7 +44,6 @@ function TodayPage() {
   const rate = last30.length
     ? Math.round((last30.filter((a) => a.status === "done").length / last30.length) * 100)
     : 100;
-  const revenue = data.payments.filter((p) => p.date === day).reduce((s, p) => s + p.amount, 0);
 
   const isNewPatient = (patientId: string) =>
     data.appointments.filter((a) => a.patientId === patientId).length <= 1;
@@ -69,7 +65,7 @@ function TodayPage() {
         }
       />
 
-      <div className={`grid gap-4 ${showRevenue ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <p className="label-caps">Rendez-vous aujourd'hui</p>
           <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{list.length}</p>
@@ -81,12 +77,6 @@ function TodayPage() {
             <div className="h-full rounded-full bg-surf" style={{ width: `${rate}%` }} />
           </div>
         </Card>
-        {showRevenue && (
-          <Card>
-            <p className="label-caps">Recettes du jour</p>
-            <p className="mt-2 num text-4xl font-semibold text-twilight dark:text-frost">{dt(revenue)}</p>
-          </Card>
-        )}
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold">Rendez-vous du jour</h2>
@@ -136,7 +126,15 @@ function TodayPage() {
                 <DropdownMenuContent align="end" className="w-52">
                   {a.status === "upcoming" && (
                     <>
-                      <DropdownMenuItem onSelect={() => setPayFor(a.id)}>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          update((d) => ({
+                            ...d,
+                            appointments: d.appointments.map((x) => (x.id === a.id ? { ...x, status: "done" } : x)),
+                          }));
+                          toast.success("Consultation marquée terminée");
+                        }}
+                      >
                         <Check className="h-4 w-4 text-success" /> Marquer terminé
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -177,7 +175,6 @@ function TodayPage() {
 
 
       <AppointmentModal open={modalOpen} onClose={() => setModalOpen(false)} editId={editId} />
-      <PaymentModal appointmentId={payFor} onClose={() => setPayFor(null)} />
       <ConfirmModal
         open={!!deleteId}
         onClose={() => setDeleteId(null)}

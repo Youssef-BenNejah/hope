@@ -18,7 +18,7 @@ import { Eye, EyeOff, KeyRound, Mail, Pencil, Plus, Power, ShieldCheck, Trash2, 
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { Doctor, UserRole } from "@/lib/cabinet/types";
-import { dt, fmtDate, today } from "@/lib/cabinet/utils";
+import { fmtDate, today } from "@/lib/cabinet/utils";
 import { randomPassword } from "@/lib/cabinet/credentials";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { ConfirmModal, Field, GhostButton, Modal, PrimaryButton, inputCls } from "@/components/cabinet/Modal";
@@ -65,18 +65,16 @@ function AdminPage() {
   const [sendTarget, setSendTarget] = useState<Doctor | null>(null);
   const [sendPassword, setSendPassword] = useState("");
 
-  const stats = useMemo(() => {
-    const monthStart = format(subDays(new Date(), 29), "yyyy-MM-dd");
-    const revenue = data.payments.filter((p) => p.date >= monthStart).reduce((s, p) => s + p.amount, 0);
-    return {
+  const stats = useMemo(
+    () => ({
       doctors: doctors.filter((d) => d.active).length,
       patients: data.patients.length,
       appointments: data.appointments.length,
-      revenue,
       prescriptions: data.prescriptions.length,
       certificates: data.certificates.length,
-    };
-  }, [data, doctors]);
+    }),
+    [data, doctors],
+  );
 
   const activity = useMemo(
     () =>
@@ -85,10 +83,9 @@ function AdminPage() {
         return {
           date: format(subDays(new Date(), 13 - i), "dd/MM", { locale: fr }),
           consultations: data.appointments.filter((a) => a.date === day).length,
-          recettes: data.payments.filter((p) => p.date === day).reduce((s, p) => s + p.amount, 0),
         };
       }),
-    [data.appointments, data.payments],
+    [data.appointments],
   );
 
   const specialties = useMemo(() => {
@@ -192,7 +189,6 @@ function AdminPage() {
     { label: "Médecins actifs", value: `${stats.doctors}/${doctors.length}` },
     { label: "Patients", value: String(stats.patients) },
     { label: "Rendez-vous", value: String(stats.appointments) },
-    { label: "Recettes 30 j", value: dt(stats.revenue) },
     { label: "Ordonnances", value: String(stats.prescriptions) },
     { label: "Certificats", value: String(stats.certificates) },
   ];
@@ -231,7 +227,6 @@ function AdminPage() {
                   contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }}
                 />
                 <Bar dataKey="consultations" fill="#0077B6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="recettes" fill="#90E0EF" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

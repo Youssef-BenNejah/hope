@@ -1,14 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowUpDown, ClipboardList, FolderOpen, MoreHorizontal, Plus, Search, Users } from "lucide-react";
+import { ArrowUpDown, ClipboardList, FolderOpen, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useCabinet } from "@/lib/cabinet/store";
 import { ageFrom, fmtDate, levenshtein, makePatientCode, matches, sexLabel, today } from "@/lib/cabinet/utils";
 import { EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
@@ -203,7 +196,7 @@ function PatientsPage() {
       ) : (
         <>
           <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_170px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
+            <div className="hidden grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_260px] items-center gap-4 bg-twilight px-5 py-2.5 sm:grid">
               <span className="label-caps text-left text-[#CAF0F8]">Identifiant</span>
               <button
                 onClick={() => toggleSort("name")}
@@ -230,7 +223,7 @@ function PatientsPage() {
             {shown.map((x) => (
               <div
                 key={x.id}
-                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_170px] sm:items-center sm:gap-4 sm:px-5"
+                className="flex w-full flex-col gap-1 border-b border-border px-4 py-3.5 text-sm transition-colors last:border-0 hover:bg-cyan/40 dark:hover:bg-muted sm:grid sm:grid-cols-[140px_minmax(0,1fr)_140px_70px_90px_130px_260px] sm:items-center sm:gap-4 sm:px-5"
               >
                 <button
                   onClick={() => navigate({ to: "/patients", search: { p: x.id } })}
@@ -253,64 +246,30 @@ function PatientsPage() {
                   </span>
                 </button>
                 <div className="order-6 flex items-center justify-end gap-2 sm:order-none sm:justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate({ to: "/patients", search: { p: x.id } });
+                    }}
+                    title="Ouvrir le dossier"
+                    aria-label={`Ouvrir le dossier de ${x.name}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-teal hover:bg-teal/10 hover:text-teal"
+                  >
+                    <FolderOpen className="h-3.5 w-3.5" /> Dossier
+                  </button>
                   {role !== "secretaire" && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setDiag({ patientId: x.id, id: null });
                       }}
-                      title="Nouvel entretien diagnostic"
-                      aria-label={`Nouvel entretien diagnostic pour ${x.name}`}
+                      title="Nouvelle consultation"
+                      aria-label={`Nouvelle consultation pour ${x.name}`}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-teal hover:bg-teal/10 hover:text-teal"
                     >
-                      <ClipboardList className="h-3.5 w-3.5" /> Entretien
+                      <ClipboardList className="h-3.5 w-3.5" /> Consultation
                     </button>
                   )}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        aria-label={`Actions pour ${x.name}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-60">
-                      <DropdownMenuItem onSelect={() => navigate({ to: "/patients", search: { p: x.id } })}>
-                        <FolderOpen className="h-4 w-4" /> Ouvrir le dossier
-                      </DropdownMenuItem>
-                      {role !== "secretaire" && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => setDiag({ patientId: x.id, id: null })}>
-                            <ClipboardList className="h-4 w-4" /> Nouvel entretien diagnostic
-                          </DropdownMenuItem>
-                          {data.diagnostics
-                            .filter((d) => d.patientId === x.id)
-                            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-                            .slice(0, 3)
-                            .map((d) => (
-                              <DropdownMenuItem
-                                key={d.id}
-                                onSelect={() => setDiag({ patientId: x.id, id: d.id })}
-                              >
-                                <span className="num text-xs text-muted-foreground">
-                                  {fmtDate(d.date, "dd/MM/yy")}
-                                </span>
-                                <span className="truncate">
-                                  {d.reason || (d.status === "brouillon" ? "Brouillon" : "Entretien")}
-                                </span>
-                              </DropdownMenuItem>
-                            ))}
-                        </>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => navigate({ to: "/suivi/$id", params: { id: x.id } })}>
-                        Suivi &amp; courbes
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
               </div>
             ))}

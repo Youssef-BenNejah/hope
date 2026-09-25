@@ -3,7 +3,6 @@ import {
   Bell,
   CalendarDays,
   FileText,
-  FolderClosed,
   IdCard,
   Lock,
   Pill,
@@ -11,7 +10,6 @@ import {
   Settings as SettingsIcon,
   Shield,
   Sun,
-  Syringe,
   Users,
   UsersRound,
   Check,
@@ -29,16 +27,14 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
+  { to: "/patients", label: "Patients", icon: Users },
   { to: "/", label: "Aujourd'hui", icon: Sun },
   { to: "/rappels", label: "Rappels", icon: Bell },
-  { to: "/patients", label: "Patients", icon: Users },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/tracker", label: "Salle d'attente", icon: DoorOpen },
   { to: "/ordonnances", label: "Ordonnances", icon: Pill, roles: ["medecin"] },
   { to: "/certificats", label: "Certificats", icon: FileText, roles: ["medecin"] },
   { to: "/orientations", label: "Orientations", icon: Send, roles: ["medecin"] },
-  { to: "/vaccinations", label: "Vaccinations", icon: Syringe, roles: ["medecin"] },
-  { to: "/documents", label: "Documents", icon: FolderClosed },
   { to: "/annuaire", label: "Annuaire", icon: UsersRound },
   { to: "/personnel", label: "Personnel", icon: IdCard, roles: ["medecin"] },
   { to: "/parametres", label: "Paramètres", icon: SettingsIcon, roles: ["medecin"] },

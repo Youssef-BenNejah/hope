@@ -89,12 +89,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Cabinet — Gestion de cabinet médical" },
       {
         name: "description",
-        content: "Prototype de gestion pour médecin exerçant seul : agenda, patients, certificats et recettes.",
+        content: "Prototype de gestion pour médecin exerçant seul : agenda, patients et certificats.",
       },
       { property: "og:title", content: "Cabinet — Gestion de cabinet médical" },
       {
         property: "og:description",
-        content: "Agenda, dossiers patients, certificats et suivi des recettes en un seul outil.",
+        content: "Agenda, dossiers patients et certificats en un seul outil.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -136,7 +136,6 @@ const SECRETAIRE_ALLOWED = [
   "/patients",
   "/agenda",
   "/tracker",
-  "/documents",
   "/annuaire",
 ];
 

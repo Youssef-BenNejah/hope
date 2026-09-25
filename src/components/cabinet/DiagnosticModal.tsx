@@ -80,7 +80,7 @@ export function DiagnosticModal({
               : x,
           ),
         }),
-        `Entretien ${status === "termine" ? "terminé" : "mis à jour"} — ${patientName(patientId)}`,
+        `Consultation ${status === "termine" ? "terminée" : "mise à jour"} — ${patientName(patientId)}`,
       );
     } else {
       update(
@@ -101,12 +101,12 @@ export function DiagnosticModal({
             },
           ],
         }),
-        `Entretien ${status === "termine" ? "terminé" : "créé (brouillon)"} — ${patientName(patientId)}`,
+        `Consultation ${status === "termine" ? "terminée" : "créée (brouillon)"} — ${patientName(patientId)}`,
       );
     }
     toast.success(
       status === "termine"
-        ? "Entretien terminé, classé au dossier et reporté sur la fiche patient"
+        ? "Consultation terminée, classée au dossier et reportée sur la fiche patient"
         : "Brouillon enregistré au dossier et sur la fiche patient",
     );
     onClose();
@@ -119,7 +119,7 @@ export function DiagnosticModal({
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border p-4 sm:p-6">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold sm:text-xl">
-              {existing ? "Entretien avec le patient" : "Nouvel entretien"}
+              {existing ? "Consultation avec le patient" : "Nouvelle consultation"}
             </h2>
             {patient ? (
               <>
@@ -156,7 +156,7 @@ export function DiagnosticModal({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
-              <Field label="Date de l'entretien">
+              <Field label="Date de la consultation">
                 <input type="date" className={`${inputCls} num`} value={date} onChange={(e) => setDate(e.target.value)} />
               </Field>
               <Field label="Motif (facultatif)">
@@ -199,7 +199,7 @@ export function DiagnosticModal({
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border p-4 sm:p-6">
           <GhostButton onClick={onClose}>Fermer</GhostButton>
           <GhostButton onClick={() => persist("brouillon")}>Enregistrer le brouillon</GhostButton>
-          <PrimaryButton onClick={() => persist("termine")}>Terminer l'entretien</PrimaryButton>
+          <PrimaryButton onClick={() => persist("termine")}>Terminer la consultation</PrimaryButton>
         </div>
       </aside>
     </div>

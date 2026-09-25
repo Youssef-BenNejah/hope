@@ -345,7 +345,7 @@ function SettingsPage() {
             </div>
             <p className="mb-3 text-sm text-muted-foreground">
               Créez vos propres groupes de symptômes, ou ajoutez des éléments à un groupe déjà intégré (ex. « Douleur
-              abdominale ») — ils apparaissent, sous votre compte uniquement, dans la grille de l'entretien avec le
+              abdominale ») — ils apparaissent, sous votre compte uniquement, dans la grille de la consultation avec le
               patient.
             </p>
 
@@ -694,7 +694,7 @@ function SettingsPage() {
         <Card>
           <h2 className="mb-4 text-lg font-semibold">Données de démonstration</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            Restaure les patients, rendez-vous et recettes d'exemple pour rejouer la démonstration.
+            Restaure les patients et rendez-vous d'exemple pour rejouer la démonstration.
           </p>
           <GhostButton
             onClick={() => {
@@ -893,7 +893,7 @@ function SettingsPage() {
           <p className="text-xs text-muted-foreground">
             {symForm.extendsGroupId
               ? "Ces éléments s'ajoutent à la liste existante du groupe choisi, sans le dupliquer."
-              : "Une fois enregistré, ce groupe apparaît dans la grille de l'entretien (Début / Évolution / EVA se complètent automatiquement, comme pour les groupes intégrés)."}
+              : "Une fois enregistré, ce groupe apparaît dans la grille de la consultation (Début / Évolution / EVA se complètent automatiquement, comme pour les groupes intégrés)."}
           </p>
         </div>
         <div className="mt-6 flex justify-end gap-2">

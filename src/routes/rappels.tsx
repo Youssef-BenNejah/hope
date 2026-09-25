@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { Bell, CalendarPlus, CheckCircle2, Phone, Pill, Syringe, Wallet } from "lucide-react";
+import { Bell, CalendarPlus, CheckCircle2, Phone, Pill } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
 import { fmtDate, today } from "@/lib/cabinet/utils";
 import { Card, EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
@@ -14,10 +14,10 @@ export const Route = createFileRoute("/rappels")({
       { title: "Rappels — Cabinet" },
       {
         name: "description",
-        content: "Rappels cliniques et administratifs déduits automatiquement : RDV, vaccins, suivis, ordonnances, CNAM.",
+        content: "Rappels cliniques déduits automatiquement : RDV, suivis chroniques, ordonnances.",
       },
       { property: "og:title", content: "Rappels — Cabinet" },
-      { property: "og:description", content: "RDV à confirmer, vaccins à rappeler, suivis en retard, dossiers CNAM." },
+      { property: "og:description", content: "RDV à confirmer, absences, suivis en retard, ordonnances à renouveler." },
     ],
   }),
   component: RemindersPage,
@@ -108,21 +108,6 @@ function RemindersPage() {
     [data.appointments, patientName],
   );
 
-  const vaccines = useMemo<Item[]>(
-    () =>
-      data.vaccinations
-        .filter((v) => v.nextDue && daysAgo(v.nextDue) >= -45)
-        .sort((a, b) => (a.nextDue ?? "").localeCompare(b.nextDue ?? ""))
-        .map((v) => ({
-          id: `v-${v.id}`,
-          patientId: v.patientId,
-          title: patientName(v.patientId),
-          detail: `${v.vaccine} — rappel prévu le ${fmtDate(v.nextDue!, "dd/MM/yyyy")}`,
-          when: daysAgo(v.nextDue!) > 0 ? "en retard" : "à venir",
-        })),
-    [data.vaccinations, patientName],
-  );
-
   const followUps = useMemo<Item[]>(() => {
     return data.patients
       .filter((p) => p.chronic.length > 0)
@@ -167,22 +152,7 @@ function RemindersPage() {
       }));
   }, [data.patients, data.prescriptions]);
 
-  const cnam = useMemo<Item[]>(
-    () =>
-      data.payments
-        .filter((pmt) => pmt.method === "cnam_pending" && daysAgo(pmt.date) >= 30)
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map((pmt) => ({
-          id: `p-${pmt.id}`,
-          patientId: pmt.patientId,
-          title: patientName(pmt.patientId),
-          detail: `${pmt.amount} DT en attente depuis le ${fmtDate(pmt.date, "dd/MM/yyyy")} (${daysAgo(pmt.date)} j)`,
-        })),
-    [data.payments, patientName],
-  );
-
-  const total =
-    confirmAppts.length + noShows.length + vaccines.length + followUps.length + renewals.length + cnam.length;
+  const total = confirmAppts.length + noShows.length + followUps.length + renewals.length;
 
   const row = (it: Item, action?: React.ReactNode) =>
     done.has(it.id) ? null : (
@@ -253,21 +223,6 @@ function RemindersPage() {
             render={(it) => row(it)}
           />
           <Section
-            icon={<Syringe className="h-4 w-4 text-teal" />}
-            tone="bg-cyan"
-            title="Vaccins à rappeler"
-            items={vaccines}
-            empty="Aucun rappel vaccinal à programmer."
-            render={(it) =>
-              row(
-                it,
-                <Link to="/vaccinations">
-                  <GhostButton className="!px-2 !py-1 text-xs">Registre</GhostButton>
-                </Link>,
-              )
-            }
-          />
-          <Section
             icon={<Bell className="h-4 w-4 text-warning" />}
             tone="bg-warning-soft"
             title="Suivis chroniques en retard (> 90 j)"
@@ -276,12 +231,9 @@ function RemindersPage() {
             render={(it) =>
               row(
                 it,
-                <button
-                  onClick={() => navigate({ to: "/suivi/$id", params: { id: it.patientId! } })}
-                  className="rounded-lg border border-border px-2 py-1 text-xs hover:bg-muted"
-                >
-                  Suivi
-                </button>,
+                <Link to="/patients" search={{ p: it.patientId }}>
+                  <GhostButton className="!px-2 !py-1 text-xs">Voir le dossier</GhostButton>
+                </Link>,
               )
             }
           />
@@ -300,21 +252,6 @@ function RemindersPage() {
                 >
                   Renouveler
                 </button>,
-              )
-            }
-          />
-          <Section
-            icon={<Wallet className="h-4 w-4 text-danger" />}
-            tone="bg-danger-soft"
-            title="Dossiers CNAM en attente (> 30 j)"
-            items={cnam}
-            empty="Aucun dossier CNAM en souffrance."
-            render={(it) =>
-              row(
-                it,
-                <Link to="/patients" search={{ p: it.patientId }}>
-                  <GhostButton className="!px-2 !py-1 text-xs">Voir le dossier</GhostButton>
-                </Link>,
               )
             }
           />

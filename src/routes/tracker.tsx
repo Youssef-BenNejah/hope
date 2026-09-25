@@ -1,13 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { differenceInMinutes } from "date-fns";
-import { ArrowRight, DoorOpen, LogIn, RotateCcw, Stethoscope, Wallet } from "lucide-react";
+import { ArrowRight, DoorOpen, LogIn, RotateCcw, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { useCabinet } from "@/lib/cabinet/store";
 import type { Appointment, TrackerStatus } from "@/lib/cabinet/types";
 import { fmtLong, today } from "@/lib/cabinet/utils";
 import { Card, EmptyState, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
-import { PaymentModal } from "@/components/cabinet/PaymentModal";
 
 export const Route = createFileRoute("/tracker")({
   head: () => ({
@@ -39,7 +38,6 @@ function TrackerPage() {
   const { data, update, patientName } = useCabinet();
   const navigate = useNavigate();
   const day = today();
-  const [payFor, setPayFor] = useState<string | null>(null);
 
   const list = useMemo(
     () => data.appointments.filter((a) => a.date === day).sort((a, b) => a.time.localeCompare(b.time)),
@@ -153,20 +151,12 @@ function TrackerPage() {
                             </button>
                           )}
                           {col.key === "in_consult" && (
-                            <>
-                              <button
-                                onClick={() => setTracker(a, "done", "consultation terminée")}
-                                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
-                              >
-                                <ArrowRight className="h-3.5 w-3.5" /> Terminer
-                              </button>
-                              <button
-                                onClick={() => setPayFor(a.id)}
-                                className="inline-flex items-center gap-1 rounded-md bg-teal px-2 py-1 text-xs font-medium text-white hover:bg-surf"
-                              >
-                                <Wallet className="h-3.5 w-3.5" /> Encaisser
-                              </button>
-                            </>
+                            <button
+                              onClick={() => setTracker(a, "done", "consultation terminée")}
+                              className="inline-flex items-center gap-1 rounded-md bg-teal px-2 py-1 text-xs font-medium text-white hover:bg-surf"
+                            >
+                              <ArrowRight className="h-3.5 w-3.5" /> Terminer
+                            </button>
                           )}
                           {col.key === "done" && (
                             <button
@@ -186,8 +176,6 @@ function TrackerPage() {
           </div>
         </>
       )}
-
-      <PaymentModal appointmentId={payFor} onClose={() => setPayFor(null)} />
     </ScreenTransition>
   );
 }

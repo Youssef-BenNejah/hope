@@ -5,6 +5,7 @@ import { useCabinet } from "@/lib/cabinet/store";
 import { ageFrom, matches } from "@/lib/cabinet/utils";
 
 const pages = [
+  { label: "Patients", to: "/patients" },
   { label: "Aujourd'hui", to: "/" },
   { label: "Rappels", to: "/rappels" },
   { label: "Agenda", to: "/agenda" },
@@ -12,8 +13,6 @@ const pages = [
   { label: "Ordonnances", to: "/ordonnances" },
   { label: "Certificats", to: "/certificats" },
   { label: "Orientations", to: "/orientations" },
-  { label: "Vaccinations", to: "/vaccinations" },
-  { label: "Documents", to: "/documents" },
   { label: "Annuaire", to: "/annuaire" },
   { label: "Personnel", to: "/personnel" },
   { label: "Paramètres", to: "/parametres" },

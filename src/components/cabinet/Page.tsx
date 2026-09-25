@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export function PageHeader({
   title,
@@ -21,28 +21,8 @@ export function PageHeader({
 }
 
 
-export function PageSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="h-9 w-56 animate-pulse rounded-lg bg-muted" />
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />
-        ))}
-      </div>
-      <div className="h-64 animate-pulse rounded-xl bg-muted" />
-    </div>
-  );
-}
-
 export function ScreenTransition({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 350);
-    return () => window.clearTimeout(t);
-  }, []);
-  if (!ready) return <PageSkeleton />;
-  return <div className="animate-in fade-in duration-300">{children}</div>;
+  return <div className="animate-in fade-in duration-150">{children}</div>;
 }
 
 export function EmptyState({

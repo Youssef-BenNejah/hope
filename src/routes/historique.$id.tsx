@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarDays, ClipboardList, FileText, Paperclip, StickyNote, Wallet } from "lucide-react";
+import { CalendarDays, ClipboardList, FileText, Paperclip, StickyNote } from "lucide-react";
 import { useCabinet } from "@/lib/cabinet/store";
-import { dt, fmtDate, statusMeta } from "@/lib/cabinet/utils";
+import { fmtDate, statusMeta } from "@/lib/cabinet/utils";
 import { Card, PageHeader, ScreenTransition } from "@/components/cabinet/Page";
 import { GhostButton } from "@/components/cabinet/Modal";
 import { DiagnosticReportView } from "@/components/cabinet/DiagnosticReportView";
@@ -13,17 +13,17 @@ export const Route = createFileRoute("/historique/$id")({
       { title: "Historique du patient — Cabinet" },
       {
         name: "description",
-        content: "Chronologie complète du patient : consultations, notes, certificats et paiements.",
+        content: "Chronologie complète du patient : rendez-vous, consultations, notes et certificats.",
       },
       { property: "og:title", content: "Historique du patient — Cabinet" },
-      { property: "og:description", content: "Consultations, notes, certificats et paiements du patient." },
+      { property: "og:description", content: "Rendez-vous, consultations, notes et certificats du patient." },
     ],
   }),
   component: HistoryPage,
 });
 
-type Kind = "Consultations" | "Diagnostic" | "Notes" | "Certificats" | "Comptabilité";
-const kinds: Kind[] = ["Consultations", "Diagnostic", "Notes", "Certificats", "Comptabilité"];
+type Kind = "Rendez-vous" | "Consultation" | "Notes" | "Certificats";
+const kinds: Kind[] = ["Rendez-vous", "Consultation", "Notes", "Certificats"];
 
 interface Entry {
   id: string;
@@ -37,11 +37,10 @@ interface Entry {
 }
 
 const kindStyle: Record<Kind, { icon: typeof CalendarDays; cls: string }> = {
-  Consultations: { icon: CalendarDays, cls: "bg-frost text-twilight" },
-  Diagnostic: { icon: ClipboardList, cls: "bg-warning-soft text-warning" },
+  "Rendez-vous": { icon: CalendarDays, cls: "bg-frost text-twilight" },
+  Consultation: { icon: ClipboardList, cls: "bg-warning-soft text-warning" },
   Notes: { icon: StickyNote, cls: "bg-cyan text-twilight" },
   Certificats: { icon: FileText, cls: "bg-success-soft text-success" },
-  Comptabilité: { icon: Wallet, cls: "bg-danger-soft text-danger" },
 };
 
 function HistoryPage() {
@@ -57,7 +56,7 @@ function HistoryPage() {
     for (const a of data.appointments.filter((x) => x.patientId === patient.id)) {
       out.push({
         id: a.id,
-        kind: "Consultations",
+        kind: "Rendez-vous",
         date: a.date,
         time: a.time,
         title: a.reason || "Consultation",
@@ -87,20 +86,11 @@ function HistoryPage() {
     for (const g of data.diagnostics.filter((x) => x.patientId === patient.id)) {
       out.push({
         id: g.id,
-        kind: "Diagnostic",
+        kind: "Consultation",
         date: g.date,
-        title: g.reason || "Entretien avec le patient",
+        title: g.reason || "Consultation avec le patient",
         ...(g.content.trim() ? { detail: g.content.trim() } : {}),
         badge: g.status === "brouillon" ? "Brouillon" : "Terminé",
-      });
-    }
-    for (const p of data.payments.filter((x) => x.patientId === patient.id)) {
-      out.push({
-        id: p.id,
-        kind: "Comptabilité",
-        date: p.date,
-        title: dt(p.amount),
-        badge: p.method === "cash" ? "Espèces" : p.method === "cnam_paid" ? "CNAM réglé" : "CNAM en attente",
       });
     }
     return out.sort((a, b) => (b.date + (b.time ?? "")).localeCompare(a.date + (a.time ?? "")));
@@ -118,15 +108,12 @@ function HistoryPage() {
   }
 
   const shown = entries.filter((e) => filters.includes(e.kind));
-  const total = data.payments
-    .filter((p) => p.patientId === patient.id)
-    .reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <ScreenTransition>
       <PageHeader
         title={`Historique — ${patient.name}`}
-        subtitle={`${patient.code} · ${entries.length} événement(s) · ${dt(total)} encaissés`}
+        subtitle={`${patient.code} · ${entries.length} événement(s)`}
         actions={
           <Link to="/patients" search={{ p: patient.id }}>
             <GhostButton>Ouvrir le dossier</GhostButton>
@@ -176,7 +163,7 @@ function HistoryPage() {
                     )}
                   </div>
                   <p className="mt-1 font-medium">{e.title}</p>
-                  {e.detail && e.kind === "Diagnostic" ? (
+                  {e.detail && e.kind === "Consultation" ? (
                     <div className="mt-1.5 rounded-lg border border-border bg-muted/30 p-3">
                       <DiagnosticReportView content={e.detail} />
                     </div>
