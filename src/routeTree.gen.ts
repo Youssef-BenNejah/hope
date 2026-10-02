@@ -11,18 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AgendaRouteImport } from './routes/agenda'
-import { Route as AnnuaireRouteImport } from './routes/annuaire'
-import { Route as CertificatsRouteImport } from './routes/certificats'
+import { Route as CabinetsRouteImport } from './routes/cabinets'
 import { Route as JournalRouteImport } from './routes/journal'
-import { Route as OrdonnancesRouteImport } from './routes/ordonnances'
-import { Route as OrientationsRouteImport } from './routes/orientations'
-import { Route as ParametresRouteImport } from './routes/parametres'
-import { Route as PatientsRouteImport } from './routes/patients'
-import { Route as PersonnelRouteImport } from './routes/personnel'
-import { Route as RappelsRouteImport } from './routes/rappels'
-import { Route as TrackerRouteImport } from './routes/tracker'
-import { Route as HistoriqueIdRouteImport } from './routes/historique.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,19 +24,9 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AgendaRoute = AgendaRouteImport.update({
-  id: '/agenda',
-  path: '/agenda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnnuaireRoute = AnnuaireRouteImport.update({
-  id: '/annuaire',
-  path: '/annuaire',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CertificatsRoute = CertificatsRouteImport.update({
-  id: '/certificats',
-  path: '/certificats',
+const CabinetsRoute = CabinetsRouteImport.update({
+  id: '/cabinets',
+  path: '/cabinets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalRoute = JournalRouteImport.update({
@@ -54,162 +34,39 @@ const JournalRoute = JournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrdonnancesRoute = OrdonnancesRouteImport.update({
-  id: '/ordonnances',
-  path: '/ordonnances',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrientationsRoute = OrientationsRouteImport.update({
-  id: '/orientations',
-  path: '/orientations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParametresRoute = ParametresRouteImport.update({
-  id: '/parametres',
-  path: '/parametres',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PatientsRoute = PatientsRouteImport.update({
-  id: '/patients',
-  path: '/patients',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PersonnelRoute = PersonnelRouteImport.update({
-  id: '/personnel',
-  path: '/personnel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RappelsRoute = RappelsRouteImport.update({
-  id: '/rappels',
-  path: '/rappels',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrackerRoute = TrackerRouteImport.update({
-  id: '/tracker',
-  path: '/tracker',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoriqueIdRoute = HistoriqueIdRouteImport.update({
-  id: '/historique/$id',
-  path: '/historique/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/agenda': typeof AgendaRoute
-  '/annuaire': typeof AnnuaireRoute
-  '/certificats': typeof CertificatsRoute
+  '/cabinets': typeof CabinetsRoute
   '/journal': typeof JournalRoute
-  '/ordonnances': typeof OrdonnancesRoute
-  '/orientations': typeof OrientationsRoute
-  '/parametres': typeof ParametresRoute
-  '/patients': typeof PatientsRoute
-  '/personnel': typeof PersonnelRoute
-  '/rappels': typeof RappelsRoute
-  '/tracker': typeof TrackerRoute
-  '/historique/$id': typeof HistoriqueIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/agenda': typeof AgendaRoute
-  '/annuaire': typeof AnnuaireRoute
-  '/certificats': typeof CertificatsRoute
+  '/cabinets': typeof CabinetsRoute
   '/journal': typeof JournalRoute
-  '/ordonnances': typeof OrdonnancesRoute
-  '/orientations': typeof OrientationsRoute
-  '/parametres': typeof ParametresRoute
-  '/patients': typeof PatientsRoute
-  '/personnel': typeof PersonnelRoute
-  '/rappels': typeof RappelsRoute
-  '/tracker': typeof TrackerRoute
-  '/historique/$id': typeof HistoriqueIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/agenda': typeof AgendaRoute
-  '/annuaire': typeof AnnuaireRoute
-  '/certificats': typeof CertificatsRoute
+  '/cabinets': typeof CabinetsRoute
   '/journal': typeof JournalRoute
-  '/ordonnances': typeof OrdonnancesRoute
-  '/orientations': typeof OrientationsRoute
-  '/parametres': typeof ParametresRoute
-  '/patients': typeof PatientsRoute
-  '/personnel': typeof PersonnelRoute
-  '/rappels': typeof RappelsRoute
-  '/tracker': typeof TrackerRoute
-  '/historique/$id': typeof HistoriqueIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/admin'
-    | '/agenda'
-    | '/annuaire'
-    | '/certificats'
-    | '/journal'
-    | '/ordonnances'
-    | '/orientations'
-    | '/parametres'
-    | '/patients'
-    | '/personnel'
-    | '/rappels'
-    | '/tracker'
-    | '/historique/$id'
+  fullPaths: '/' | '/admin' | '/cabinets' | '/journal'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/admin'
-    | '/agenda'
-    | '/annuaire'
-    | '/certificats'
-    | '/journal'
-    | '/ordonnances'
-    | '/orientations'
-    | '/parametres'
-    | '/patients'
-    | '/personnel'
-    | '/rappels'
-    | '/tracker'
-    | '/historique/$id'
-  id:
-    | '__root__'
-    | '/'
-    | '/admin'
-    | '/agenda'
-    | '/annuaire'
-    | '/certificats'
-    | '/journal'
-    | '/ordonnances'
-    | '/orientations'
-    | '/parametres'
-    | '/patients'
-    | '/personnel'
-    | '/rappels'
-    | '/tracker'
-    | '/historique/$id'
+  to: '/' | '/admin' | '/cabinets' | '/journal'
+  id: '__root__' | '/' | '/admin' | '/cabinets' | '/journal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  AgendaRoute: typeof AgendaRoute
-  AnnuaireRoute: typeof AnnuaireRoute
-  CertificatsRoute: typeof CertificatsRoute
+  CabinetsRoute: typeof CabinetsRoute
   JournalRoute: typeof JournalRoute
-  OrdonnancesRoute: typeof OrdonnancesRoute
-  OrientationsRoute: typeof OrientationsRoute
-  ParametresRoute: typeof ParametresRoute
-  PatientsRoute: typeof PatientsRoute
-  PersonnelRoute: typeof PersonnelRoute
-  RappelsRoute: typeof RappelsRoute
-  TrackerRoute: typeof TrackerRoute
-  HistoriqueIdRoute: typeof HistoriqueIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -228,25 +85,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/agenda': {
-      id: '/agenda'
-      path: '/agenda'
-      fullPath: '/agenda'
-      preLoaderRoute: typeof AgendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/annuaire': {
-      id: '/annuaire'
-      path: '/annuaire'
-      fullPath: '/annuaire'
-      preLoaderRoute: typeof AnnuaireRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/certificats': {
-      id: '/certificats'
-      path: '/certificats'
-      fullPath: '/certificats'
-      preLoaderRoute: typeof CertificatsRouteImport
+    '/cabinets': {
+      id: '/cabinets'
+      path: '/cabinets'
+      fullPath: '/cabinets'
+      preLoaderRoute: typeof CabinetsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal': {
@@ -256,80 +99,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JournalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ordonnances': {
-      id: '/ordonnances'
-      path: '/ordonnances'
-      fullPath: '/ordonnances'
-      preLoaderRoute: typeof OrdonnancesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/orientations': {
-      id: '/orientations'
-      path: '/orientations'
-      fullPath: '/orientations'
-      preLoaderRoute: typeof OrientationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/parametres': {
-      id: '/parametres'
-      path: '/parametres'
-      fullPath: '/parametres'
-      preLoaderRoute: typeof ParametresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/patients': {
-      id: '/patients'
-      path: '/patients'
-      fullPath: '/patients'
-      preLoaderRoute: typeof PatientsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/personnel': {
-      id: '/personnel'
-      path: '/personnel'
-      fullPath: '/personnel'
-      preLoaderRoute: typeof PersonnelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rappels': {
-      id: '/rappels'
-      path: '/rappels'
-      fullPath: '/rappels'
-      preLoaderRoute: typeof RappelsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tracker': {
-      id: '/tracker'
-      path: '/tracker'
-      fullPath: '/tracker'
-      preLoaderRoute: typeof TrackerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/historique/$id': {
-      id: '/historique/$id'
-      path: '/historique/$id'
-      fullPath: '/historique/$id'
-      preLoaderRoute: typeof HistoriqueIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  AgendaRoute: AgendaRoute,
-  AnnuaireRoute: AnnuaireRoute,
-  CertificatsRoute: CertificatsRoute,
+  CabinetsRoute: CabinetsRoute,
   JournalRoute: JournalRoute,
-  OrdonnancesRoute: OrdonnancesRoute,
-  OrientationsRoute: OrientationsRoute,
-  ParametresRoute: ParametresRoute,
-  PatientsRoute: PatientsRoute,
-  PersonnelRoute: PersonnelRoute,
-  RappelsRoute: RappelsRoute,
-  TrackerRoute: TrackerRoute,
-  HistoriqueIdRoute: HistoriqueIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hope / Cabinet — API Reference</title>
+<meta name="description" content="Interactive Swagger-like reference for every Hope / Cabinet API endpoint, generated from API-ENDPOINTS.md." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ---------- Design tokens, lifted 1:1 from src/styles.css ---------- */
+  :root {
+    --radius: 0.75rem;
+    --background: #f7fafc;
+    --foreground: #0b1220;
+    --card: #ffffff;
+    --primary: #0077b6;
+    --primary-foreground: #ffffff;
+    --secondary: #caf0f8;
+    --secondary-foreground: #03045e;
+    --muted: #f1f5f9;
+    --muted-foreground: #5b6472;
+    --accent: #caf0f8;
+    --accent-foreground: #03045e;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --placeholder: #8b94a3;
+
+    --success: #1b9c6e;
+    --success-soft: #e4f7ee;
+    --warning: #c88a1a;
+    --warning-soft: #fbf0da;
+    --danger: #c4432e;
+    --danger-soft: #fbe7e2;
+
+    --twilight: #03045e;
+    --teal: #0077b6;
+    --surf: #00b4d8;
+    --frost: #90e0ef;
+    --cyan: #caf0f8;
+
+    --sidebar: #03045e;
+    --sidebar-foreground: #eaf2fa;
+    --sidebar-border: #1b2547;
+
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  :root[data-theme="dark"] {
+    --background: #060a1f;
+    --foreground: #eaf2fa;
+    --card: #0c1230;
+    --primary: #00b4d8;
+    --primary-foreground: #03045e;
+    --secondary: #12193c;
+    --secondary-foreground: #caf0f8;
+    --muted: #12193c;
+    --muted-foreground: #9fb3c8;
+    --accent: #12193c;
+    --accent-foreground: #90e0ef;
+    --border: #1b2547;
+    --border-strong: #2a3765;
+    --placeholder: #6c7c96;
+
+    --success: #35c692;
+    --success-soft: #102f27;
+    --warning: #e0a53a;
+    --warning-soft: #33270f;
+    --danger: #e2705a;
+    --danger-soft: #351a15;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --background: #060a1f;
+      --foreground: #eaf2fa;
+      --card: #0c1230;
+      --primary: #00b4d8;
+      --primary-foreground: #03045e;
+      --secondary: #12193c;
+      --secondary-foreground: #caf0f8;
+      --muted: #12193c;
+      --muted-foreground: #9fb3c8;
+      --accent: #12193c;
+      --accent-foreground: #90e0ef;
+      --border: #1b2547;
+      --border-strong: #2a3765;
+      --placeholder: #6c7c96;
+
+      --success: #35c692;
+      --success-soft: #102f27;
+      --warning: #e0a53a;
+      --warning-soft: #33270f;
+      --danger: #e2705a;
+      --danger-soft: #351a15;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  code, .mono, .path, pre { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  a { color: var(--teal); }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    background: var(--sidebar);
+    color: var(--sidebar-foreground);
+    border-bottom: 1px solid var(--sidebar-border);
+  }
+  .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.01em; }
+  .topbar .brand .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--surf); box-shadow: 0 0 0 4px rgba(0,180,216,0.25); }
+  .topbar .brand span.sub { font-weight: 500; color: var(--frost); font-size: 12px; margin-left: 4px; }
+  .topbar .spacer { flex: 1; }
+  .topbar .stat {
+    font-size: 12px; color: var(--frost); background: rgba(255,255,255,0.06);
+    border: 1px solid var(--sidebar-border); padding: 4px 10px; border-radius: 999px;
+  }
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.08); border: 1px solid var(--sidebar-border);
+    color: var(--sidebar-foreground); border-radius: 999px; padding: 6px 12px;
+    font-size: 12px; cursor: pointer; font-family: var(--font-sans); font-weight: 600;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.14); }
+
+  /* ---------- Layout ---------- */
+  .shell { display: flex; min-height: calc(100vh - 53px); }
+  .sidenav {
+    width: 260px; flex-shrink: 0;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 16px 10px 40px;
+    position: sticky; top: 53px; height: calc(100vh - 53px); overflow-y: auto;
+  }
+  .sidenav .search-wrap { padding: 6px 8px 14px; }
+  .sidenav input[type="search"] {
+    width: 100%; padding: 9px 12px; border-radius: var(--radius);
+    border: 1px solid var(--border-strong); background: var(--muted); color: var(--foreground);
+    font-family: var(--font-sans); font-size: 13px; outline: none;
+  }
+  .sidenav input[type="search"]:focus { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 20%, transparent); }
+
+  .method-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px 14px; }
+  .mchip {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em; padding: 4px 9px;
+    border-radius: 999px; border: 1px solid var(--border-strong); cursor: pointer;
+    background: var(--muted); color: var(--muted-foreground); user-select: none;
+  }
+  .mchip[data-active="true"].m-get { background: var(--secondary); color: var(--secondary-foreground); border-color: var(--teal); }
+  .mchip[data-active="true"].m-post { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+  .mchip[data-active="true"].m-patch { background: var(--warning-soft); color: var(--warning); border-color: var(--warning); }
+  .mchip[data-active="true"].m-delete { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+
+  .navlist { list-style: none; margin: 0; padding: 0; }
+  .navgroup { margin-bottom: 2px; }
+  .navgroup > a {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border-radius: var(--radius); text-decoration: none;
+    color: var(--foreground); font-size: 13px; font-weight: 600;
+  }
+  .navgroup > a:hover { background: var(--muted); }
+  .navgroup .count {
+    font-size: 11px; font-weight: 600; color: var(--muted-foreground);
+    background: var(--muted); border-radius: 999px; padding: 1px 7px;
+  }
+
+  .main { flex: 1; min-width: 0; padding: 28px 32px 80px; max-width: 980px; }
+
+  .hero {
+    background: linear-gradient(135deg, var(--twilight), var(--teal) 130%);
+    color: #eaf2fa; border-radius: 20px; padding: 28px 30px; margin-bottom: 28px;
+    box-shadow: 0 12px 30px -14px rgba(3,4,94,0.5);
+  }
+  .hero h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: -0.01em; }
+  .hero p { margin: 0; color: var(--frost); font-size: 14px; max-width: 640px; line-height: 1.5; }
+  .hero .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .hero .badge {
+    font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .scope-note {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--warning-soft); border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+    color: var(--foreground); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 28px; font-size: 13px; line-height: 1.5;
+  }
+  .scope-note b { color: var(--warning); }
+
+  h2.section-title {
+    font-size: 19px; margin: 40px 0 4px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px; scroll-margin-top: 68px;
+  }
+  h2.section-title .n { color: var(--muted-foreground); font-weight: 600; font-size: 13px; }
+  p.section-desc { margin: 0 0 16px; color: var(--muted-foreground); font-size: 13.5px; max-width: 720px; line-height: 1.5; }
+
+  /* ---------- Endpoint card ---------- */
+  .endpoint {
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--card);
+    margin-bottom: 10px; overflow: hidden; scroll-margin-top: 68px;
+  }
+  .endpoint[data-planned="true"] { border-style: dashed; }
+  .endpoint-head {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer;
+    user-select: none;
+  }
+  .endpoint-head:hover { background: var(--muted); }
+  .method-badge {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+    padding: 4px 9px; border-radius: 6px; min-width: 56px; text-align: center; flex-shrink: 0;
+  }
+  .method-badge.get { background: var(--secondary); color: var(--secondary-foreground); }
+  .method-badge.post { background: var(--success-soft); color: var(--success); }
+  .method-badge.patch { background: var(--warning-soft); color: var(--warning); }
+  .method-badge.delete { background: var(--danger-soft); color: var(--danger); }
+
+  .endpoint-path { font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; color: var(--foreground); flex-shrink: 0; }
+  .endpoint-summary { color: var(--muted-foreground); font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag-chip {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 3px 7px; border-radius: 6px; flex-shrink: 0;
+  }
+  .tag-audit { background: var(--danger-soft); color: var(--danger); }
+  .tag-planned { background: var(--muted); color: var(--muted-foreground); border: 1px solid var(--border-strong); }
+  .tag-auth { background: var(--accent); color: var(--accent-foreground); }
+  .chev { flex-shrink: 0; color: var(--muted-foreground); transition: transform 0.15s ease; }
+  .endpoint[data-open="true"] .chev { transform: rotate(90deg); }
+
+  .endpoint-body { display: none; border-top: 1px solid var(--border); padding: 16px 18px 18px; background: color-mix(in srgb, var(--muted) 45%, var(--card)); }
+  .endpoint[data-open="true"] .endpoint-body { display: block; }
+
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .meta-pill {
+    font-size: 11.5px; padding: 4px 10px; border-radius: 999px; background: var(--muted);
+    color: var(--muted-foreground); border: 1px solid var(--border);
+  }
+  .meta-pill b { color: var(--foreground); font-weight: 600; }
+
+  .source-line {
+    font-size: 12px; color: var(--muted-foreground); margin-bottom: 14px; line-height: 1.5;
+  }
+  .source-line code { background: var(--muted); padding: 1px 6px; border-radius: 4px; font-size: 11.5px; }
+
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .panes { grid-template-columns: 1fr; } }
+  .pane h4 {
+    margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted-foreground); display: flex; align-items: center; gap: 6px;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 999px; display: inline-block; }
+  .status-dot.req { background: var(--surf); }
+  .status-dot.res { background: var(--success); }
+
+  pre.jsonblock {
+    margin: 0; padding: 12px 13px; background: var(--twilight); color: #eaf2fa;
+    border-radius: 10px; font-size: 12.2px; line-height: 1.55; overflow-x: auto;
+    border: 1px solid var(--sidebar-border);
+  }
+  :root[data-theme="dark"] pre.jsonblock,
+  @media (prefers-color-scheme: dark) { }
+  pre.jsonblock .k { color: #90e0ef; }
+  pre.jsonblock .s { color: #caf0f8; }
+  pre.jsonblock .n { color: #ffd583; }
+  pre.jsonblock .b { color: #7fe6b7; }
+  pre.jsonblock .nul { color: #9fb3c8; }
+  pre.jsonblock .p { color: #6c7c96; }
+  pre.jsonblock .comment { color: #7c8bab; font-style: italic; }
+
+  .no-body { color: var(--muted-foreground); font-size: 12.5px; font-style: italic; padding: 10px 0; }
+
+  .notes-block {
+    margin-top: 14px; padding: 10px 12px; border-radius: 10px;
+    background: var(--accent); color: var(--accent-foreground); font-size: 12.5px; line-height: 1.55;
+  }
+  .notes-block b { font-weight: 700; }
+
+  .errors-line { margin-top: 12px; font-size: 12px; color: var(--muted-foreground); }
+  .errors-line .err-code {
+    font-family: var(--font-mono); font-weight: 700; color: var(--danger);
+    background: var(--danger-soft); padding: 1px 6px; border-radius: 4px; margin-right: 4px;
+  }
+
+  .empty-state { padding: 60px 0; text-align: center; color: var(--muted-foreground); font-size: 14px; }
+
+  footer.page-footer {
+    margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border);
+    color: var(--muted-foreground); font-size: 12px; line-height: 1.6;
+  }
+
+  ::selection { background: var(--frost); color: var(--twilight); }
+
+  /* small screens: hide sidenav behind toggle */
+  .nav-toggle { display: none; }
+  @media (max-width: 880px) {
+    .sidenav { position: fixed; left: -280px; top: 53px; height: calc(100vh - 53px); z-index: 40; transition: left 0.2s ease; box-shadow: 8px 0 24px -12px rgba(0,0,0,0.35); }
+    .sidenav[data-open="true"] { left: 0; }
+    .nav-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.08); border: 1px solid var(--sidebar-border);
+      color: var(--sidebar-foreground); border-radius: 999px; padding: 6px 12px;
+      font-size: 12px; cursor: pointer; font-family: var(--font-sans); font-weight: 600;
+    }
+    .main { padding: 22px 16px 60px; }
+    .panes { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="nav-toggle" id="navToggle" aria-label="Menu">☰ Menu</button>
+  <div class="brand"><span class="dot"></span> Hope <span class="sub">/ Cabinet API</span></div>
+  <div class="spacer"></div>
+  <span class="stat" id="visibleCount">— endpoints</span>
+  <button class="theme-toggle" id="themeToggle">🌓 Thème</button>
+</div>
+
+<div class="shell">
+  <nav class="sidenav" id="sidenav">
+    <div class="search-wrap">
+      <input type="search" id="searchInput" placeholder="Rechercher un endpoint, un champ…" autocomplete="off" />
+    </div>
+    <div class="method-filters" id="methodFilters">
+      <span class="mchip m-get" data-method="GET" data-active="true">GET</span>
+      <span class="mchip m-post" data-method="POST" data-active="true">POST</span>
+      <span class="mchip m-patch" data-method="PATCH" data-active="true">PATCH</span>
+      <span class="mchip m-delete" data-method="DELETE" data-active="true">DELETE</span>
+    </div>
+    <ul class="navlist" id="navList"></ul>
+  </nav>
+
+  <main class="main">
+    <div class="hero">
+      <h1>Hope / Cabinet — API Reference</h1>
+      <p>Interactive reference generated from <code>docs/API-ENDPOINTS.md</code>. The prototype has no real
+        backend today — every entry below specifies the REST endpoint that should back the equivalent
+        localStorage mutation in the running app, with the exact request/response bodies and its source
+        line in <code>src/</code>.</p>
+      <div class="badges">
+        <span class="badge">Spring Boot 3 · Java 21</span>
+        <span class="badge">JWT + rotating refresh</span>
+        <span class="badge">RFC 7807 problem+json</span>
+        <span class="badge">Role-based access control</span>
+        <span class="badge">Per-write audit events</span>
+      </div>
+    </div>
+
+    <div class="scope-note">
+      <span>⚠️</span>
+      <span><b>Scope note:</b> endpoints for <code>vaccinations</code>, <code>documents</code>,
+        <code>payments</code> and <code>analyses</code> are excluded, matching <code>DATA-MODEL.md</code>.
+        Endpoints marked <span class="tag-chip tag-planned" style="vertical-align:middle;">planned</span>
+        have no equivalent action in the running prototype yet but are required by already-scoped tickets.
+        Endpoints marked with a note about "prototype behavior" describe what the UI does today even where
+        it conflicts with the ticket file's own rejection criteria (hard delete instead of
+        deactivate/cancel) — the recommended real endpoint is named alongside each one.</span>
+    </div>
+
+    <div id="sections"></div>
+
+    <footer class="page-footer">
+      Generated from <code>docs/API-ENDPOINTS.md</code>, which was itself generated from a read-through of
+      every <code>update()</code> / <code>setSettings()</code> call site in <code>src/routes/*.tsx</code> and
+      <code>src/components/cabinet/*.tsx</code>, cross-referenced against <code>DATA-MODEL.md</code> and
+      <code>hope-tickets.json</code>. 🔴 in the source markdown = audit-logged write, rendered here as a red
+      "audit" tag.
+    </footer>
+  </main>
+</div>
+
+<script>
+/* ======================================================================
+   Data — every endpoint from docs/API-ENDPOINTS.md, structured.
+   ====================================================================== */
+const SECTIONS = [
+{
+  id: "auth", title: "1. Auth & session", desc: "Backs LockScreen.tsx (login, quick-login, show/hide password), parametres.tsx (change own password), and the session state in context.ts/store.tsx.",
+  endpoints: [
+    { method:"POST", path:"/api/auth/login", auth:"public", summary:"Log in as staff or as the separate admin account", source:"LockScreen.tsx:17-45 (attemptLogin)",
+      request:`{
+  "email": "amine.gastro@cabinet.tn",
+  "password": "Doctor@2024"
+}`,
+      response:`{
+  "accessToken": "eyJhbGciOi...",
+  "accessTokenExpiresIn": 900,
+  "user": {
+    "id": "doc-amine",
+    "name": "Dr Amine Gastro",
+    "email": "amine.gastro@cabinet.tn",
+    "role": "medecin",
+    "mustChangePassword": false
+  }
+}`,
+      errors:["401 Identifiants invalides (wrong password or unknown email — same message)","403 Compte désactivé","423 Compte verrouillé (lockout window, HOPE-AUTH-07)"],
+      notes:"Two login paths merge into one endpoint: a normal <b>Doctor</b> login, and the separate <b>admin</b> login (Settings.adminEmail/adminPassword, not a Doctor row) — server checks both and returns the resolved role. Sets the refresh-token cookie (HttpOnly, Secure, SameSite=Strict)." },
+    { method:"POST", path:"/api/auth/refresh", auth:"public (refresh cookie)", summary:"Silently refresh the access token", source:"implicit — prototype re-shows the lock screen on reload; real app must silently refresh (HOPE-AUTH-03)",
+      request:"— (reads the HttpOnly refresh cookie, no body)",
+      response:`{
+  "accessToken": "eyJhbGciOi...",
+  "accessTokenExpiresIn": 900,
+  "user": { "...": "same shape as login" }
+}`,
+      errors:["401 Refresh token invalide, expiré ou déjà utilisé (reuse revokes the whole token family)"],
+      notes:"Rotates the refresh cookie on every call." },
+    { method:"POST", path:"/api/auth/logout", auth:"session", summary:"End the session (real sign-out, distinct from the client-only lock)", source:"Sidebar.tsx “Verrouiller” / lock() in context.ts:20",
+      request:"{ }", response:"204 No Content",
+      notes:"lock() in the prototype is purely client-side state — there's no server session to end. This endpoint is the real “sign out”, e.g. reachable from the sidebar." },
+    { method:"POST", path:"/api/auth/unlock", auth:"session (still-valid access token)", summary:"Unlock the lock-screen overlay without ending the session", source:"LockScreen.tsx reused as overlay; unlock() in context.ts:21 — backs HOPE-AUTH-04",
+      request:`{ "password": "Doctor@2024" }`,
+      response:"204 No Content",
+      errors:["401 Mot de passe incorrect — does NOT end the session, just keeps the overlay up"],
+      notes:"Session continues; nothing new is issued on success." },
+    { method:"GET", path:"/api/auth/me", auth:"session", summary:"Get the current logged-in user", source:"context.ts currentUser",
+      response:`{
+  "id": "doc-amine",
+  "name": "Dr Amine Gastro",
+  "specialty": "Gastro-entérologie",
+  "email": "amine.gastro@cabinet.tn",
+  "role": "medecin",
+  "active": true,
+  "customSymptomGroups": [
+    { "id": "grp-1", "title": "Post-opératoire", "items": ["Douleur de paroi"], "extendsGroupId": null }
+  ]
+}` },
+    { method:"POST", path:"/api/auth/password/change", audit:true, auth:"session", summary:"Change your own password", source:"parametres.tsx:582-622 (own-password change form)",
+      request:`{ "currentPassword": "old", "newPassword": "NewPass1234" }`,
+      response:"204 No Content",
+      errors:["400 Politique de mot de passe non respectée (HOPE-AUTH-05: ≥10 car., maj., min., chiffre)","401 Mot de passe actuel incorrect"],
+      notes:"Audit: <i>“Mot de passe modifié”</i>." },
+    { method:"POST", path:"/api/auth/password/forgot", planned:true, auth:"public", summary:"Request a password reset link by email", source:"planned — HOPE-AUTH-09, not in prototype",
+      request:`{ "email": "amine.gastro@cabinet.tn" }`,
+      response:"202 Accepted (always — never reveals whether the email exists)",
+      notes:"Sends a single-use, 30-minute reset link by email." },
+    { method:"POST", path:"/api/auth/password/reset", planned:true, auth:"public (bears reset token)", summary:"Set a new password from a reset link", source:"planned — HOPE-AUTH-09",
+      request:`{ "token": "...", "newPassword": "NewPass1234" }`,
+      response:"204 No Content",
+      errors:["410 Lien expiré ou déjà utilisé"] },
+  ]
+},
+{
+  id: "staff", title: "2. Staff / accounts (Doctor)", desc: "Backs routes/admin.tsx (all staff, both roles) and routes/personnel.tsx (secretary accounts only). Role & creation model: admin creates EITHER role via /admin's role selector; medecin creates ONLY secretaire accounts via /personnel (no UI path for a doctor to create another doctor); secretaire creates nobody and is refused /personnel outright. ⚠️ /admin has no server-side role guard of its own in the prototype — see the note on POST /api/staff below. Backing schema (DATA-MODEL.md §8): the wide Doctor row splits into app_user (base identity) + a SEPARATE doctor_profile table (medecin-only: licenseNumber) + a SEPARATE staff_profile table (secretaire-only: the HR fields, e.g. cin/rib/bank/hiredAt) — every endpoint below still returns the flat DTO shown, the split only affects server-side storage/validation.",
+  endpoints: [
+    { method:"GET", path:"/api/staff", auth:"admin, medecin", summary:"List staff (filter by role/active/search)", source:"admin.tsx list, personnel.tsx:59 filter",
+      request:"Query: ?role=medecin|secretaire&active=true|false&q=search",
+      response:`{
+  "content": [
+    {
+      "id": "doc-amine", "name": "Dr Amine Gastro", "specialty": "Gastro-entérologie",
+      "email": "amine.gastro@cabinet.tn", "phone": "+216 20 000 000",
+      "licenseNumber": "TN-1234", "active": true, "role": "medecin",
+      "createdAt": "2024-01-01T00:00:00Z", "lastPasswordResetAt": null,
+      "photo": null, "birthDate": null, "cin": null, "address": null,
+      "hiredAt": null, "contractType": null, "bank": null, "rib": null,
+      "emergencyContact": null, "notes": null, "version": 1
+    }
+  ],
+  "page": 0, "size": 20, "totalElements": 3, "totalPages": 1
+}`,
+      notes:"Never includes <code>password</code>/<code>passwordHash</code>." },
+    { method:"GET", path:"/api/staff/{id}", auth:"admin (any target), medecin (secretaire targets only)", summary:"Get one staff member", source:"personnel.tsx detail panel (secretary records only)",
+      response:"Single staff object — same shape as the list item above." },
+    { method:"POST", path:"/api/staff", audit:true, auth:"admin (role: medecin or secretaire), medecin (role must be secretaire — server must reject a medecin creating another medecin)", summary:"Create a staff account", source:"admin.tsx:143-153 (create, role selectable), personnel.tsx:181-196 (create, role hardcoded to secretaire)",
+      request:`{
+  "name": "Fatma Secrétaire",
+  "specialty": "",
+  "email": "fatma@cabinet.tn",
+  "phone": "+216 20 111 111",
+  "licenseNumber": "—",
+  "role": "secretaire",
+  "birthDate": "1990-05-01",
+  "cin": "12345678",
+  "address": "Tunis",
+  "hiredAt": "2024-01-15",
+  "contractType": "CDI",
+  "bank": "BIAT",
+  "rib": "08 000 0000000000000 00",
+  "emergencyContact": "+216 20 222 222",
+  "notes": "Temps plein"
+}`,
+      response:`{ "id": "doc-fatma", "name": "Fatma Secrétaire", "email": "fatma@cabinet.tn", "role": "secretaire", "active": true, "createdAt": "2025-01-01T00:00:00Z", "version": 1 }`,
+      errors:["409 Email déjà utilisé dans ce cabinet"],
+      notes:"No <code>password</code> field in the request — server generates one and sends an activation email. The prototype currently shows the generated password inline in a toast (admin.tsx:151) — a security issue flagged in DATA-MODEL.md §7.1; the real endpoint must not return it. ⚠️ /admin has no role guard of its own in the prototype — isAdmin only shows/hides the Sidebar link and force-redirects an admin session back to /admin; it never blocks a medecin session from opening /admin directly. The real @PreAuthorize must enforce role:\"medecin\" in the body → admin-only, not rely on the route. Audit: <i>“Compte créé — {name}”</i>." },
+    { method:"PATCH", path:"/api/staff/{id}", audit:true, auth:"admin (any target), medecin (secretaire targets only)", summary:"Edit a staff account", source:"admin.tsx:138-142 (edit, any role), personnel.tsx:157-180 (edit, secretary records only — list pre-filtered to role===secretaire)",
+      request:`{
+  "phone": "+216 20 999 999",
+  "address": "Sousse",
+  "version": 3
+}`,
+      response:"Updated staff object (same shape as GET).",
+      errors:["409 Conflit de version (édition concurrente)"],
+      notes:"Audit: <i>“Compte modifié — {name}”</i>." },
+    { method:"PATCH", path:"/api/staff/{id}/activation", audit:true, auth:"admin (any target), medecin (secretaire targets only)", summary:"Activate or deactivate an account", source:"admin.tsx:158-164 (toggleActive, any role), personnel.tsx:196-206 (toggleActive, secretary records only)",
+      request:`{ "active": false }`,
+      response:`{ "id": "doc-fatma", "active": false }`,
+      notes:"Audit: <i>“Compte {name} désactivé”</i> / <i>“réactivé”</i>." },
+    { method:"POST", path:"/api/staff/{id}/password-reset", audit:true, auth:"admin (any target), medecin (secretaire targets only)", summary:"Reset a staff member's password", source:"admin.tsx:166-185 (confirmReset, any role), personnel.tsx:207-223 (confirmReset, secretary records only)",
+      request:"{ } — server generates the password (prototype instead lets the admin type it and shows it in a toast; real endpoint should generate + email only, never return it)",
+      response:"204 No Content",
+      notes:"Side effect in the prototype: if this account's name equals Settings.doctorName, Settings.password is updated too (admin.tsx:178-180) — a consequence of the “three credential pairs” design smell (DATA-MODEL.md §3.19) the real schema should eliminate. Audit: <i>“Mot de passe réinitialisé — {name}”</i>." },
+    { method:"POST", path:"/api/staff/{id}/send-credentials", auth:"admin (any target), medecin (secretaire targets only)", summary:"Email new credentials to a staff member", source:"SendCredentialsModal.tsx + credentials.ts:17 (buildCredentialsEmail) — currently simulated, nothing is actually sent",
+      request:"{ }",
+      response:"202 Accepted",
+      notes:"The real implementation replaces this whole pattern with an activation-link flow (HOPE-NOT-01 / HOPE-USR-01) — passwords should never traverse the network at all." },
+    { method:"DELETE", path:"/api/staff/{id}", audit:true, auth:"admin (any target), medecin (secretaire targets only)", summary:"Delete a staff account (prototype behavior — hard delete)", source:"admin.tsx:483 (any role), personnel.tsx:651 (secretary records only)",
+      response:"204 No Content",
+      notes:"⚠️ Corrected: an earlier pass of this document listed auth as admin-only — personnel.tsx gives medecin the same hard-delete power over secretary accounts. Prototype hard-deletes the row. Real API should reject this and require <code>PATCH .../activation</code> instead (HOPE-USR-01: “Delete = deactivate, history stays linked”). If ever allowed, audit: <i>“Compte supprimé — {name}”</i>." },
+    { method:"POST", path:"/api/staff/me/symptom-groups", audit:true, auth:"medecin", summary:"Add a custom symptom group to the structured interview", source:"parametres.tsx:151-156",
+      request:`{ "title": "Post-opératoire", "items": ["Douleur de paroi", "Écoulement"], "extendsGroupId": null }`,
+      response:"201 Created — the new CustomSymptomGroup object",
+      notes:"Audit: <i>“Groupe de symptômes ajouté — {title}”</i>." },
+    { method:"DELETE", path:"/api/staff/me/symptom-groups/{groupId}", audit:true, auth:"medecin", summary:"Remove a custom symptom group", source:"parametres.tsx:163-169",
+      response:"204 No Content",
+      notes:"Audit: <i>“Groupe de symptômes supprimé — {title}”</i>." },
+  ]
+},
+{
+  id: "patients", title: "3. Patients", desc: "Backs routes/patients.tsx, PatientDrawer.tsx, PatientPicker.tsx, GlobalSearch.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/patients", auth:"session (role-scoped DTO)", summary:"List / search patients", source:"patients.tsx:73 (filtered/sorted list), PatientPicker.tsx:32",
+      request:"Query: ?q=search&sort=name|age|lastVisit&dir=asc|desc&page=&size=&recent=true",
+      response:`{
+  "content": [
+    {
+      "id": "pat-salma", "code": "ST-482915", "name": "Salma Trabelsi",
+      "phone": "+216 22 111 222", "birthDate": "1985-03-12", "age": 40,
+      "sex": "femme", "country": "Tunisie", "coverage": "cnam", "insurer": null,
+      "cnam": "1234567", "allergies": ["Pénicilline"], "chronic": ["Metformine 1000mg"],
+      "profession": "Enseignante", "address": "Tunis", "createdAt": "2023-06-01T00:00:00Z",
+      "version": 4
+    }
+  ],
+  "page": 0, "size": 20, "totalElements": 10, "totalPages": 1
+}`,
+      notes:"<code>q</code> is accent-insensitive substring/trigram search on name, phone, patient code (server-side <code>unaccent</code>+<code>pg_trgm</code>, HOPE-PAT-01). <code>recent=true</code> = the “Récents” tab (10 most recently active). Response DTO differs by role: <b>secretaire</b> gets an administrative DTO (no clinical fields); <b>medecin</b>/<b>admin</b> get the full DTO." },
+    { method:"GET", path:"/api/patients/{id}", auth:"session (role-scoped DTO)", summary:"Get one patient record", source:"patients.tsx:67,100,139, PatientDrawer.tsx:96",
+      response:"Single patient DTO — same shape as the list item above." },
+    { method:"POST", path:"/api/patients", audit:true, auth:"medecin, secretaire", summary:"Create a patient (also used for quick-create while booking)", source:"patients.tsx:97-133 (create); AppointmentModal.tsx:53-70 (quick-create for a new patient)",
+      request:`{
+  "name": "Hédi Ben Salah",
+  "phone": "+216 98 000 000",
+  "birthDate": "1978-09-20",
+  "sex": "homme",
+  "country": "Tunisie",
+  "coverage": "cnam",
+  "cnam": "7654321",
+  "insurer": "",
+  "allergies": ["Aspirine"],
+  "profession": "Ingénieur",
+  "address": "Sfax"
+}`,
+      response:`{ "id": "pat-hedi", "code": "HB-113987", "name": "Hédi Ben Salah", "...": "rest of the fields above", "createdAt": "2025-01-01T00:00:00Z", "version": 1 }`,
+      errors:["400 Validation (format téléphone tunisien, date de naissance future, numéro CNAM requis si coverage=cnam)"],
+      notes:"<code>code</code> is <b>not</b> sent by the client — generated server-side, unique per practice, retried on collision under concurrency (HOPE-PAT-02). Audit: <i>“Patient créé — {name}”</i>." },
+    { method:"POST", path:"/api/patients/duplicates-check", auth:"medecin, secretaire", summary:"Check for a likely-duplicate patient before creating one", source:"patients.tsx:99-103 (Levenshtein ≤2 against existing names before create); also used by the quick-create-from-appointment flow",
+      request:`{ "name": "Salma Trablsi", "phone": "22111222", "birthDate": "1985-03-12" }`,
+      response:`{
+  "duplicates": [
+    { "id": "pat-salma", "name": "Salma Trabelsi", "code": "ST-482915", "matchReason": "name" }
+  ]
+}`,
+      notes:"<code>matchReason</code> ∈ name (Levenshtein ≤2 / trigram ≥0.6), phone (exact), birthDate (exact). Empty array = proceed straight to <code>POST /api/patients</code>." },
+    { method:"PATCH", path:"/api/patients/{id}", audit:true, auth:"medecin, secretaire (identity fields only)", summary:"Edit a patient's identity / allergies", source:"PatientDrawer.tsx:225-232 (save, general identity edit), PatientDrawer.tsx:803-812 (allergies-only edit)",
+      request:`{ "phone": "+216 22 999 888", "allergies": ["Pénicilline", "Iode"], "version": 4 }`,
+      response:"Updated patient DTO.",
+      errors:[`409 Conflit — { "type": "https://hope.example/problems/conflict", "title": "Version conflict", "status": 409, "detail": "Patient was modified by another user.", "current": { "...": "latest server copy" } }`],
+      notes:"Diff recorded in the audit event (HOPE-PAT-04). Audit: <i>“Patient modifié — {name}”</i>." },
+    { method:"POST", path:"/api/patients/{id}/archive", planned:true, auth:"medecin, admin", summary:"Archive (soft-delete) a patient", source:"planned — HOPE-PAT-05, not in prototype",
+      request:"{ }", response:"204 No Content",
+      notes:"Sets <code>archivedAt</code>; patient disappears from default list/search but is retrievable with <code>?archived=true</code>." },
+    { method:"POST", path:"/api/patients/{id}/import-demo-history", auth:"medecin", summary:"Prototype-only demo affordance — seeds fake history", source:"PatientDrawer.tsx:143-158 — “Import de dossier” button",
+      request:"{ }", response:"201 Created — 4 synthetic past appointments",
+      notes:"⚠️ Explicitly a prototype placeholder (per the app's own labeling) — should not exist in the real API. Listed here only for traceability, not as a real design." },
+  ]
+},
+{
+  id: "appointments", title: "4. Appointments (agenda + tracker + dashboard)", desc: "Backs routes/agenda.tsx, routes/tracker.tsx, routes/index.tsx (“Aujourd'hui” dashboard), AppointmentModal.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/appointments", auth:"session", summary:"List appointments by date range / practitioner / patient / status", source:"agenda.tsx:56,271, index.tsx:39-49, tracker.tsx (list), patients.tsx:60-65 (patient history)",
+      request:"Query: ?from=2025-01-01&to=2025-01-31&practitionerId=&patientId=&status=&date=2025-01-15",
+      response:`{
+  "content": [
+    {
+      "id": "apt-1", "patientId": "pat-salma", "date": "2025-01-15", "time": "09:00",
+      "reason": "Consultation de suivi", "status": "upcoming",
+      "category": "cat-consultation", "resourceId": "res-salle-1",
+      "checkedInAt": null, "tracker": null, "version": 1
+    }
+  ],
+  "page": 0, "size": 50, "totalElements": 12, "totalPages": 1
+}` },
+    { method:"GET", path:"/api/appointments/{id}", auth:"session", summary:"Get one appointment", source:"AppointmentModal.tsx:22 (load for edit)",
+      response:"Single appointment — same shape as above." },
+    { method:"POST", path:"/api/appointments", audit:true, auth:"medecin, secretaire", summary:"Create an appointment", source:"AppointmentModal.tsx:37-98 (create; can also inline-create the patient first)",
+      request:`{
+  "patientId": "pat-salma",
+  "date": "2025-01-20",
+  "time": "10:30",
+  "reason": "Contrôle post-traitement",
+  "category": "cat-consultation",
+  "resourceId": "res-salle-1"
+}`,
+      response:`{ "id": "apt-2", "status": "upcoming", "...": "rest of the fields above" }`,
+      errors:["409 Créneau bloqué (Block/Holiday) ou double réservation sur la même ressource"],
+      notes:"<code>status</code> defaults to <code>upcoming</code>. Audit: <i>“Rendez-vous créé — {patientName}, {date} {time}”</i>." },
+    { method:"PATCH", path:"/api/appointments/{id}", audit:true, auth:"medecin, secretaire", summary:"Edit an appointment", source:"AppointmentModal.tsx edit path (reuses the create form pre-filled)",
+      request:`{ "time": "11:00", "reason": "...", "version": 2 }`,
+      response:"Updated appointment.",
+      notes:"Audit: <i>“Rendez-vous modifié — {patientName}”</i>." },
+    { method:"POST", path:"/api/appointments/{id}/status", audit:true, auth:"medecin, secretaire", summary:"Mark an appointment done / absent", source:"index.tsx:131-134 (mark done), index.tsx:142-145 (mark absent)",
+      request:`{ "status": "done" }`,
+      response:`{ "id": "apt-1", "status": "done" }`,
+      errors:["422 Transition invalide (ex. déjà « done »)"],
+      notes:"Audit: <i>“Consultation marquée terminée — {patientName}”</i> / <i>“Patient marqué absent — {patientName}”</i>." },
+    { method:"POST", path:"/api/appointments/{id}/check-in", audit:true, auth:"secretaire, medecin", summary:"Check a patient in on arrival", source:"tracker.tsx:66-73 (checkIn)",
+      request:"{ }",
+      response:`{ "id": "apt-1", "checkedInAt": "2025-01-20T10:32:00Z", "tracker": "waiting" }`,
+      notes:"Audit: <i>“Arrivée enregistrée — {patientName}”</i>." },
+    { method:"PATCH", path:"/api/appointments/{id}/tracker", audit:true, auth:"secretaire, medecin", summary:"Move a checked-in patient between waiting-room columns", source:"tracker.tsx:52-60 (setTracker: waiting → in_consult → done)",
+      request:`{ "tracker": "in_consult" }`,
+      response:`{ "id": "apt-1", "tracker": "in_consult" }`,
+      notes:"Audit: <i>“Flux patient — {patientName} : {label}”</i> (label = column name, e.g. « En consultation »)." },
+    { method:"POST", path:"/api/appointments/{id}/tracker/reopen", audit:true, auth:"secretaire, medecin", summary:"Send a checked-in patient back to “not arrived”", source:"tracker.tsx:75-84 (reopen)",
+      request:"{ }",
+      response:`{ "id": "apt-1", "checkedInAt": null, "tracker": null }`,
+      notes:"Audit: <i>“Patient retiré du tableau — {patientName}”</i>." },
+    { method:"DELETE", path:"/api/appointments/{id}", audit:true, auth:"medecin, secretaire", summary:"Delete / cancel an appointment (prototype behavior — hard delete)", source:"index.tsx:183 (dashboard delete), AppointmentModal.tsx:99 (cancel from edit modal)",
+      response:"204 No Content",
+      notes:"⚠️ Prototype hard-deletes for both “delete” and “cancel”. Per HOPE-AGD-01's rejection criteria (“Cancelling by deleting the appointment row”), the real endpoint should be <code>POST /api/appointments/{id}/cancel</code> instead — see next entry." },
+    { method:"POST", path:"/api/appointments/{id}/cancel", audit:true, auth:"medecin, secretaire", summary:"Recommended replacement for DELETE — cancel with reason, keep the row", source:"recommended per HOPE-AGD-01 rejection criteria",
+      request:`{ "reason": "Patient a annulé par téléphone" }`,
+      response:`{ "id": "apt-1", "status": "cancelled" }`,
+      notes:"Audit: <i>“Rendez-vous annulé — {patientName} ({reason})”</i>." },
+  ]
+},
+{
+  id: "agenda-blocks", title: "5. Agenda blocks & holidays", desc: "Backs routes/agenda.tsx (blocks) and routes/parametres.tsx:540-580 (holidays).",
+  endpoints: [
+    { method:"GET", path:"/api/agenda/blocks", auth:"session", summary:"List agenda block-outs", source:"agenda.tsx:58 (data.blocks.find)",
+      request:"Query: ?from=&to=",
+      response:`{ "content": [ { "id": "blk-1", "date": "2025-01-22", "start": "12:00", "end": "14:00", "reason": "Formation" } ] }` },
+    { method:"POST", path:"/api/agenda/blocks", auth:"medecin, secretaire", summary:"Block out a time slot", source:"agenda.tsx:233",
+      request:`{ "date": "2025-01-22", "start": "12:00", "end": "14:00", "reason": "Formation" }`,
+      response:"201 Created — the new block" },
+    { method:"DELETE", path:"/api/agenda/blocks/{id}", auth:"medecin, secretaire", summary:"Remove a block-out", source:"implied by the block list UI (delete affordance next to each block)",
+      response:"204 No Content" },
+    { method:"GET", path:"/api/agenda/holidays", auth:"session", summary:"List holidays", source:"agenda.tsx:59,272, parametres.tsx holiday list",
+      response:`{ "content": [ { "id": "hol-1", "date": "2025-04-10", "label": "Aïd el-Fitr" } ] }` },
+    { method:"POST", path:"/api/agenda/holidays", auth:"admin, medecin", summary:"Add a holiday (blocks the whole day)", source:"parametres.tsx:572",
+      request:`{ "date": "2025-04-10", "label": "Aïd el-Fitr" }`,
+      response:"201 Created" },
+    { method:"DELETE", path:"/api/agenda/holidays/{id}", auth:"admin, medecin", summary:"Remove a holiday", source:"parametres.tsx:557",
+      response:"204 No Content" },
+  ]
+},
+{
+  id: "notes", title: "6. Notes / consultations", desc: "Backs PatientDrawer.tsx (Notes tab, attachments), DiagnosticModal.tsx (structured consultation fields + ICD picking), historique.$id.tsx (read-only timeline).",
+  endpoints: [
+    { method:"GET", path:"/api/patients/{patientId}/notes", auth:"medecin (secretary → 403, clinical data)", summary:"List a patient's clinical notes / consultations", source:"PatientDrawer.tsx:102, historique.$id.tsx:66, patients.tsx:66",
+      response:`{
+  "content": [
+    {
+      "id": "note-1", "patientId": "pat-salma", "date": "2025-01-10",
+      "text": "RAS, patiente rassurée.",
+      "motif": "Douleur épigastrique", "exam": "Souple, indolore", "diagnosis": "RGO",
+      "plan": "IPP 4 semaines", "icd": [ { "code": "K21.9", "label": "Reflux gastro-œsophagien sans œsophagite" } ],
+      "authorId": "doc-amine",
+      "attachments": [ { "id": "att-1", "name": "compte-rendu.pdf", "type": "application/pdf", "url": "/files/att-1" } ]
+    }
+  ]
+}`,
+      notes:"<code>attachments[].url</code> replaces the prototype's inline <code>dataUrl</code> (DATA-MODEL.md §7.5)." },
+    { method:"POST", path:"/api/patients/{patientId}/notes", audit:true, auth:"medecin", summary:"Create a note / structured consultation", source:"DiagnosticModal.tsx:53-77 (structured consultation), free-text note creation in PatientDrawer.tsx",
+      request:`{
+  "date": "2025-01-20",
+  "text": "",
+  "motif": "Douleur abdominale",
+  "exam": "Sensibilité en FID",
+  "diagnosis": "Suspicion d'appendicite",
+  "plan": "Échographie en urgence",
+  "icd": [ { "code": "K37", "label": "Appendicite, sans précision" } ]
+}`,
+      response:"201 Created — the new note",
+      notes:"Audit: <i>“Consultation enregistrée — {patientName}”</i>." },
+    { method:"PATCH", path:"/api/patients/{patientId}/notes/{noteId}", audit:true, auth:"medecin (author or admin)", summary:"Edit an existing note / consultation", source:"editing an existing note/consultation",
+      request:`{ "plan": "IPP 8 semaines", "version": 2 }`,
+      response:"Updated note.",
+      notes:"Audit: <i>“Consultation modifiée — {patientName}”</i>." },
+    { method:"POST", path:"/api/patients/{patientId}/notes/{noteId}/attachments", auth:"medecin", summary:"Upload a file attachment to a note", source:"PatientDrawer.tsx attachment upload (drag/drop or file picker, currently base64)",
+      request:"multipart/form-data, field: file",
+      response:`{ "id": "att-2", "name": "scanner.jpg", "type": "image/jpeg", "url": "/files/att-2" }` },
+    { method:"DELETE", path:"/api/patients/{patientId}/notes/{noteId}/attachments/{attachmentId}", audit:true, auth:"medecin", summary:"Remove a note attachment", source:"PatientDrawer.tsx:658-667",
+      response:"204 No Content",
+      notes:"Audit: <i>“Fichier supprimé — {fileName}”</i>." },
+  ]
+},
+{
+  id: "prescriptions", title: "7. Prescriptions", desc: "Backs routes/ordonnances.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/prescriptions", auth:"medecin", summary:"List prescriptions for a patient", source:"ordonnances.tsx list for a patient, patients.tsx patient history",
+      request:"Query: ?patientId=pat-salma",
+      response:`{
+  "content": [
+    { "id": "presc-1", "patientId": "pat-salma", "date": "2025-01-10", "text": "Oméprazole 20mg (gélule) - 1 cp x 1/j, 4 semaines - le matin à jeun", "renewedFrom": null }
+  ]
+}` },
+    { method:"POST", path:"/api/prescriptions", audit:true, auth:"medecin", summary:"Create a prescription (from favorites/protocols, or a renewal)", source:"ordonnances.tsx:81-90 (save — composes selected Favorite/Protocol lines)",
+      request:`{
+  "patientId": "pat-salma",
+  "text": "Oméprazole 20mg (gélule) - 1 cp x 1/j, 4 semaines - le matin à jeun",
+  "renewedFrom": "presc-0"
+}`,
+      response:`{
+  "id": "presc-1", "patientId": "pat-salma", "text": "...", "renewedFrom": "presc-0",
+  "warnings": { "allergy": ["Pénicilline"], "chronic": [] }
+}`,
+      notes:"Server re-runs the allergy/chronic-drug conflict check and surfaces warnings in the response. Audit: <i>“Ordonnance créée — {patientName}”</i>." },
+    { method:"GET", path:"/api/prescriptions/{id}/conflicts-preview", auth:"medecin", summary:"Live allergy / chronic-drug conflict check while typing a line", source:"prescriptions.ts:64 (lineConflicts), called live before saving",
+      request:`{ "patientId": "pat-salma", "line": "Amoxicilline 1g" }`,
+      response:`{ "allergy": ["Pénicilline"], "chronic": [] }` },
+  ]
+},
+{
+  id: "certificates", title: "8. Certificates", desc: "Backs routes/certificats.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/certificates", auth:"medecin", summary:"List certificates (monthly register, per patient)", source:"certificats.tsx:74 (monthly register), historique.$id.tsx:76, PatientDrawer.tsx:107",
+      request:"Query: ?patientId=&month=2025-01",
+      response:`{
+  "content": [
+    { "id": "cert-1", "patientId": "pat-salma", "type": "Arrêt de travail", "documentDate": "2025-01-10", "startDate": "2025-01-10", "days": 3, "endDate": "2025-01-13", "text": "...", "createdAt": "2025-01-10T09:00:00Z" }
+  ]
+}` },
+    { method:"POST", path:"/api/certificates", audit:true, auth:"medecin", summary:"Issue a certificate", source:"certificats.tsx:159-179 (create)",
+      request:`{
+  "patientId": "pat-salma",
+  "type": "Arrêt de travail",
+  "startDate": "2025-01-10",
+  "days": 3,
+  "text": "Je soussigné..."
+}`,
+      response:"201 Created — documentDate/endDate/createdAt computed server-side (endDate = startDate + days)",
+      notes:"Audit: <i>“Certificat créé — {type}, {patientName}”</i>." },
+    { method:"POST", path:"/api/certificates/{id}/duplicate", audit:true, auth:"medecin", summary:"Duplicate an existing certificate", source:"certificats.tsx:181-191 (duplicate)",
+      request:"{ }",
+      response:"201 Created — same patientId/type/text, documentDate/createdAt reset to now",
+      notes:"Audit: <i>“Certificat dupliqué — {type}, {patientName}”</i>." },
+    { method:"GET", path:"/api/certificates/{id}/pdf", planned:true, auth:"medecin", summary:"Download a server-rendered PDF", source:"planned — HOPE-CERT-03 (prototype prints via the browser instead)",
+      response:"200 OK, Content-Type: application/pdf" },
+  ]
+},
+{
+  id: "referrals", title: "9. Referrals", desc: "Backs routes/orientations.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/referrals", auth:"medecin", summary:"List referral letters", source:"orientations.tsx list",
+      request:"Query: ?patientId=",
+      response:`{
+  "content": [
+    { "id": "ref-1", "patientId": "pat-salma", "specialty": "Cardiologie", "contactId": "ctc-1", "reason": "Bilan pré-thérapeutique", "documentDate": "2025-01-15", "text": "...", "createdAt": "2025-01-15T00:00:00Z" }
+  ]
+}` },
+    { method:"POST", path:"/api/referrals", audit:true, auth:"medecin", summary:"Create a referral letter", source:"orientations.tsx:86-98 (save)",
+      request:`{ "patientId": "pat-salma", "specialty": "Cardiologie", "contactId": "ctc-1", "reason": "Bilan pré-thérapeutique", "text": "Cher confrère, ..." }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Courrier d'orientation créé — {patientName} → {specialty}”</i>." },
+    { method:"POST", path:"/api/referrals/{id}/email", planned:true, auth:"medecin", summary:"Email the referral letter (PDF) to the colleague", source:"planned — HOPE-ORI-03, not in prototype",
+      request:"{ } (uses contactId's email)",
+      response:"202 Accepted" },
+  ]
+},
+{
+  id: "contacts", title: "10. Contacts (directory)", desc: "Backs routes/annuaire.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/contacts", auth:"session", summary:"List / search the address book", source:"annuaire.tsx:94,101, orientations.tsx:60-61,260 (picking a recipient)",
+      request:"Query: ?kind=&q=",
+      response:`{
+  "content": [
+    { "id": "ctc-1", "name": "Dr Karim Cardio", "kind": "Confrère", "specialty": "Cardiologie", "phone": "+216 71 000 000", "email": "karim@cardio.tn", "address": "Tunis", "notes": null }
+  ]
+}` },
+    { method:"POST", path:"/api/contacts", audit:true, auth:"session", summary:"Add a contact", source:"annuaire.tsx:151",
+      request:`{ "name": "Dr Karim Cardio", "kind": "Confrère", "specialty": "Cardiologie", "phone": "+216 71 000 000", "email": "karim@cardio.tn", "address": "Tunis" }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Contact ajouté — {name}”</i>." },
+    { method:"PATCH", path:"/api/contacts/{id}", audit:true, auth:"session", summary:"Edit a contact", source:"annuaire.tsx edit form",
+      request:`{ "phone": "+216 71 111 222" }`,
+      response:"Updated contact.",
+      notes:"Audit: <i>“Contact modifié — {name}”</i>." },
+    { method:"DELETE", path:"/api/contacts/{id}", audit:true, auth:"session", summary:"Remove a contact", source:"annuaire.tsx:347",
+      response:"204 No Content",
+      notes:"Audit: <i>“Contact supprimé — {name}”</i>." },
+  ]
+},
+{
+  id: "diagnostics", title: "11. Diagnostics (structured interview)", desc: "Backs DiagnosticModal.tsx + GiInterviewForm.tsx, read-only in historique.$id.tsx:86.",
+  endpoints: [
+    { method:"GET", path:"/api/patients/{patientId}/diagnostics", auth:"medecin", summary:"List a patient's free-form interviews", source:"DiagnosticModal.tsx:23-24",
+      response:`{
+  "content": [
+    {
+      "id": "diag-1", "patientId": "pat-salma", "date": "2025-01-10",
+      "reason": "Douleur épigastrique", "content": "Douleur épigastrique depuis 3 jours\\n  - Post-prandiale immédiate\\n🚨 Vomissements persistants",
+      "status": "termine", "authorId": "doc-amine",
+      "createdAt": "2025-01-10T09:00:00Z", "updatedAt": "2025-01-10T09:20:00Z"
+    }
+  ]
+}` },
+    { method:"POST", path:"/api/patients/{patientId}/diagnostics", audit:true, auth:"medecin", summary:"Create an interview (draft)", source:"DiagnosticModal.tsx:72-90 (save, status “brouillon” on first save)",
+      request:`{ "date": "2025-01-20", "reason": "Douleur épigastrique", "content": "...", "status": "brouillon" }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Entretien créé — {patientName}”</i>." },
+    { method:"PATCH", path:"/api/patients/{patientId}/diagnostics/{id}", audit:true, auth:"medecin (author)", summary:"Update / finalize an interview", source:"DiagnosticModal.tsx re-save while editing / finalizing",
+      request:`{ "content": "...", "status": "termine", "version": 2 }`,
+      response:"Updated diagnostic; updatedAt bumped server-side.",
+      notes:"Audit: <i>“Entretien terminé — {patientName}”</i> when status → termine, else <i>“Entretien modifié — {patientName}”</i>." },
+  ]
+},
+{
+  id: "audit", title: "12. Audit log", desc: "Backs routes/journal.tsx. Read-only — every 🔴 write elsewhere triggers an insert here as a side effect, never a direct client call.",
+  endpoints: [
+    { method:"GET", path:"/api/audit", auth:"admin, medecin", summary:"List audit events", source:"journal.tsx:28 (data.audit.map)",
+      request:"Query: ?from=&to=&actorId=&entity=&patientId=&page=&size=",
+      response:`{
+  "content": [
+    { "id": "aud-1", "at": "2025-01-20T10:00:00Z", "actorId": "doc-amine", "actor": "Dr Amine Gastro", "action": "PATIENT_CREATED", "entity": "patient", "entityId": "pat-hedi", "patientId": "pat-hedi", "summary": "Patient créé — Hédi Ben Salah", "diff": null }
+  ],
+  "page": 0, "size": 50, "totalElements": 400, "totalPages": 8
+}`,
+      notes:"The <code>action</code>/<code>entity</code>/<code>entityId</code>/<code>diff</code> fields are additions over the prototype (which only stores <code>actor</code>+<code>summary</code> as free text) — required per DATA-MODEL.md §7.4/§8 (HOPE-AUD-01: structured, append-only, no row cap, no UPDATE/DELETE grant)." },
+  ]
+},
+{
+  id: "settings", title: "13. Settings (practice configuration)", desc: "Backs routes/parametres.tsx. Settings is a singleton; its embedded collections (favorites, protocols, categories, resources, certificate templates) get their own sub-collection endpoints since they're independently added/removed.",
+  endpoints: [
+    { method:"GET", path:"/api/settings", auth:"session (fields trimmed for secretaire)", summary:"Get practice settings", source:"parametres.tsx load, used practice-wide for document/print branding",
+      response:`{
+  "doctorName": "Dr Amine Gastro", "specialty": "Gastro-entérologie",
+  "address": "12 avenue Habib Bourguiba, Tunis", "phone": "+216 71 000 000",
+  "licenseNumber": "TN-1234", "consultDuration": 30, "lockDelay": 5,
+  "theme": "system", "adminEmail": "admin@cabinet.tn"
+}`,
+      notes:"<code>password</code>/<code>adminPassword</code> never returned." },
+    { method:"PATCH", path:"/api/settings", audit:true, auth:"admin, medecin", summary:"Update practice settings", source:"parametres.tsx:189-208 (doctorName/specialty/address/phone/licenseNumber), :428 (consultDuration), :632 (lockDelay), :672 (theme)",
+      request:`{ "consultDuration": 20, "lockDelay": 10, "theme": "dark" }`,
+      response:"Updated settings.",
+      notes:"Audit: <i>“Paramètres modifiés”</i>." },
+    { method:"GET", path:"/api/settings/favorites", auth:"medecin", summary:"List quick-add prescription favorites", source:"ordonnances.tsx quick-add list, parametres.tsx:230-270",
+      response:`{ "content": [ { "id": "fav-1", "label": "Paracétamol 1 g", "form": "comprimé", "posology": "1 cp x 3/j", "duration": "5 jours", "route": "orale", "note": "au milieu du repas", "drugClass": "Antalgique", "uses": 12 } ] }` },
+    { method:"POST", path:"/api/settings/favorites", audit:true, auth:"medecin", summary:"Add a prescription favorite", source:"parametres.tsx favorite creation form",
+      request:`{ "label": "Paracétamol 1 g", "form": "comprimé", "posology": "1 cp x 3/j", "duration": "5 jours", "route": "orale", "note": "au milieu du repas", "drugClass": "Antalgique" }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Favori ajouté — {label}”</i>." },
+    { method:"DELETE", path:"/api/settings/favorites/{id}", audit:true, auth:"medecin", summary:"Remove a favorite", source:"parametres.tsx:263",
+      response:"204 No Content",
+      notes:"Audit: <i>“Favori supprimé — {label}”</i>." },
+    { method:"POST", path:"/api/settings/favorites/{id}/use", auth:"medecin", summary:"Bump a favorite's usage counter", source:"implied by Favorite.uses (types.ts:272), incremented on insert into a prescription",
+      request:"{ }",
+      response:`{ "id": "fav-1", "uses": 12 }` },
+    { method:"GET", path:"/api/settings/protocols", auth:"medecin", summary:"List prescription protocols", source:"ordonnances.tsx, parametres.tsx:280-313",
+      response:`{ "content": [ { "id": "pro-1", "name": "Angine bactérienne (adulte)", "category": "ORL", "note": "10 jours", "lines": ["Amoxicilline 1g - 1 cp x 2/j, 10 jours"] } ] }` },
+    { method:"POST", path:"/api/settings/protocols", audit:true, auth:"medecin", summary:"Add a prescription protocol", source:"parametres.tsx protocol creation form",
+      request:`{ "name": "Angine bactérienne (adulte)", "category": "ORL", "note": "10 jours", "lines": ["Amoxicilline 1g - 1 cp x 2/j, 10 jours"] }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Protocole ajouté — {name}”</i>." },
+    { method:"DELETE", path:"/api/settings/protocols/{id}", audit:true, auth:"medecin", summary:"Remove a protocol", source:"parametres.tsx:313",
+      response:"204 No Content",
+      notes:"Audit: <i>“Protocole supprimé — {name}”</i>." },
+    { method:"GET", path:"/api/settings/appointment-categories", auth:"session", summary:"List calendar categories", source:"agenda.tsx color legend, AppointmentModal.tsx category picker, parametres.tsx:440-475",
+      response:`{ "content": [ { "id": "cat-consultation", "label": "Consultation", "color": "#0077B6" } ] }` },
+    { method:"POST", path:"/api/settings/appointment-categories", audit:true, auth:"admin, medecin", summary:"Add a calendar category", source:"parametres.tsx:453-465",
+      request:`{ "label": "Contrôle", "color": "#2E9E6B" }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Catégorie ajoutée — {label}”</i>." },
+    { method:"DELETE", path:"/api/settings/appointment-categories/{id}", audit:true, auth:"admin, medecin", summary:"Remove a calendar category", source:"parametres.tsx:475",
+      response:"204 No Content",
+      notes:"Audit: <i>“Catégorie supprimée — {label}”</i>." },
+    { method:"GET", path:"/api/settings/resources", auth:"session", summary:"List rooms / equipment / practitioners", source:"agenda.tsx/AppointmentModal.tsx resource picker, parametres.tsx:480-515",
+      response:`{ "content": [ { "id": "res-salle-1", "name": "Salle 1", "kind": "salle" } ] }` },
+    { method:"POST", path:"/api/settings/resources", audit:true, auth:"admin, medecin", summary:"Add a resource", source:"parametres.tsx:535",
+      request:`{ "name": "Échographe", "kind": "équipement" }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Ressource ajoutée — {name}”</i>." },
+    { method:"DELETE", path:"/api/settings/resources/{id}", audit:true, auth:"admin, medecin", summary:"Remove a resource", source:"parametres.tsx:515",
+      response:"204 No Content",
+      notes:"Audit: <i>“Ressource supprimée — {name}”</i>." },
+    { method:"GET", path:"/api/settings/certificate-templates", auth:"medecin", summary:"List custom certificate templates", source:"certificats.tsx model list, parametres.tsx template management",
+      response:`{ "content": [ { "type": "Certificat de sport personnalisé", "text": "..." } ] }` },
+    { method:"POST", path:"/api/settings/certificate-templates", audit:true, auth:"medecin", summary:"Add a certificate template", source:"parametres.tsx template creation form",
+      request:`{ "type": "Certificat de sport personnalisé", "text": "Je soussigné..." }`,
+      response:"201 Created",
+      notes:"Audit: <i>“Modèle de certificat ajouté — {type}”</i>." },
+    { method:"DELETE", path:"/api/settings/certificate-templates/{type}", audit:true, auth:"medecin", summary:"Remove a certificate template", source:"template removal in parametres.tsx",
+      response:"204 No Content",
+      notes:"Audit: <i>“Modèle de certificat supprimé — {type}”</i>." },
+  ]
+},
+{
+  id: "reference", title: "14. Reference data", desc: "Read-only, not tied to the practice — static/versioned content served to every tenant. Backs IcdPicker.tsx and GiInterviewForm.tsx.",
+  endpoints: [
+    { method:"GET", path:"/api/reference/icd10", auth:"session", summary:"Search the ICD-10 subset", source:"icd10.ts:62 (searchIcd)",
+      request:"Query: ?q=reflux&limit=8",
+      response:`{ "content": [ { "code": "K21.9", "label": "Reflux gastro-œsophagien sans œsophagite" } ] }` },
+    { method:"GET", path:"/api/reference/gi-interview", auth:"medecin", summary:"Get the structured GI interview grid", source:"gi-interview.ts (RED_FLAGS, SYMPTOM_GROUPS, EXTENDABLE_GROUPS, LOCALISATIONS, CARACTERISTIQUES, IRRADIATIONS, RELATIONS_REPAS, FACTEURS_AGGRAVANTS, FACTEURS_SOULAGEANTS, DEBUTS, EVOLUTIONS, BRISTOL, ATCD_*, PARENTES)",
+      response:`{
+  "redFlags": [ { "id": "Dysphagie / odynophagie", "label": "Dysphagie / odynophagie" } ],
+  "symptomGroups": [ { "id": "douleur", "title": "Douleur abdominale", "items": [ { "id": "Épigastralgie", "label": "Épigastralgie" } ] } ],
+  "extendableGroups": [ { "id": "flags", "title": "Red flags" } ],
+  "localisations": ["Épigastre", "HCD", "..."],
+  "caracteristiques": ["Brûlure", "..."],
+  "bristol": ["1", "2", "3", "4", "5", "6", "7"],
+  "atcdMed": [ { "id": "HTA", "label": "HTA" } ]
+}`,
+      notes:"Merged server-side with the current doctor's customSymptomGroups. HOPE-CONS-01/HOPE-V2-10 note this should become versioned, specialty-selectable, database-backed content rather than a single hardcoded response." },
+    { method:"GET", path:"/api/reference/drug-classes", auth:"medecin", summary:"List therapeutic drug classes", source:"types.ts:242 (DRUG_CLASSES)",
+      response:`{ "content": ["Antalgique", "AINS", "Antibiotique", "..."] }` },
+    { method:"GET", path:"/api/reference/certificate-types", auth:"medecin", summary:"List built-in certificate types", source:"types.ts:132 (BUILTIN_CERTIFICATE_TYPES)",
+      response:`{ "content": ["Arrêt de travail", "Aptitude sportive", "Certificat scolaire", "..."] }`,
+      notes:"Merges with Settings.certificateTemplates (§13) for the full picker list." },
+    { method:"GET", path:"/api/reference/contact-kinds", auth:"session", summary:"List built-in contact kinds", source:"types.ts:194 (CONTACT_KINDS)",
+      response:`{ "content": ["Confrère", "Laboratoire", "Fournisseur", "Autre"] }` },
+  ]
+},
+{
+  id: "search", title: "15. Global search", desc: "Backs GlobalSearch.tsx (the “/” omnibox). ⚠️ Corrected: the prototype searches ONLY Patient (name/phone/code) plus a static list of nav-page labels — there is no appointment or contact search anywhere in the running app today.",
+  endpoints: [
+    { method:"GET", path:"/api/search", auth:"session", summary:"Search patients + static navigation pages", source:"GlobalSearch.tsx:49-57",
+      request:"Query: ?q=salma",
+      response:`{
+  "patients": [
+    { "id": "pat-salma", "name": "Salma Trabelsi", "code": "ST-482915", "phone": "+216 22 111 222" }
+  ],
+  "pages": [
+    { "label": "Patients", "to": "/patients" }
+  ]
+}`,
+      notes:"<code>patients</code> matches accent-insensitive substring on name, phone, or code (capped at 6 client-side). <code>pages</code> matches the static nav-label list (Patients, Aujourd'hui, Rappels, Agenda, Salle d'attente, Ordonnances, Certificats, Orientations, Annuaire, Personnel, Paramètres — capped at 4). The patient list is role-scoped like every other patient DTO. HOPE-SRCH-01 is what would widen this to appointments/contacts server-side — don't add those groups without that ticket." },
+  ]
+},
+];
+
+/* ======================================================================
+   Rendering
+   ====================================================================== */
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+// tiny JSON syntax highlighter for our pretty-printed strings
+function highlightJson(str) {
+  const escaped = escapeHtml(str);
+  return escaped.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+\.?\d*([eE][+-]?\d+)?)/g,
+    (match) => {
+      if (/^"/.test(match)) {
+        return /:$/.test(match) ? `<span class="k">${match}</span>` : `<span class="s">${match}</span>`;
+      }
+      if (/true|false/.test(match)) return `<span class="b">${match}</span>`;
+      if (/null/.test(match)) return `<span class="nul">${match}</span>`;
+      return `<span class="n">${match}</span>`;
+    }
+  ).replace(/([{}\[\],])/g, '<span class="p">$1</span>');
+}
+
+function methodClass(m) { return m.toLowerCase(); }
+
+function renderEndpoint(ep, idx, sectionId) {
+  const id = `${sectionId}-${idx}`;
+  const auditTag = ep.audit ? `<span class="tag-chip tag-audit" title="Writes an AuditEntry on success">audit</span>` : "";
+  const plannedTag = ep.planned ? `<span class="tag-chip tag-planned">planned</span>` : "";
+  const authTag = ep.auth ? `<span class="tag-chip tag-auth">${escapeHtml(ep.auth)}</span>` : "";
+
+  const reqBlock = ep.request
+    ? (/^\{|^\[/.test(ep.request.trim())
+        ? `<pre class="jsonblock">${highlightJson(ep.request)}</pre>`
+        : `<div class="no-body">${escapeHtml(ep.request)}</div>`)
+    : `<div class="no-body">Aucun corps de requête</div>`;
+
+  const resBlock = ep.response
+    ? (/^\{|^\[/.test(ep.response.trim())
+        ? `<pre class="jsonblock">${highlightJson(ep.response)}</pre>`
+        : `<div class="no-body">${escapeHtml(ep.response)}</div>`)
+    : `<div class="no-body">—</div>`;
+
+  const errorsBlock = ep.errors && ep.errors.length
+    ? `<div class="errors-line">${ep.errors.map(e => {
+        const m = e.match(/^(\d{3})\s+(.*)$/);
+        return m ? `<div><span class="err-code">${m[1]}</span>${escapeHtml(m[2])}</div>` : `<div>${escapeHtml(e)}</div>`;
+      }).join("")}</div>`
+    : "";
+
+  const notesBlock = ep.notes ? `<div class="notes-block">${ep.notes}</div>` : "";
+
+  return `
+  <div class="endpoint" id="${id}" data-method="${ep.method}" data-planned="${!!ep.planned}"
+       data-search="${escapeHtml((ep.method + " " + ep.path + " " + ep.summary + " " + (ep.source||"")).toLowerCase())}">
+    <div class="endpoint-head" onclick="toggleEndpoint('${id}')">
+      <span class="method-badge ${methodClass(ep.method)}">${ep.method}</span>
+      <span class="endpoint-path">${escapeHtml(ep.path)}</span>
+      <span class="endpoint-summary">${escapeHtml(ep.summary)}</span>
+      ${plannedTag}${auditTag}
+      <span class="chev">▶</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="meta-row">
+        <span class="meta-pill"><b>Auth</b>&nbsp;${escapeHtml(ep.auth || "session")}</span>
+        ${authTag ? "" : ""}
+      </div>
+      <div class="source-line">📄 Source prototype : <code>${escapeHtml(ep.source || "—")}</code></div>
+      <div class="panes">
+        <div class="pane">
+          <h4><span class="status-dot req"></span> Requête</h4>
+          ${reqBlock}
+        </div>
+        <div class="pane">
+          <h4><span class="status-dot res"></span> Réponse</h4>
+          ${resBlock}
+        </div>
+      </div>
+      ${errorsBlock}
+      ${notesBlock}
+    </div>
+  </div>`;
+}
+
+function renderSection(section) {
+  const eps = section.endpoints.map((ep, i) => renderEndpoint(ep, i, section.id)).join("");
+  return `
+  <section class="section" id="${section.id}" data-section>
+    <h2 class="section-title" id="sec-${section.id}">${escapeHtml(section.title)} <span class="n">(${section.endpoints.length})</span></h2>
+    <p class="section-desc">${escapeHtml(section.desc)}</p>
+    ${eps}
+  </section>`;
+}
+
+function renderNav() {
+  return SECTIONS.map(s => `
+    <li class="navgroup">
+      <a href="#sec-${s.id}">${escapeHtml(s.title.replace(/^\d+\.\s*/, ""))} <span class="count">${s.endpoints.length}</span></a>
+    </li>`).join("");
+}
+
+document.getElementById("sections").innerHTML = SECTIONS.map(renderSection).join("");
+document.getElementById("navList").innerHTML = renderNav();
+
+const totalEndpoints = SECTIONS.reduce((n, s) => n + s.endpoints.length, 0);
+document.getElementById("visibleCount").textContent = totalEndpoints + " endpoints";
+
+/* ---------- interactivity ---------- */
+function toggleEndpoint(id) {
+  const el = document.getElementById(id);
+  el.setAttribute("data-open", el.getAttribute("data-open") === "true" ? "false" : "true");
+}
+
+const activeMethods = new Set(["GET", "POST", "PATCH", "DELETE"]);
+document.querySelectorAll(".mchip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const m = chip.dataset.method;
+    if (activeMethods.has(m)) { activeMethods.delete(m); chip.setAttribute("data-active", "false"); }
+    else { activeMethods.add(m); chip.setAttribute("data-active", "true"); }
+    applyFilters();
+  });
+});
+
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", applyFilters);
+
+function applyFilters() {
+  const q = searchInput.value.trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll("[data-section]").forEach(sectionEl => {
+    let sectionVisible = 0;
+    sectionEl.querySelectorAll(".endpoint").forEach(ep => {
+      const methodOk = activeMethods.has(ep.dataset.method);
+      const textOk = !q || ep.dataset.search.includes(q);
+      const show = methodOk && textOk;
+      ep.style.display = show ? "" : "none";
+      if (show) { sectionVisible++; visible++; }
+    });
+    sectionEl.style.display = sectionVisible > 0 ? "" : "none";
+  });
+  document.getElementById("visibleCount").textContent = visible + " / " + totalEndpoints + " endpoints";
+}
+
+/* ---------- theme toggle ---------- */
+const root = document.documentElement;
+function currentTheme() {
+  return root.getAttribute("data-theme") ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("hope-api-docs-theme", next); } catch (e) {}
+});
+try {
+  const saved = localStorage.getItem("hope-api-docs-theme");
+  if (saved) root.setAttribute("data-theme", saved);
+} catch (e) {}
+
+/* ---------- mobile nav toggle ---------- */
+const sidenav = document.getElementById("sidenav");
+document.getElementById("navToggle").addEventListener("click", () => {
+  sidenav.setAttribute("data-open", sidenav.getAttribute("data-open") === "true" ? "false" : "true");
+});
+sidenav.addEventListener("click", (e) => {
+  if (e.target.tagName === "A" && window.innerWidth <= 880) sidenav.setAttribute("data-open", "false");
+});
+
+/* open the endpoint whose #hash matches on load (deep link) */
+window.addEventListener("DOMContentLoaded", () => {
+  if (location.hash) {
+    const target = document.querySelector(location.hash);
+    if (target && target.classList.contains("section")) {
+      target.scrollIntoView();
+    }
+  }
+});
+</script>
+</body>
+</html>

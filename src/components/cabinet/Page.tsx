@@ -15,31 +15,8 @@ export function PageHeader({
         <h1 className="text-xl font-semibold leading-tight sm:text-[26px]">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted-foreground first-letter:uppercase">{subtitle}</p>}
       </div>
-      <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
-  );
-}
-
-
-export function ScreenTransition({ children }: { children: ReactNode }) {
-  return <div className="animate-in fade-in duration-150">{children}</div>;
-}
-
-export function EmptyState({
-  icon,
-  title,
-  action,
-}: {
-  icon: ReactNode;
-  title: string;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border-strong bg-card px-6 py-14 text-center">
-      <div className="text-frost">{icon}</div>
-      <p className="text-sm text-muted-foreground">{title}</p>
-      {action}
-    </div>
   );
 }
 

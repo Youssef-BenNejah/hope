@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hope / Cabinet — Data Model</title>
+<meta name="description" content="Interactive, searchable reference for every table, field and relationship in the Hope / Cabinet data model, generated from DATA-MODEL.md." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --radius: 0.75rem;
+    --background: #f7fafc;
+    --foreground: #0b1220;
+    --card: #ffffff;
+    --primary: #0077b6;
+    --primary-foreground: #ffffff;
+    --secondary: #caf0f8;
+    --secondary-foreground: #03045e;
+    --muted: #f1f5f9;
+    --muted-foreground: #5b6472;
+    --accent: #caf0f8;
+    --accent-foreground: #03045e;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --placeholder: #8b94a3;
+
+    --success: #1b9c6e;
+    --success-soft: #e4f7ee;
+    --warning: #c88a1a;
+    --warning-soft: #fbf0da;
+    --danger: #c4432e;
+    --danger-soft: #fbe7e2;
+
+    --twilight: #03045e;
+    --teal: #0077b6;
+    --surf: #00b4d8;
+    --frost: #90e0ef;
+    --cyan: #caf0f8;
+
+    --sidebar: #03045e;
+    --sidebar-foreground: #eaf2fa;
+    --sidebar-border: #1b2547;
+
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  :root[data-theme="dark"] {
+    --background: #060a1f; --foreground: #eaf2fa; --card: #0c1230;
+    --primary: #00b4d8; --primary-foreground: #03045e;
+    --secondary: #12193c; --secondary-foreground: #caf0f8;
+    --muted: #12193c; --muted-foreground: #9fb3c8;
+    --accent: #12193c; --accent-foreground: #90e0ef;
+    --border: #1b2547; --border-strong: #2a3765; --placeholder: #6c7c96;
+    --success: #35c692; --success-soft: #102f27;
+    --warning: #e0a53a; --warning-soft: #33270f;
+    --danger: #e2705a; --danger-soft: #351a15;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --background: #060a1f; --foreground: #eaf2fa; --card: #0c1230;
+      --primary: #00b4d8; --primary-foreground: #03045e;
+      --secondary: #12193c; --secondary-foreground: #caf0f8;
+      --muted: #12193c; --muted-foreground: #9fb3c8;
+      --accent: #12193c; --accent-foreground: #90e0ef;
+      --border: #1b2547; --border-strong: #2a3765; --placeholder: #6c7c96;
+      --success: #35c692; --success-soft: #102f27;
+      --warning: #e0a53a; --warning-soft: #33270f;
+      --danger: #e2705a; --danger-soft: #351a15;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  code, .mono, pre { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  a { color: var(--teal); }
+
+  .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--sidebar); color: var(--sidebar-foreground); border-bottom: 1px solid var(--sidebar-border); }
+  .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.01em; }
+  .topbar .brand .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--frost); box-shadow: 0 0 0 4px rgba(144,224,239,0.22); }
+  .topbar .brand span.sub { font-weight: 500; color: var(--frost); font-size: 12px; margin-left: 4px; }
+  .topbar .spacer { flex: 1; }
+  .topbar .stat { font-size: 12px; color: var(--frost); background: rgba(255,255,255,0.06); border: 1px solid var(--sidebar-border); padding: 4px 10px; border-radius: 999px; }
+  .theme-toggle, .nav-toggle { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.08); border: 1px solid var(--sidebar-border); color: var(--sidebar-foreground); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: var(--font-sans); font-weight: 600; }
+  .theme-toggle:hover, .nav-toggle:hover { background: rgba(255,255,255,0.14); }
+  .nav-toggle { display: none; }
+
+  .shell { display: flex; min-height: calc(100vh - 53px); }
+  .sidenav { width: 270px; flex-shrink: 0; background: var(--card); border-right: 1px solid var(--border); padding: 16px 10px 40px; position: sticky; top: 53px; height: calc(100vh - 53px); overflow-y: auto; }
+  .sidenav .search-wrap { padding: 6px 8px 14px; }
+  .sidenav input[type="search"] { width: 100%; padding: 9px 12px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--muted); color: var(--foreground); font-family: var(--font-sans); font-size: 13px; outline: none; }
+  .sidenav input[type="search"]:focus { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 20%, transparent); }
+
+  .kind-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px 14px; }
+  .kchip { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border-strong); cursor: pointer; background: var(--muted); color: var(--muted-foreground); user-select: none; }
+  .kchip[data-active="true"].k-table { background: var(--secondary); color: var(--secondary-foreground); border-color: var(--teal); }
+  .kchip[data-active="true"].k-embedded { background: var(--warning-soft); color: var(--warning); border-color: var(--warning); }
+  .kchip[data-active="true"].k-singleton { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+  .kchip[data-active="true"].k-unused { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+
+  .navlist { list-style: none; margin: 0; padding: 0; }
+  .navgroup > a { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: var(--radius); text-decoration: none; color: var(--foreground); font-size: 12.5px; font-weight: 600; }
+  .navgroup > a:hover { background: var(--muted); }
+  .navgroup .count { font-size: 10.5px; font-weight: 600; color: var(--muted-foreground); background: var(--muted); border-radius: 999px; padding: 1px 6px; }
+  .navsub { padding: 8px 10px 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted-foreground); }
+
+  .main { flex: 1; min-width: 0; padding: 28px 32px 80px; max-width: 1040px; }
+
+  .hero { background: linear-gradient(135deg, var(--twilight), var(--teal) 130%); color: #eaf2fa; border-radius: 20px; padding: 28px 30px; margin-bottom: 24px; box-shadow: 0 12px 30px -14px rgba(3,4,94,0.5); }
+  .hero h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: -0.01em; }
+  .hero p { margin: 0; color: var(--frost); font-size: 14px; max-width: 680px; line-height: 1.55; }
+  .hero .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .hero .badge { font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); }
+
+  .scope-note { display: flex; gap: 10px; align-items: flex-start; background: var(--warning-soft); border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent); color: var(--foreground); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 26px; font-size: 13px; line-height: 1.55; }
+  .scope-note b { color: var(--warning); }
+
+  h2.section-title { font-size: 19px; margin: 44px 0 4px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; scroll-margin-top: 68px; }
+  h2.section-title .n { color: var(--muted-foreground); font-weight: 600; font-size: 13px; }
+  p.section-desc { margin: 0 0 16px; color: var(--muted-foreground); font-size: 13.5px; max-width: 760px; line-height: 1.55; }
+
+  /* summary table (section 1) */
+  table.summary-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; font-size: 13px; }
+  table.summary-table th { text-align: left; background: var(--muted); color: var(--muted-foreground); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  table.summary-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.summary-table tr:last-child td { border-bottom: none; }
+  table.summary-table tr:hover td { background: var(--muted); }
+  table.summary-table code { background: var(--accent); color: var(--accent-foreground); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+  /* ER diagram */
+  .er-diagram { background: var(--twilight); color: #eaf2fa; border: 1px solid var(--sidebar-border); border-radius: 14px; padding: 18px 20px; overflow-x: auto; font-size: 12.6px; line-height: 1.65; white-space: pre; }
+  .er-diagram .er-entity { color: #90e0ef; font-weight: 700; }
+  .er-diagram .er-field { color: #ffd583; }
+  .er-diagram .er-comment { color: #7c8bab; font-style: italic; }
+  .er-diagram .er-arrow { color: #6c7c96; }
+
+  /* entity cards */
+  .entity { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); margin-bottom: 12px; overflow: hidden; scroll-margin-top: 68px; }
+  .entity[data-kind="embedded"] { border-style: dashed; }
+  .entity-head { display: flex; align-items: center; gap: 10px; padding: 13px 15px; cursor: pointer; user-select: none; }
+  .entity-head:hover { background: var(--muted); }
+  .entity-name { font-family: var(--font-mono); font-weight: 700; font-size: 14.5px; color: var(--foreground); flex-shrink: 0; }
+  .entity-tagline { color: var(--muted-foreground); font-size: 12.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kind-badge { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+  .kind-badge.table { background: var(--secondary); color: var(--secondary-foreground); }
+  .kind-badge.embedded { background: var(--warning-soft); color: var(--warning); }
+  .kind-badge.singleton { background: var(--success-soft); color: var(--success); }
+  .kind-badge.unused { background: var(--danger-soft); color: var(--danger); }
+  .field-count { font-size: 11px; color: var(--muted-foreground); background: var(--muted); border-radius: 999px; padding: 2px 8px; flex-shrink: 0; }
+  .chev { flex-shrink: 0; color: var(--muted-foreground); transition: transform 0.15s ease; }
+  .entity[data-open="true"] .chev { transform: rotate(90deg); }
+  .entity-body { display: none; border-top: 1px solid var(--border); padding: 14px 15px 16px; background: color-mix(in srgb, var(--muted) 45%, var(--card)); }
+  .entity[data-open="true"] .entity-body { display: block; }
+
+  .source-line { font-size: 12px; color: var(--muted-foreground); margin-bottom: 12px; }
+  .source-line code { background: var(--muted); padding: 1px 6px; border-radius: 4px; font-size: 11.5px; }
+
+  table.field-table { width: 100%; border-collapse: collapse; font-size: 12.6px; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  table.field-table th { text-align: left; background: var(--muted); color: var(--muted-foreground); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  table.field-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+  table.field-table tr:last-child td { border-bottom: none; }
+  table.field-table tr:hover td { background: var(--muted); }
+  table.field-table .fname { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+  table.field-table .ftype { font-family: var(--font-mono); color: var(--teal); white-space: nowrap; }
+  table.field-table code { background: var(--accent); color: var(--accent-foreground); padding: 0 5px; border-radius: 4px; font-size: 11.8px; }
+  .req-yes { color: var(--success); font-weight: 700; }
+  .req-no { color: var(--muted-foreground); }
+
+  .notes-block { margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: var(--accent); color: var(--accent-foreground); font-size: 12.5px; line-height: 1.6; }
+  .notes-block + .notes-block { margin-top: 8px; }
+  .notes-block b { font-weight: 700; }
+  .used-line { font-size: 12px; color: var(--muted-foreground); margin-top: 10px; line-height: 1.6; }
+  .used-line code { background: var(--muted); padding: 0 5px; border-radius: 4px; font-size: 11.5px; }
+
+  /* generic content card (sections 4-8, 10) */
+  .content-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 16px 18px; margin-bottom: 14px; font-size: 13.2px; line-height: 1.65; }
+  .content-card h4 { margin: 0 0 8px; font-size: 13px; }
+  .content-card ul, .content-card ol { margin: 6px 0; padding-left: 20px; }
+  .content-card li { margin-bottom: 6px; }
+  .content-card code { background: var(--muted); padding: 1px 6px; border-radius: 4px; font-size: 12.2px; }
+
+  pre.schemablock { margin: 0; padding: 16px 18px; background: var(--twilight); color: #eaf2fa; border-radius: 12px; font-size: 12.2px; line-height: 1.6; overflow-x: auto; border: 1px solid var(--sidebar-border); }
+  pre.schemablock .tbl { color: #90e0ef; font-weight: 700; }
+  pre.schemablock .col { color: #ffd583; }
+  pre.schemablock .kw { color: #7fe6b7; }
+  pre.schemablock .cm { color: #7c8bab; font-style: italic; }
+
+  /* flat field index */
+  .flat-index { columns: 2; column-gap: 24px; font-family: var(--font-mono); font-size: 12px; line-height: 1.9; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
+  @media (max-width: 700px) { .flat-index { columns: 1; } }
+  .flat-index .frow { break-inside: avoid; white-space: nowrap; }
+  .flat-index .frow.hidden { display: none; }
+  .flat-index .ftbl { color: var(--teal); font-weight: 600; }
+  .flat-index .ffield { color: var(--foreground); }
+  .flat-index .ftype2 { color: var(--muted-foreground); }
+
+  table.filemap-table { width: 100%; border-collapse: collapse; font-size: 12.8px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table.filemap-table th { text-align: left; background: var(--muted); color: var(--muted-foreground); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  table.filemap-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); line-height: 1.5; }
+  table.filemap-table tr:last-child td { border-bottom: none; }
+  table.filemap-table tr:hover td { background: var(--muted); }
+  table.filemap-table code { background: var(--accent); color: var(--accent-foreground); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+  .empty-state { padding: 60px 0; text-align: center; color: var(--muted-foreground); font-size: 14px; }
+  footer.page-footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 12px; line-height: 1.6; }
+  ::selection { background: var(--frost); color: var(--twilight); }
+
+  @media (max-width: 880px) {
+    .sidenav { position: fixed; left: -290px; top: 53px; height: calc(100vh - 53px); z-index: 40; transition: left 0.2s ease; box-shadow: 8px 0 24px -12px rgba(0,0,0,0.35); }
+    .sidenav[data-open="true"] { left: 0; }
+    .nav-toggle { display: inline-flex; }
+    .main { padding: 22px 16px 60px; }
+    .flat-index { columns: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="nav-toggle" id="navToggle" aria-label="Menu">☰ Menu</button>
+  <div class="brand"><span class="dot"></span> Hope <span class="sub">/ Data Model</span></div>
+  <div class="spacer"></div>
+  <span class="stat" id="visibleCount">— entities</span>
+  <button class="theme-toggle" id="themeToggle">🌓 Thème</button>
+</div>
+
+<div class="shell">
+  <nav class="sidenav" id="sidenav">
+    <div class="search-wrap">
+      <input type="search" id="searchInput" placeholder="Rechercher une table, un champ…" autocomplete="off" />
+    </div>
+    <div class="kind-filters" id="kindFilters">
+      <span class="kchip k-table" data-kind="table" data-active="true">Tables</span>
+      <span class="kchip k-embedded" data-kind="embedded" data-active="true">Embedded</span>
+      <span class="kchip k-singleton" data-kind="singleton" data-active="true">Singleton</span>
+      <span class="kchip k-unused" data-kind="unused" data-active="true">Unused</span>
+    </div>
+    <div class="navsub">Document</div>
+    <ul class="navlist">
+      <li class="navgroup"><a href="#sec-overview">Vue d'ensemble</a></li>
+      <li class="navgroup"><a href="#sec-erd">Diagramme ER</a></li>
+      <li class="navgroup"><a href="#sec-entities">Tables <span class="count" id="entityCount">21</span></a></li>
+      <li class="navgroup"><a href="#sec-session">État de session</a></li>
+      <li class="navgroup"><a href="#sec-reference">Données de référence</a></li>
+      <li class="navgroup"><a href="#sec-logic">Logique dérivée</a></li>
+      <li class="navgroup"><a href="#sec-security">Sécurité</a></li>
+      <li class="navgroup"><a href="#sec-schema">Schéma SQL</a></li>
+      <li class="navgroup"><a href="#sec-index">Index des champs</a></li>
+      <li class="navgroup"><a href="#sec-filemap">Fichiers source</a></li>
+    </ul>
+    <div class="navsub">Tables</div>
+    <ul class="navlist" id="entityNav"></ul>
+  </nav>
+
+  <main class="main">
+    <div class="hero">
+      <h1>Hope / Cabinet — Data Model</h1>
+      <p>Interactive reference generated from <code>docs/DATA-MODEL.md</code>. Extracted directly from the
+        prototype's TypeScript source (<code>src/lib/cabinet/*</code>) plus every route/component that
+        reads or writes each field — the authoritative field-by-field, table-by-table inventory to carry
+        into the real app.</p>
+      <div class="badges">
+        <span class="badge">13 in-scope collections</span>
+        <span class="badge">21 entities incl. embedded objects</span>
+        <span class="badge">localStorage today → normalized SQL tomorrow</span>
+        <span class="badge">No tenant isolation yet</span>
+      </div>
+    </div>
+
+    <div class="scope-note">
+      <span>⚠️</span>
+      <span><b>Scope note:</b> <code>vaccinations</code>, <code>documents</code>, <code>payments</code> and
+        <code>analyses</code> are intentionally excluded (out of scope for now), even though the
+        <code>CabinetData</code> type still declares those four collections
+        (<code>Vaccination</code>, <code>CabinetDocument</code>, <code>Payment</code>, <code>Analysis</code> /
+        <code>AnalysisValue</code>). If they come back in scope later, re-derive their sections from
+        <code>src/lib/cabinet/types.ts</code> and <code>tracking.ts</code>.</span>
+    </div>
+
+    <h2 class="section-title" id="sec-overview">1. High-level shape</h2>
+    <p class="section-desc"><code>CabinetData</code> (<code>types.ts:339</code>) is the root object — the
+      "database". Of its 17 arrays + 1 embedded config object, the <b>13 in-scope collections</b> documented
+      here are listed below. There is <b>no <code>cabinet_id</code> / tenant column anywhere</b> — the
+      prototype is single-practice by construction.</p>
+    <table class="summary-table" id="summaryTable"></table>
+
+    <h2 class="section-title" id="sec-erd">2. Entity-relationship diagram</h2>
+    <p class="section-desc">Every "FK" below is a <b>plain string equality match</b>, resolved client-side
+      (<code>Array.find(x => x.patientId === id)</code>). Nothing prevents an orphan <code>patientId</code>
+      today; a real schema must add real foreign keys + cascade rules (§8).</p>
+    <div class="er-diagram" id="erDiagram"></div>
+
+    <h2 class="section-title" id="sec-entities">3. Tables in full detail</h2>
+    <p class="section-desc">Every field, its TypeScript type, optionality, meaning, and where it's
+      read/written in the UI. Click a row to expand. <b>Table</b> = top-level <code>CabinetData</code>
+      array · <b>Embedded</b> = nested inside another row/object · <b>Singleton</b> = one instance,
+      no array · <b>Unused</b> = typed &amp; seeded but not wired to any screen yet.</p>
+    <div id="entities"></div>
+
+    <h2 class="section-title" id="sec-session">4. Session / runtime state (not persisted)</h2>
+    <p class="section-desc">Held in React state inside <code>CabinetProvider</code> (<code>store.tsx</code>),
+      exposed via <code>useCabinet()</code> (<code>context.ts</code>). Not part of <code>CabinetData</code>
+      and vanishes on reload.</p>
+    <table class="field-table" id="sessionTable" style="margin-bottom:14px;"></table>
+    <div class="content-card">Real app equivalents: <code>offline</code>/<code>pending</code>/<code>syncing</code>
+      map to a real offline-sync/PWA design (<code>HOPE-V2-08</code>, explicitly out of v1 scope);
+      <code>locked</code>/<code>lockDelay</code> map to <code>HOPE-AUTH-04</code>;
+      <code>currentUser</code>/<code>role</code>/<code>isAdmin</code> map to a real JWT session
+      (<code>HOPE-AUTH-01</code>, <code>HOPE-AUTH-06</code>).</div>
+
+    <h2 class="section-title" id="sec-reference">5. Static reference data (shipped as constants)</h2>
+    <p class="section-desc">Not stored per row — reference content served the same way to every tenant.</p>
+    <div id="referenceCards"></div>
+
+    <h2 class="section-title" id="sec-logic">6. Cross-cutting derived / computed logic</h2>
+    <p class="section-desc">Pure functions over the tables above — important to reproduce server-side (or in
+      shared logic) so the real app's numbers match.</p>
+    <table class="field-table" id="logicTable"></table>
+    <div class="content-card" style="margin-top:14px;"><code>tracking.ts</code>'s marker/trend/score helpers
+      (<code>markerSeries</code>, <code>inRange</code>, <code>analysisScore</code>, <code>markerTrend</code>,
+      <code>globalTrend</code>) operate on <code>Analysis[]</code> data and are out of scope per the
+      exclusion above.</div>
+
+    <h2 class="section-title" id="sec-security">7. Security / data-hygiene issues</h2>
+    <p class="section-desc">Visible directly in this schema — carried over into the real app's design
+      (matches the <code>HOPE-AUTH-*</code> tickets).</p>
+    <div class="content-card"><ol id="securityList"></ol></div>
+
+    <h2 class="section-title" id="sec-schema">8. Suggested relational schema</h2>
+    <p class="section-desc">A straightforward mapping of §3 into SQL tables, adding what's missing (tenant
+      key, timestamps, versioning) without changing the product's actual data shape. Postgres-flavored;
+      adapt for SQLite if building a local <code>.exe</code> with an embedded DB.</p>
+    <pre class="schemablock" id="schemaBlock"></pre>
+    <div class="content-card" style="margin-top:14px;">
+      <ul>
+        <li>Every embedded array in §3 (<code>Note.attachments</code>, <code>Doctor.customSymptomGroups</code>,
+          <code>Settings.favorites/protocols/…</code>) becomes its own child table with a real FK, instead
+          of JSON-nested data.</li>
+        <li><code>cabinet_id</code> is added to every table that needs tenant isolation; child tables
+          inherit it transitively through their parent FK.</li>
+        <li><code>version</code> columns added wherever the prototype has no concurrency control but the
+          tickets file requires optimistic locking (<code>patient</code>, <code>appointment</code>,
+          <code>note</code>, <code>app_user</code>).</li>
+        <li><code>icd_code</code> becomes a real versioned reference table; <code>note_icd_code</code> keeps
+          the prototype's copy-by-value semantics.</li>
+        <li><code>app_user</code> is split into the base identity row plus <b>doctor_profile</b> and
+          <b>staff_profile</b> (both 1:1 via <code>user_id</code>), instead of the prototype's single wide
+          Doctor row that carries every field for every role — <code>licenseNumber</code> is meaningless on
+          a secretaire row today, every HR field is meaningless on a medecin row. The relation between the
+          two profile tables is purely "1:1 extension of the same app_user row picked by role" — there is
+          <b>no</b> "this secretary reports to that doctor" relation anywhere in the prototype; a secretaire
+          belongs to the practice (cabinet_id), not to an individual medecin.</li>
+      </ul>
+    </div>
+
+    <h2 class="section-title" id="sec-index">9. Field inventory — flat index</h2>
+    <p class="section-desc">Every field, one line each. Format: <code>Table.field : type</code>. Filtered by
+      the same search box as the rest of the page.</p>
+    <div class="flat-index" id="flatIndex"></div>
+
+    <h2 class="section-title" id="sec-filemap">10. File map</h2>
+    <p class="section-desc">Where all of this lives today.</p>
+    <table class="filemap-table" id="fileMapTable"></table>
+
+    <footer class="page-footer">
+      Generated from a read-through of the full <code>src/lib/cabinet/*</code> module and every
+      route/component that touches <code>CabinetData</code>, cross-checked against
+      <code>hope-tickets.json</code> and recent commit history for known gaps.
+      <code>vaccinations</code>, <code>documents</code>, <code>payments</code> and <code>analyses</code> are
+      excluded from this pass by request.
+    </footer>
+  </main>
+</div>
+
+<script>
+/* ======================================================================
+   Data — every table / embedded object / summary content from
+   docs/DATA-MODEL.md, structured.
+   ====================================================================== */
+
+const COLLECTIONS = [
+  { n:1, name:"doctors", type:"Doctor", pk:"id", owner:"practice", count:"5 (3 médecin + 2 secrétaire)" },
+  { n:2, name:"patients", type:"Patient", pk:"id", owner:"practice", count:"10" },
+  { n:3, name:"appointments", type:"Appointment", pk:"id", owner:"practice", count:"many (generated)" },
+  { n:4, name:"blocks", type:"Block", pk:"id", owner:"practice", count:"few" },
+  { n:5, name:"holidays", type:"Holiday", pk:"id", owner:"practice", count:"few" },
+  { n:6, name:"notes", type:"Note", pk:"id", owner:"patient", count:"per patient" },
+  { n:7, name:"prescriptions", type:"Prescription", pk:"id", owner:"patient", count:"per patient" },
+  { n:8, name:"certificates", type:"Certificate", pk:"id", owner:"patient", count:"per patient" },
+  { n:9, name:"referrals", type:"Referral", pk:"id", owner:"patient", count:"few" },
+  { n:10, name:"contacts", type:"Contact", pk:"id", owner:"practice", count:"few" },
+  { n:11, name:"diagnostics", type:"Diagnostic", pk:"id", owner:"patient", count:"few" },
+  { n:12, name:"audit", type:"AuditEntry", pk:"id", owner:"practice", count:"capped at 400" },
+  { n:13, name:"checkups", type:"Checkup", pk:"id", owner:"patient", count:"few" },
+  { n:"—", name:"settings", type:"Settings", pk:"(singleton, no id)", owner:"practice", count:"1" },
+];
+
+const ER_TEXT = `Doctor (practice staff, 1..N)
+  │ id
+  │
+  ├──< Appointment.resourceId?  (only if resource kind = "praticien")
+  ├──< Note.authorId
+  ├──< Diagnostic.authorId
+  ├──< AuditEntry.actor          (by name snapshot, not FK)
+  └──< Doctor.customSymptomGroups (embedded, 1:N, owned by the doctor)
+
+Patient (1)
+  │ id
+  ├──< Appointment.patientId        (1:N)
+  ├──< Note.patientId               (1:N)   -- includes structured "consultation" fields
+  ├──< Prescription.patientId       (1:N)   -- Prescription.renewedFrom -> Prescription.id (self-ref)
+  ├──< Certificate.patientId        (1:N)
+  ├──< Referral.patientId           (1:N)   -- Referral.contactId -> Contact.id
+  ├──< Diagnostic.patientId         (1:N)
+  └──< Checkup.patientId            (1:N)
+
+Appointment
+  ├── patientId -> Patient.id
+  ├── category  -> Settings.appointmentCategories[].id (string, not enforced)
+  └── resourceId -> Settings.resources[].id (string, not enforced)
+
+Block / Holiday
+  └── no FK — pure calendar rows (date range / single date) that block the agenda
+
+Contact (address book: colleague / lab / supplier)
+  └──< Referral.contactId (nullable, 1:N)
+
+Settings (singleton, embedded sub-objects)
+  ├── favorites: Favorite[]                (prescription "quick add" items)
+  ├── protocols: Protocol[]                (bundles of favorite lines)
+  ├── appointmentCategories: AppointmentCategory[]
+  ├── resources: Resource[]                (room / equipment / practitioner)
+  └── certificateTemplates: CertificateTemplate[]
+
+Static reference data (not stored, shipped as constants — see §5)
+  ICD10[]            <- Note.icd[] (embedded snapshot, code+label copied in)
+  SYMPTOM_GROUPS[]    <- consumed by GiInterviewForm, answers flattened into Diagnostic.content (free text)
+  DRUG_CLASSES[]      <- Favorite.drugClass (free string, validated against this list in the UI only)
+  CONTACT_KINDS[]     <- Contact.kind (free string)
+  BUILTIN_CERTIFICATE_TYPES[] <- Certificate.type / CertificateTemplate.type (free string)`;
+
+// fields: [name, type, required('yes'|'no'), notes(html)]
+const ENTITIES = [
+  { id:"doctor", num:"3.1", name:"Doctor", kind:"table", tagline:"Practice staff account — both médecin and secrétaire, doubling as an HR record",
+    source:"types.ts:313",
+    fields:[
+      ["id","string","yes","PK"],
+      ["name","string","yes","Full name"],
+      ["specialty","string","yes",'e.g. "Gastro-entérologie" for a medecin; also used as a <b>job title</b> for secretaire rows (seed: "Secrétariat médical", "Assistante médicale") — ⚠️ corrected, an earlier pass wrongly said "secretaries: usually blank"'],
+      ["email","string","yes","<b>Login identifier</b>, must be unique per practice"],
+      ["phone","string","yes",""],
+      ["licenseNumber","string","yes","Medical license / ordre number"],
+      ["password","string","yes","<b>Plain text in prototype</b> — see §7 Security notes"],
+      ["active","boolean","yes","Deactivated accounts can't log in; used instead of delete"],
+      ["createdAt","string (ISO)","yes",""],
+      ["lastPasswordResetAt","string (ISO)","no","Shown instead of the password in the admin UI"],
+      ["role",'"medecin" | "secretaire"',"yes",'Drives route guards (<code>SECRETAIRE_ALLOWED</code> in <code>__root.tsx</code>)'],
+      ["photo","string (dataURL)","no","Resized client-side to 400px via <code>resizeImage()</code>"],
+      ["birthDate","string","no","HR field"],
+      ["cin","string","no","National ID card number (Tunisia)"],
+      ["address","string","no","HR field"],
+      ["hiredAt","string","no","HR field"],
+      ["contractType",'"CDI"|"CDD"|"Stage"|"Temps partiel"',"no","HR field"],
+      ["bank","string","no","HR field"],
+      ["rib","string","no","Bank account (20-digit RIB), HR field"],
+      ["emergencyContact","string","no","HR field"],
+      ["notes","string","no","Free HR notes"],
+      ["customSymptomGroups","CustomSymptomGroup[]","no","<b>Embedded 1:N</b> — per-doctor customization of the structured interview grid (see §3.17)"],
+    ],
+    used:"<code>routes/admin.tsx</code>, <code>routes/personnel.tsx</code>, <code>components/cabinet/LockScreen.tsx</code> (login + quick-login), <code>components/cabinet/SendCredentialsModal.tsx</code>.",
+    notes:['<b>Role &amp; account-creation model</b> — three roles, asymmetric creation rights: <code>admin</code> (<code>Settings.adminEmail</code>/<code>adminPassword</code>, a separate login not a Doctor row) is confined to <code>/admin</code> and can create <b>either</b> <code>medecin</code> or <code>secretaire</code> accounts (role selector at <code>admin.tsx:409-417</code>). <code>medecin</code> can create <b>only</b> <code>secretaire</code> accounts, via <code>/personnel</code> (role hardcoded there, <code>personnel.tsx:142</code>) — no UI path lets a doctor create another doctor. <code>secretaire</code> can create nobody and is explicitly refused entry to <code>/personnel</code> ("Accès réservé au médecin").',
+      '⚠️ <b>Confirmed gap</b>: <code>/admin</code> has no role guard of its own — <code>isAdmin</code> only toggles the Sidebar link and force-redirects an <i>admin</i> session back to <code>/admin</code>; it never blocks a <code>medecin</code> session from navigating there directly. A logged-in doctor who types <code>/admin</code> reaches the full account-management screen today, including the ability to create/deactivate other doctors.',
+      'Session/runtime fields (not persisted — see <code>context.ts</code>): <code>currentUser: Doctor | null</code>, <code>role: "medecin" | "secretaire" | "admin"</code> (admin is a <i>separate</i> login, not a Doctor row — see §3.19 Settings).',
+      'A <code>secretaire</code> session is further restricted client-side by <code>SECRETAIRE_ALLOWED</code> (<code>__root.tsx:133-140</code>) to exactly 6 routes: <code>/</code>, <code>/rappels</code>, <code>/patients</code>, <code>/agenda</code>, <code>/tracker</code>, <code>/annuaire</code>. Not modeled as data — see §7 Security note 8.',
+      '<b>This one table holds three roles’ worth of unrelated fields</b> — medical (licenseNumber, customSymptomGroups) and HR (cin/rib/bank/hiredAt/contractType/emergencyContact/…) regardless of which role actually uses them. The suggested real schema (§8) splits this into a base <code>app_user</code> identity row plus a <b>separate <code>doctor_profile</code> table</b> and a <b>separate <code>staff_profile</code> table</b>, each related to <code>app_user</code> by a 1:1 <code>user_id</code> FK — not staff nested inside doctor, but siblings off the same base row. See §7 point 10.'] },
+
+  { id:"patient", num:"3.2", name:"Patient", kind:"table", tagline:"Core patient record",
+    source:"types.ts:6",
+    fields:[
+      ["id","string","yes","PK"],
+      ["code","string","yes","<b>Generated unique ID</b>, format <code>XX-000000</code> (2 initials + 6 digits), see <code>makePatientCode()</code> in <code>utils.ts:83</code>"],
+      ["name","string","yes",""],
+      ["phone","string","yes",""],
+      ["birthDate","string","yes","Age computed on the fly via <code>ageFrom()</code> (<code>utils.ts:101</code>), never stored"],
+      ["sex",'"homme" | "femme"',"no",""],
+      ["country","string","no",""],
+      ["coverage",'"cnam"|"assurance"|"aucune"',"no","Insurance status"],
+      ["insurer","string","no",'Private insurer name, relevant if coverage="assurance"'],
+      ["cnam","string","yes","(always present, can be empty) — CNAM (Tunisian national health insurance) number"],
+      ["allergies","string[]","yes","Free-text list; checked against prescriptions via <code>lineConflicts()</code>"],
+      ["chronic","string[]","yes","Chronic conditions / chronic treatments; also checked against prescriptions"],
+      ["createdAt","string (ISO)","yes",""],
+      ["profession","string","no",""],
+      ["address","string","no",""],
+    ],
+    used:"<code>routes/patients.tsx</code> (list/search/create), <code>components/cabinet/PatientDrawer.tsx</code> (record view), <code>components/cabinet/PatientPicker.tsx</code>, <code>GlobalSearch.tsx</code>.",
+    notes:["Patient ID generation (<code>makePatientCode</code>): initials from first+last name word, deterministic hash of the name → 6 digits, retried up to 1000 times against the <code>taken</code> list to avoid collisions. <b>This needs to become a server-side, transaction-safe sequence/constraint</b> — see ticket <code>HOPE-PAT-02</code>."] },
+
+  { id:"appointment", num:"3.3", name:"Appointment", kind:"table", tagline:"Agenda / calendar entry",
+    source:"types.ts:24",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["date","string (yyyy-MM-dd)","yes",""],
+      ["time","string (HH:mm)","yes",""],
+      ["reason","string","yes","Free text"],
+      ["status",'"upcoming"|"done"|"absent"',"yes","Simple 3-state status (⚠️ the ticket file describes a richer unified status machine — confirm/check-in/call/finish/no-show/cancel — for the real API; this prototype only has 3 states)"],
+      ["category","string","no","FK-like → Settings.appointmentCategories[].id"],
+      ["resourceId","string","no","FK-like → Settings.resources[].id (room / equipment / practitioner)"],
+      ["checkedInAt","string (ISO)","no","Arrival timestamp, drives the waiting-room tracker"],
+      ["tracker",'"waiting"|"in_consult"|"done"',"no","Waiting-room flow position, independent from status"],
+    ],
+    used:"<code>routes/agenda.tsx</code>, <code>routes/tracker.tsx</code> (waiting room board), <code>routes/index.tsx</code> (today's dashboard), <code>AppointmentModal.tsx</code>, <code>routes/patients.tsx</code> (patient's appointment history).",
+    notes:['Cancelling in this prototype is not a distinct status — there\'s no "cancelled" state; the real spec calls for one (never delete the row).'] },
+
+  { id:"block", num:"3.4", name:"Block", kind:"table", tagline:"Agenda block-out",
+    source:"types.ts:37",
+    fields:[
+      ["id","string","yes","PK"],
+      ["date","string","yes",""],
+      ["start","string (HH:mm)","yes",""],
+      ["end","string (HH:mm)","yes",""],
+      ["reason","string","yes",'e.g. "Congé", "Formation"'],
+    ],
+    used:"<code>routes/agenda.tsx</code> to grey out slots.", notes:[] },
+
+  { id:"holiday", num:"3.5", name:"Holiday", kind:"table", tagline:"Practice-wide holiday, blocks the whole day",
+    source:"types.ts:46",
+    fields:[
+      ["id","string","yes","PK"],
+      ["date","string (yyyy-MM-dd)","yes",""],
+      ["label","string","yes",'e.g. "Aïd el-Fitr"'],
+    ],
+    used:"Blocks the whole day automatically in <code>agenda.tsx</code> / <code>index.tsx</code>.", notes:[] },
+
+  { id:"resource", num:"3.6", name:"Resource", kind:"embedded", tagline:"Room / equipment / practitioner — embedded in Settings.resources[]",
+    source:"types.ts:52",
+    fields:[
+      ["id","string","yes","PK"],
+      ["name","string","yes",""],
+      ["kind",'"salle" | "équipement" | "praticien"',"yes",""],
+    ], used:"", notes:[] },
+
+  { id:"appointmentcategory", num:"3.7", name:"AppointmentCategory", kind:"embedded", tagline:"Calendar category / color — embedded in Settings.appointmentCategories[]",
+    source:"types.ts:58",
+    fields:[
+      ["id","string","yes","PK"],
+      ["label","string","yes",'e.g. "Consultation", "Contrôle"'],
+      ["color","string (hex)","yes","Calendar color coding"],
+    ], used:"", notes:[] },
+
+  { id:"note", num:"3.8", name:"Note", kind:"table", tagline:"Clinical note / consultation record — the most overloaded table",
+    source:"types.ts:76",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["date","string","yes",""],
+      ["text","string","yes","Free-text body"],
+      ["attachments","NoteAttachment[]","no","Embedded 1:N, see §3.9"],
+      ["motif","string","no","Structured consultation: chief complaint"],
+      ["exam","string","no","Structured consultation: physical exam"],
+      ["diagnosis","string","no","Structured consultation: diagnosis"],
+      ["plan","string","no","Structured consultation: plan"],
+      ["icd","IcdCode[]","no","Embedded snapshot of picked ICD-10 codes (see §5.1) — copied by value, not by reference"],
+      ["authorId","string","no","FK-like → Doctor.id"],
+    ], used:"", notes:["It stores <b>both free-text notes and structured consultation data</b> in the same row."] },
+
+  { id:"noteattachment", num:"3.9", name:"NoteAttachment", kind:"embedded", tagline:"Embedded in Note.attachments[]",
+    source:"types.ts:64",
+    fields:[
+      ["id","string","yes",""],
+      ["name","string","yes","File name"],
+      ["type","string","yes","MIME type"],
+      ["dataUrl","string","yes","Base64 inline — <b>must become a real file store / object storage in the real app</b>"],
+    ], used:"", notes:[] },
+
+  { id:"icdcode", num:"3.10", name:"IcdCode", kind:"embedded", tagline:"Embedded value object",
+    source:"types.ts:71",
+    fields:[
+      ["code","string","yes",""],
+      ["label","string","yes",""],
+    ], used:"", notes:[] },
+
+  { id:"prescription", num:"3.11", name:"Prescription", kind:"table", tagline:"Rendered prescription body, with renewal chaining",
+    source:"types.ts:91",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["date","string","yes",""],
+      ["text","string","yes","Full rendered prescription body (multi-line, built from Favorite lines via <code>renderFavorite()</code>)"],
+      ["renewedFrom","string","no","<b>Self-referencing FK</b> → Prescription.id of the original prescription being renewed"],
+    ], used:"",
+    notes:["Conflict checking: <code>lineConflicts()</code> (<code>prescriptions.ts:64</code>) cross-checks each line's drug name against Patient.allergies and Patient.chronic, including a small hardcoded cross-allergy table (penicillins, sulfonamides, aspirin, iodine). This logic needs to move server-side and ideally use a real drug database instead of substring matching."] },
+
+  { id:"checkup", num:"3.12", name:"Checkup", kind:"unused", tagline:"Manual clinical follow-up point — typed, seeded, not wired to any screen",
+    source:"types.ts:117",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["date","string","yes",""],
+      ["state",'"mieux"|"stable"|"moins_bien"',"yes","Doctor's subjective assessment"],
+      ["weight","number (kg)","no",""],
+      ["systolic","number (mmHg)","no",""],
+      ["diastolic","number (mmHg)","no",""],
+      ["heartRate","number (bpm)","no",""],
+      ["temperature","number (°C)","no",""],
+      ["pain","number (0–10)","no",""],
+      ["comment","string","no",""],
+    ], used:"",
+    notes:["<code>stateMeta</code> (<code>tracking.ts:3</code>) maps each state to a label, CSS class, color dot, and a numeric score (100/65/25). Per repo scan, this table is currently <b>not surfaced in any route</b> — defined in the type system and seeded, but no UI reads/writes it yet (flagged in the tickets file as \"Not in UI\")."] },
+
+  { id:"certificate", num:"3.13", name:"Certificate", kind:"table", tagline:"Issued certificate (sick leave, sport fitness, etc.)",
+    source:"types.ts:146",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["type","string","yes","One of BUILTIN_CERTIFICATE_TYPES (§5.4) or a custom CertificateTemplate.type"],
+      ["documentDate","string","yes","Date printed on the document"],
+      ["startDate","string","no","For sick-leave certificates"],
+      ["days","number","no","Sick-leave duration"],
+      ["endDate","string","no","Computed from startDate + days"],
+      ["text","string","yes","Rendered certificate body"],
+      ["createdAt","string (ISO)","yes",""],
+    ], used:"<code>routes/certificats.tsx</code> (monthly register, print/duplicate).", notes:[] },
+
+  { id:"certificatetemplate", num:"3.14", name:"CertificateTemplate", kind:"embedded", tagline:"Embedded in Settings.certificateTemplates[]",
+    source:"types.ts:141",
+    fields:[
+      ["type","string","yes",""],
+      ["text","string","yes",""],
+    ], used:"", notes:[] },
+
+  { id:"referral", num:"3.15", name:"Referral", kind:"table", tagline:"Letter to a specialist",
+    source:"types.ts:159",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["specialty","string","yes","Target specialty"],
+      ["contactId","string","no","FK → Contact.id (recipient)"],
+      ["reason","string","yes",""],
+      ["documentDate","string","yes",""],
+      ["text","string","yes","Rendered letter body"],
+      ["createdAt","string (ISO)","yes",""],
+    ], used:"<code>routes/orientations.tsx</code>.", notes:[] },
+
+  { id:"contact", num:"3.16", name:"Contact", kind:"table", tagline:"Address book entry — colleague, lab, supplier",
+    source:"types.ts:197",
+    fields:[
+      ["id","string","yes","PK"],
+      ["name","string","yes",""],
+      ["kind","string","yes","One of CONTACT_KINDS (§5.5) or free text"],
+      ["specialty","string","no",""],
+      ["phone","string","no",""],
+      ["email","string","no",""],
+      ["address","string","no",""],
+      ["notes","string","no",""],
+    ], used:"<code>routes/annuaire.tsx</code>, referenced by Referral.contactId.", notes:[] },
+
+  { id:"diagnostic", num:"3.17", name:"Diagnostic", kind:"table", tagline:"Free-form patient interview / consultation — not a coded diagnosis",
+    source:"types.ts:213",
+    fields:[
+      ["id","string","yes","PK"],
+      ["patientId","string","yes","FK → Patient.id"],
+      ["date","string (yyyy-MM-dd)","yes","Interview date"],
+      ["reason","string","no","Main complaint"],
+      ["content","string","yes","Free text — patient's answers, typed by the doctor"],
+      ["status",'"brouillon"|"termine"',"yes","draft / finished"],
+      ["authorId","string","no","FK-like → Doctor.id"],
+      ["createdAt","string (ISO)","yes",""],
+      ["updatedAt","string (ISO)","yes",""],
+    ], used:"",
+    notes:[
+      'Legacy migration note (<code>store.tsx:82-100</code>): older data shape had a <code>answers: {question, answer}[]</code> array plus <code>freeNotes</code>; on load this is flattened into the single <code>content</code> string.',
+      'The structured <i>symptom picker</i> (<code>GiInterviewForm</code>, backed by <code>gi-interview.ts</code>) is a <b>UI helper only</b> — it doesn\'t have its own table. It composes picked items into <code>Diagnostic.content</code> free text via <code>diagnostic-report.ts</code>\'s report builder/parser. See §5.2.',
+      '<code>CustomSymptomGroup</code> (<code>types.ts:304</code>, embedded in Doctor.customSymptomGroups[]): <code>id</code>, <code>title</code>, <code>items: string[]</code>, <code>extendsGroupId?</code> (if set, these items are appended to an existing built-in group instead of forming a new section).',
+      '<code>ReportLine</code> (<code>diagnostic-report.ts:1</code>, not persisted — display-only parse of Diagnostic.content): <code>{ kind: "flag"|"section"|"sub"|"text", text }</code>.',
+    ] },
+
+  { id:"auditentry", num:"3.18", name:"AuditEntry", kind:"table", tagline:"Activity log — append-only by convention, not by enforcement",
+    source:"types.ts:226",
+    fields:[
+      ["id","string","yes","PK"],
+      ["at","string (ISO)","yes",""],
+      ["actor","string","yes","<b>Name snapshot</b>, not an FK — resolved once at write time from the current user (<code>store.tsx:151-152</code>)"],
+      ["summary","string","yes","Human-readable description of the action"],
+    ], used:"",
+    notes:["Written centrally by the <code>update()</code> function in <code>store.tsx:146-159</code>, whenever a caller passes an <code>audit</code> message. <b>Capped at 400 entries</b> (<code>.slice(0, 400)</code>) — oldest entries silently dropped. This cap and the lack of structured action/entity/entityId/diff fields is exactly what the tickets file flags as needing a real append-only, ungapped audit table server-side."] },
+
+  { id:"settings", num:"3.19", name:"Settings", kind:"singleton", tagline:"Singleton practice configuration — one object at CabinetData.settings",
+    source:"types.ts:284",
+    fields:[
+      ["doctorName","string","yes","Printed on documents"],
+      ["specialty","string","yes",""],
+      ["address","string","yes","Practice address, printed on documents"],
+      ["phone","string","yes",""],
+      ["licenseNumber","string","yes",""],
+      ["favorites","Favorite[]","yes","Embedded 1:N — see §3.20"],
+      ["protocols","Protocol[]","yes","Embedded 1:N — see §3.21"],
+      ["consultDuration","number (minutes)","yes","Default appointment slot length"],
+      ["password","string","yes","<b>Fallback password for the main doctor account</b> (separate from Doctor.password!)"],
+      ["adminEmail","string","yes","Separate <b>admin</b> login, not a Doctor row"],
+      ["adminPassword","string","yes","Admin login password (plain text in prototype)"],
+      ["lockDelay","number (minutes, 0=never)","yes","Auto-lock inactivity timer, per-practice today (should likely be per-user)"],
+      ["theme",'"light"|"dark"|"system"',"yes",""],
+      ["appointmentCategories","AppointmentCategory[]","yes","Embedded 1:N — see §3.7"],
+      ["resources","Resource[]","yes","Embedded 1:N — see §3.6"],
+      ["certificateTemplates","CertificateTemplate[]","yes","Embedded 1:N — see §3.14"],
+    ],
+    used:"<code>routes/parametres.tsx</code> and almost every print/document view (header/footer branding).",
+    notes:["<b>Important design smell to resolve in the real app</b>: there are <i>three independent credential pairs</i> today — Doctor.email/Doctor.password per staff row, plus Settings.password (main doctor fallback) and Settings.adminEmail/adminPassword (a separate admin login not tied to any Doctor row). A real auth model should probably collapse these into one <code>app_user</code> table with a role."] },
+
+  { id:"favorite", num:"3.20", name:"Favorite", kind:"embedded", tagline:"Quick-add prescription line — embedded in Settings.favorites[]",
+    source:"types.ts:263",
+    fields:[
+      ["id","string","yes",""],
+      ["label","string","yes",'Drug name + dosage, e.g. "Paracétamol 1 g"'],
+      ["form","string","no","Comprimé, gélule, sachet, sirop, inhalateur…"],
+      ["posology","string","yes",'e.g. "1 cp x 3/j"'],
+      ["duration","string","no",'e.g. "5 jours"'],
+      ["route","string","no","Orale, cutanée, inhalée…"],
+      ["note","string","no",'e.g. "au milieu du repas"'],
+      ["drugClass","string","no","One of DRUG_CLASSES (§5.3) or free text"],
+      ["uses","number","no",'Usage counter, powers "most used" sort'],
+    ], used:"",
+    notes:['<code>renderFavorite()</code> (<code>prescriptions.ts:25</code>) turns a Favorite into one prescription text line: <code>label (form) - posology, duration - note</code>. <code>parseLegacyFavorite()</code> handles the reverse for migrating old plain-string favorites.'] },
+
+  { id:"protocol", num:"3.21", name:"Protocol", kind:"embedded", tagline:"Prescription template — embedded in Settings.protocols[]",
+    source:"types.ts:276",
+    fields:[
+      ["id","string","yes",""],
+      ["name","string","yes",'e.g. "Angine bactérienne (adulte)"'],
+      ["category","string","no",""],
+      ["note","string","no",""],
+      ["lines","string[]","yes","Ready-to-insert prescription lines for a common situation"],
+    ], used:"", notes:[] },
+];
+
+const SESSION_STATE = [
+  ["hydrated","boolean","Whether localStorage has been read yet"],
+  ["offline","boolean",'Simulated network-loss toggle (Sidebar "Simuler une coupure réseau")'],
+  ["pending","number",'Count of unsynced writes while "offline"'],
+  ["syncing / justSynced","boolean","Simulated sync animation state"],
+  ["locked","boolean","Whether the lock screen is showing"],
+  ["isAdmin","boolean","True if logged in via the separate admin login"],
+  ["currentUserId / currentUser","string|null / Doctor|null","Logged-in staff member"],
+  ["role",'"medecin"|"secretaire"|"admin"',"Effective session role, drives route guards"],
+];
+
+const REFERENCE_DATA = [
+  { title:"5.1 ICD-10 subset", file:"icd10.ts", html:`<code>ICD10: IcdCode[]</code> — a short hand-picked subset of common general-medicine codes (hypertension, diabetes, URTIs, GERD, etc.), each <code>{code, label}</code>. <code>searchIcd(query, limit=8)</code> does a simple substring/prefix search. Picked codes are <b>copied by value</b> into <code>Note.icd[]</code>, not referenced by code alone. A real app likely wants the full CIM-10 (or ICD-11) reference table server-side, searchable, with the same copy-on-select semantics preserved.` },
+  { title:"5.2 Structured interview reference data", file:"gi-interview.ts", html:`Specialty-specific (gastro-enterology) helper content for <code>GiInterviewForm</code>, all shipped as constants — <b>not stored per row</b>, only their picked/typed results end up in <code>Diagnostic.content</code>:
+    <ul>
+      <li><code>RED_FLAGS</code> — 14 alarm symptoms.</li>
+      <li><code>SYMPTOM_GROUPS</code> — 10 groups × items: douleur abdominale, reflux/œsophage, estomac/duodénum, transit intestinal, saignement digestif, hépato-bilio-pancréatique, symptômes anorectaux, signes généraux, signes extra-digestifs.</li>
+      <li><code>EXTENDABLE_GROUPS</code> — the above + a virtual "flags" target, used so a doctor's CustomSymptomGroup.extendsGroupId can append to any of them.</li>
+      <li>Free-form option lists: <code>LOCALISATIONS</code>, <code>CARACTERISTIQUES</code>, <code>IRRADIATIONS</code>, <code>RELATIONS_REPAS</code>, <code>FACTEURS_AGGRAVANTS</code>, <code>FACTEURS_SOULAGEANTS</code>, <code>DEBUTS</code>, <code>EVOLUTIONS</code>, <code>BRISTOL</code> (1–7 scale).</li>
+      <li>History checklists: <code>ATCD_MED</code> (17 items), <code>ATCD_DIG</code> (13), <code>ATCD_HEPATO</code> (18), <code>ATCD_CHIR</code> (12), <code>ATCD_FAM</code> (10).</li>
+      <li><code>PARENTES</code> — relation list for family history (Père, Mère, Frère/Sœur, Enfant, Autre).</li>
+    </ul>
+    This whole reference set is specialty-specific (HGE = gastroenterology). <code>HOPE-V2-10</code> ("Interview grids for other specialties") implies this needs to become data-driven/versioned in the database — see <code>HOPE-CONS-01</code>.` },
+  { title:"5.3 DRUG_CLASSES", file:"types.ts:242", html:`17 therapeutic class labels: Antalgique, AINS, Antibiotique, Antipyrétique, IPP/anti-acide, Antihypertenseur, Antidiabétique, Hypolipémiant, Corticoïde, Antihistaminique, Bronchodilatateur, Antitussif, Antispasmodique, Anxiolytique/hypnotique, Vitamine/supplément, Dermatologie, Autre.` },
+  { title:"5.4 BUILTIN_CERTIFICATE_TYPES", file:"types.ts:132", html:`5 built-in types: Arrêt de travail, Aptitude sportive, Certificat scolaire, Certificat de grossesse, Certificat de vaccination. Extensible via <code>Settings.certificateTemplates</code>.` },
+  { title:"5.5 CONTACT_KINDS", file:"types.ts:194", html:`4 built-in kinds: Confrère, Laboratoire, Fournisseur, Autre. <code>Contact.kind</code> accepts any string, these are just UI suggestions.` },
+];
+
+const DERIVED_LOGIC = [
+  ["ageFrom(birthDate)","utils.ts:101","Patient.birthDate","age in years, null if invalid/future/≥130"],
+  ["makePatientCode(name, taken)","utils.ts:83","Patient.name + existing codes","unique XX-000000 code"],
+  ["levenshtein(a,b)","utils.ts:62","two strings","edit distance (accent/case-insensitive) — used for duplicate-name detection"],
+  ["matches(haystack,needle)","utils.ts:80","two strings","accent/case-insensitive substring match — used for search"],
+  ["renderFavorite(f)","prescriptions.ts:25","Favorite","one prescription text line"],
+  ["parseLegacyFavorite(raw)","prescriptions.ts:35","legacy string","Favorite"],
+  ["lineConflicts(line, allergies, chronic)","prescriptions.ts:64","prescription line + allergies/chronic","{allergy: string[], chronic: string[]} matches, incl. hardcoded cross-allergy table"],
+  ["searchIcd(query, limit)","icd10.ts:62","text","matching IcdCode[]"],
+  ["parseReport(content)","diagnostic-report.ts:7","Diagnostic.content","ReportLine[] for display (flag/section/sub/text)"],
+  ["randomPassword(length)","credentials.ts:6","—","generated password for new accounts"],
+  ["buildCredentialsEmail(doc, password, cabinetName)","credentials.ts:17","Doctor + password","{to, subject, body} (currently simulated, never actually sent)"],
+];
+
+const SECURITY_ISSUES = [
+  `<b>Plain-text passwords everywhere</b>: Doctor.password, Settings.password, Settings.adminPassword are all stored and handled as plain strings client-side — must become server-side Argon2id hashes, never returned in any response.`,
+  `<b>No password ever leaves the client via a real channel</b> — SendCredentialsModal and credentials.ts <i>simulate</i> sending credentials by email; nothing is actually transmitted. A real activation/reset flow must use single-use links, not password delivery.`,
+  `<b>No tenant isolation column</b> — single-practice by construction. Every table needs a cabinet_id/practice_id FK in a multi-tenant backend, enforced server-side (RLS or an equivalent filter), not just filtered in the UI.`,
+  `<b>No server-side audit</b> — AuditEntry is written client-side only, capped at 400 rows, with a free-text actor/summary instead of structured action/entity/entityId/diff columns, and nothing stops a client from skipping the audit call entirely.`,
+  `<b>Base64 files inline in JSON</b> (NoteAttachment.dataUrl, Doctor.photo) — must move to real object/blob storage with the table holding only a reference (URL/key), for both size and access-control reasons.`,
+  `<b>No optimistic concurrency</b> — nothing like a version column exists on any row; concurrent edits silently overwrite each other (localStorage is single-writer today, but a real multi-user app needs it, matching HOPE-PAT-04's ConflictDialog requirement).`,
+  `<b>No soft-delete/archive flag</b> on Patient (or most other tables) — active exists only on Doctor. Everything else that shouldn't be hard-deleted (patients, appointments-as-cancel) needs an explicit status/flag instead of row removal.`,
+  `<b>Route-level RBAC is a hardcoded array, not modeled data</b> — SECRETAIRE_ALLOWED (src/routes/__root.tsx:133-140) is a client-only whitelist of exactly six paths a secretaire session may open: /, /rappels, /patients, /agenda, /tracker, /annuaire. Every other route is meant for medecin/admin, but see the next point — that boundary isn't actually enforced for medecin either. Nothing server-side enforces any of this today — it's exactly the gap HOPE-AUTH-06's access matrix (spec §3.2) must close.`,
+  `<b>/admin has no role guard of its own</b> — isAdmin only toggles the Sidebar link and force-redirects an admin session back to /admin; it never blocks a medecin session from navigating there directly (routes/admin.tsx has zero role check). A logged-in doctor who types /admin in the URL reaches the full account-management screen today, including the role selector that creates/deactivates other doctors. The real API's @PreAuthorize must restrict every /api/staff* mutation with role:"medecin" in the body to admin only, regardless of what the front-end route allows.`,
+  `<b>Medical fields and HR fields share one row regardless of role</b> — Doctor.licenseNumber is only ever meaningful for medecin (the prototype stores the placeholder "—" for every secretaire); Doctor.cin/rib/bank/hiredAt/contractType/emergencyContact are only ever set by routes/personnel.tsx, which exclusively operates on secretaire rows. See §8's doctor_profile/staff_profile split for the real-schema fix.`,
+];
+
+const SQL_SCHEMA = `cabinet(id, name, address, phone, license_number, specialty,
+        lock_delay_minutes, theme, consult_duration_minutes,
+        created_at)
+
+-- The prototype's Doctor is ONE flat row for every role, mixing
+-- auth/identity fields with medecin-only fields (license_number,
+-- custom symptom groups) and secretaire-only HR fields (cin, rib,
+-- bank, ...) that no UI ever sets on a medecin row. Split into a base
+-- identity table + two 1:1 role-profile tables instead -- this is
+-- the "separate table for secretary/staff, related to the doctor
+-- table" the schema should have:
+
+app_user(id, cabinet_id FK, name, specialty, email UNIQUE(cabinet_id,email),
+         phone, password_hash, role ENUM(medecin,secretaire,admin),
+         active, created_at, updated_at, last_password_reset_at, version)
+         -- base identity/auth row, shared by all 3 roles.
+         -- specialty doubles as job title for secretaire (e.g. "Secrétariat médical").
+
+doctor_profile(user_id FK -> app_user PK, license_number)
+         -- 1:1 extension, medecin only. Empty/absent for secretaire and admin rows.
+
+staff_profile(user_id FK -> app_user PK, photo_ref, birth_date, cin,
+              address, hired_at, contract_type, bank, rib,
+              emergency_contact, notes)
+         -- 1:1 extension, secretaire only (the HR record built by
+         -- routes/personnel.tsx). Empty/absent for medecin and admin
+         -- rows. NOT a "this secretary reports to that doctor" link --
+         -- no such relation exists in the prototype; secretary
+         -- accounts belong to the practice (cabinet_id via app_user),
+         -- not to an individual doctor.
+
+custom_symptom_group(id, doctor_id FK -> doctor_profile.user_id, title,
+                      extends_group_id NULL, sort_order)
+custom_symptom_item(id, group_id FK, label, sort_order)
+
+patient(id, cabinet_id FK, code UNIQUE(cabinet_id,code), name, phone,
+        birth_date, sex, country, coverage, insurer, cnam,
+        profession, address, archived_at NULL,
+        created_at, updated_at, version)
+patient_allergy(id, patient_id FK, label)
+patient_chronic_condition(id, patient_id FK, label)
+
+appointment_category(id, cabinet_id FK, label, color)
+resource(id, cabinet_id FK, name, kind ENUM(salle,equipement,praticien))
+
+appointment(id, cabinet_id FK, patient_id FK, date, time, reason,
+            status, category_id FK NULL, resource_id FK NULL,
+            checked_in_at NULL, tracker_status NULL,
+            created_at, updated_at, version)
+
+agenda_block(id, cabinet_id FK, date, start_time, end_time, reason)
+holiday(id, cabinet_id FK, date, label)
+
+note(id, patient_id FK, author_id FK -> app_user NULL, date, text,
+     motif, exam, diagnosis, plan, created_at, updated_at, version)
+note_attachment(id, note_id FK, name, mime_type, storage_ref)
+note_icd_code(id, note_id FK, code, label)          -- snapshot copy, not FK to a live icd_code table
+
+icd_code(code PK, label, version)                    -- reference table, versioned
+
+prescription(id, patient_id FK, date, text,
+             renewed_from_id FK -> prescription NULL, created_at)
+
+checkup(id, patient_id FK, date, state, weight, systolic, diastolic,
+        heart_rate, temperature, pain, comment)
+
+certificate_template(id, cabinet_id FK, type, text)
+certificate(id, patient_id FK, type, document_date, start_date NULL,
+            days NULL, end_date NULL, text, created_at)
+
+contact(id, cabinet_id FK, name, kind, specialty, phone, email,
+        address, notes)
+
+referral(id, patient_id FK, specialty, contact_id FK NULL, reason,
+         document_date, text, created_at)
+
+diagnostic(id, patient_id FK, date, reason, content, status,
+           author_id FK -> app_user NULL, created_at, updated_at)
+
+favorite(id, cabinet_id FK, label, form, posology, duration, route,
+         note, drug_class, uses)
+protocol(id, cabinet_id FK, name, category, note)
+protocol_line(id, protocol_id FK, text, sort_order)
+
+audit_event(id, cabinet_id FK, at, actor_id FK -> app_user,
+            action, entity, entity_id, patient_id NULL, ip,
+            diff JSONB, summary)                       -- append-only, no UPDATE/DELETE grant`;
+
+const FILE_MAP = [
+  ["src/lib/cabinet/types.ts","All table/row TypeScript interfaces + CabinetData root shape"],
+  ["src/lib/cabinet/store.tsx","localStorage persistence, migrations/back-compat, CabinetProvider, update()/audit-log writer"],
+  ["src/lib/cabinet/context.ts","useCabinet() hook + session-only state shape"],
+  ["src/lib/cabinet/seed.ts","Demo data generator (10 patients, appointments, staff, etc.)"],
+  ["src/lib/cabinet/utils.ts","Date formatting, makePatientCode, levenshtein, matches, ageFrom, resizeImage"],
+  ["src/lib/cabinet/prescriptions.ts","Favorite rendering/parsing, allergy/chronic conflict detection"],
+  ["src/lib/cabinet/gi-interview.ts","Static structured-interview reference data (gastro-enterology)"],
+  ["src/lib/cabinet/icd10.ts","Static ICD-10 subset + search"],
+  ["src/lib/cabinet/credentials.ts","Password generation + simulated credentials email body"],
+  ["src/lib/cabinet/diagnostic-report.ts","Parses Diagnostic.content into display lines"],
+  ["src/routes/*.tsx","One route per major table/feature (patients, agenda, tracker, journal, ordonnances, certificats, orientations, annuaire, personnel, admin, parametres, historique.$id)"],
+  ["src/components/cabinet/*.tsx","Shared widgets: PatientDrawer, AppointmentModal, DiagnosticModal, GiInterviewForm, LockScreen, Sidebar, GlobalSearch, PatientPicker, SendCredentialsModal, IcdPicker, Combobox, Page, Modal"],
+];
+
+/* ======================================================================
+   Rendering
+   ====================================================================== */
+function esc(str) { return String(str).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+
+function highlightSql(str) {
+  const escaped = esc(str);
+  return escaped
+    .replace(/(--.*)$/gm, '<span class="cm">$1</span>')
+    .replace(/^([a-z_]+)(\()/gm, '<span class="tbl">$1</span>$2')
+    .replace(/\b(FK|PK|NULL|UNIQUE|ENUM)\b/g, '<span class="kw">$1</span>');
+}
+
+function highlightErd(str) {
+  const escaped = esc(str);
+  // Order matters: comment/arrow passes run on plain escaped text first
+  // (no tags exist yet, so their char classes can't clash with markup);
+  // the entity-name pass runs last since it's the only one that injects
+  // tags into whole-line matches that must stay untouched afterwards.
+  return escaped
+    .replace(/(--\s.*)$/gm, '<span class="er-comment">$1</span>')
+    .replace(/([│├└─┤])/g, '<span class="er-arrow">$1</span>')
+    .replace(/^([A-Z][A-Za-z0-9_]*(\s\([^)]*\))?)$/gm, '<span class="er-entity">$1</span>');
+}
+
+// summary table (section 1)
+document.getElementById("summaryTable").innerHTML = `
+  <tr><th>#</th><th>Collection</th><th>Row type</th><th>PK</th><th>Owned by</th><th>Seed count</th></tr>
+  ${COLLECTIONS.map(c => `<tr><td>${c.n}</td><td><code>${c.name}</code></td><td><code>${c.type}</code></td><td>${esc(c.pk)}</td><td>${esc(c.owner)}</td><td>${esc(c.count)}</td></tr>`).join("")}
+`;
+
+document.getElementById("erDiagram").innerHTML = highlightErd(ER_TEXT);
+
+function renderFieldRows(fields) {
+  return fields.map(([name, type, req, notes]) => `
+    <tr>
+      <td class="fname">${esc(name)}</td>
+      <td class="ftype">${esc(type)}</td>
+      <td>${req === "yes" ? '<span class="req-yes">✓</span>' : '<span class="req-no">optional</span>'}</td>
+      <td>${notes}</td>
+    </tr>`).join("");
+}
+
+function kindLabel(k) { return { table:"Table", embedded:"Embedded", singleton:"Singleton", unused:"Unused" }[k] || k; }
+
+function renderEntity(ent) {
+  return `
+  <div class="entity" id="ent-${ent.id}" data-kind="${ent.kind}"
+       data-search="${esc((ent.name + " " + ent.tagline + " " + ent.fields.map(f=>f[0]).join(" ")).toLowerCase())}">
+    <div class="entity-head" onclick="toggleEntity('ent-${ent.id}')">
+      <span class="entity-name">${esc(ent.name)}</span>
+      <span class="entity-tagline">${esc(ent.tagline)}</span>
+      <span class="kind-badge ${ent.kind}">${kindLabel(ent.kind)}</span>
+      <span class="field-count">${ent.fields.length} champs</span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="entity-body">
+      <div class="source-line">§${ent.num} · 📄 <code>${esc(ent.source)}</code></div>
+      <table class="field-table">
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+        ${renderFieldRows(ent.fields)}
+      </table>
+      ${ent.used ? `<div class="used-line">Used in: ${ent.used}</div>` : ""}
+      ${ent.notes.map(n => `<div class="notes-block">${n}</div>`).join("")}
+    </div>
+  </div>`;
+}
+
+document.getElementById("entities").innerHTML = ENTITIES.map(renderEntity).join("");
+document.getElementById("entityCount").textContent = ENTITIES.length;
+document.getElementById("entityNav").innerHTML = ENTITIES.map(e =>
+  `<li class="navgroup"><a href="#ent-${e.id}">${esc(e.name)} <span class="count">${e.fields.length}</span></a></li>`
+).join("");
+
+document.getElementById("sessionTable").innerHTML = `
+  <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+  ${SESSION_STATE.map(([n,t,p]) => `<tr><td class="fname">${esc(n)}</td><td class="ftype">${esc(t)}</td><td>${esc(p)}</td></tr>`).join("")}
+`;
+
+document.getElementById("referenceCards").innerHTML = REFERENCE_DATA.map(r => `
+  <div class="content-card">
+    <h4>${esc(r.title)} <span style="font-weight:400;color:var(--muted-foreground);">— <code>${esc(r.file)}</code></span></h4>
+    <div>${r.html}</div>
+  </div>`).join("");
+
+document.getElementById("logicTable").innerHTML = `
+  <tr><th>Function</th><th>File</th><th>Inputs</th><th>Output</th></tr>
+  ${DERIVED_LOGIC.map(([fn,file,inp,out]) => `<tr><td class="fname">${esc(fn)}</td><td><code>${esc(file)}</code></td><td>${esc(inp)}</td><td>${esc(out)}</td></tr>`).join("")}
+`;
+
+document.getElementById("securityList").innerHTML = SECURITY_ISSUES.map(s => `<li>${s}</li>`).join("");
+
+document.getElementById("schemaBlock").innerHTML = highlightSql(SQL_SCHEMA);
+
+document.getElementById("fileMapTable").innerHTML = `
+  <tr><th>File</th><th>Role</th></tr>
+  ${FILE_MAP.map(([f,r]) => `<tr><td><code>${esc(f)}</code></td><td>${esc(r)}</td></tr>`).join("")}
+`;
+
+// flat field index, generated straight from ENTITIES so it never drifts
+function flatTypeStr(type, req) {
+  return type + (req === "no" ? "?" : "");
+}
+const FLAT_ROWS = [];
+ENTITIES.forEach(ent => {
+  ent.fields.forEach(([name, type, req]) => {
+    FLAT_ROWS.push({ table: ent.name, field: name, type: flatTypeStr(type, req) });
+  });
+});
+document.getElementById("flatIndex").innerHTML = FLAT_ROWS.map(r =>
+  `<div class="frow" data-search="${esc((r.table + "." + r.field + " " + r.type).toLowerCase())}"><span class="ftbl">${esc(r.table)}</span>.<span class="ffield">${esc(r.field)}</span> <span class="ftype2">: ${esc(r.type)}</span></div>`
+).join("");
+
+/* ---------- interactivity ---------- */
+function toggleEntity(id) {
+  const el = document.getElementById(id);
+  el.setAttribute("data-open", el.getAttribute("data-open") === "true" ? "false" : "true");
+}
+
+const activeKinds = new Set(["table", "embedded", "singleton", "unused"]);
+document.querySelectorAll(".kchip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const k = chip.dataset.kind;
+    if (activeKinds.has(k)) { activeKinds.delete(k); chip.setAttribute("data-active", "false"); }
+    else { activeKinds.add(k); chip.setAttribute("data-active", "true"); }
+    applyFilters();
+  });
+});
+
+const totalEntities = ENTITIES.length;
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", applyFilters);
+
+function applyFilters() {
+  const q = searchInput.value.trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll(".entity").forEach(ent => {
+    const kindOk = activeKinds.has(ent.dataset.kind);
+    const textOk = !q || ent.dataset.search.includes(q);
+    const show = kindOk && textOk;
+    ent.style.display = show ? "" : "none";
+    if (show) visible++;
+  });
+  document.getElementById("visibleCount").textContent = visible + " / " + totalEntities + " entités";
+
+  document.querySelectorAll(".flat-index .frow").forEach(row => {
+    const show = !q || row.dataset.search.includes(q);
+    row.classList.toggle("hidden", !show);
+  });
+}
+document.getElementById("visibleCount").textContent = totalEntities + " entités";
+
+/* ---------- theme toggle ---------- */
+const root = document.documentElement;
+function currentTheme() {
+  return root.getAttribute("data-theme") ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("hope-data-model-theme", next); } catch (e) {}
+});
+try {
+  const saved = localStorage.getItem("hope-data-model-theme");
+  if (saved) root.setAttribute("data-theme", saved);
+} catch (e) {}
+
+/* ---------- mobile nav toggle ---------- */
+const sidenav = document.getElementById("sidenav");
+document.getElementById("navToggle").addEventListener("click", () => {
+  sidenav.setAttribute("data-open", sidenav.getAttribute("data-open") === "true" ? "false" : "true");
+});
+sidenav.addEventListener("click", (e) => {
+  if (e.target.tagName === "A" && window.innerWidth <= 880) sidenav.setAttribute("data-open", "false");
+});
+</script>
+</body>
+</html>
